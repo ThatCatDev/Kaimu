@@ -24,3 +24,7 @@ query Project($id: ID!) {
     }
   }
 }
+
+mutation DeleteProject($id: ID!) {
+  deleteProject(id: $id)
+}

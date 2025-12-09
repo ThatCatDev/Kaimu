@@ -159,6 +159,10 @@ export type Mutation = {
   deleteColumn: Scalars['Boolean']['output'];
   /** Delete a label */
   deleteLabel: Scalars['Boolean']['output'];
+  /** Delete an organization */
+  deleteOrganization: Scalars['Boolean']['output'];
+  /** Delete a project */
+  deleteProject: Scalars['Boolean']['output'];
   /** Login with username and password */
   login: AuthPayload;
   /** Logout current user */
@@ -228,6 +232,16 @@ export type MutationDeleteColumnArgs = {
 
 
 export type MutationDeleteLabelArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteOrganizationArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteProjectArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -599,6 +613,13 @@ export type OrganizationQueryVariables = Exact<{
 
 export type OrganizationQuery = { __typename?: 'Query', organization?: { __typename?: 'Organization', id: string, name: string, slug: string, description?: string | null, createdAt: string, updatedAt: string, projects: Array<{ __typename?: 'Project', id: string, name: string, key: string, description?: string | null, createdAt: string, updatedAt: string }> } | null };
 
+export type DeleteOrganizationMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteOrganizationMutation = { __typename?: 'Mutation', deleteOrganization: boolean };
+
 export type CreateProjectMutationVariables = Exact<{
   input: CreateProjectInput;
 }>;
@@ -612,3 +633,10 @@ export type ProjectQueryVariables = Exact<{
 
 
 export type ProjectQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, name: string, key: string, description?: string | null, createdAt: string, updatedAt: string, organization: { __typename?: 'Organization', id: string, name: string, slug: string } } | null };
+
+export type DeleteProjectMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteProjectMutation = { __typename?: 'Mutation', deleteProject: boolean };

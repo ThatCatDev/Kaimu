@@ -30,6 +30,7 @@ type Service interface {
 	GetOrganization(ctx context.Context, id uuid.UUID) (*organization.Organization, error)
 	GetOrganizationBySlug(ctx context.Context, slug string) (*organization.Organization, error)
 	GetUserOrganizations(ctx context.Context, userID uuid.UUID) ([]*organization.Organization, error)
+	DeleteOrganization(ctx context.Context, id uuid.UUID) error
 	AddMember(ctx context.Context, orgID, userID uuid.UUID, role string) (*organization_member.OrganizationMember, error)
 	RemoveMember(ctx context.Context, orgID, userID uuid.UUID) error
 	IsMember(ctx context.Context, orgID, userID uuid.UUID) (bool, error)
@@ -169,6 +170,23 @@ func (s *service) GetUserOrganizations(ctx context.Context, userID uuid.UUID) ([
 	defer span.End()
 
 	return s.orgRepo.GetByUserID(ctx, userID)
+}
+
+func (s *service) DeleteOrganization(ctx context.Context, id uuid.UUID) error {
+	ctx, span := s.startServiceSpan(ctx, "DeleteOrganization")
+	span.SetAttributes(attribute.String("org.id", id.String()))
+	defer span.End()
+
+	// Verify organization exists
+	_, err := s.orgRepo.GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrOrgNotFound
+		}
+		return err
+	}
+
+	return s.orgRepo.Delete(ctx, id)
 }
 
 func (s *service) AddMember(ctx context.Context, orgID, userID uuid.UUID, role string) (*organization_member.OrganizationMember, error) {

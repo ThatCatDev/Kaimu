@@ -38,3 +38,7 @@ query Organization($id: ID!) {
     }
   }
 }
+
+mutation DeleteOrganization($id: ID!) {
+  deleteOrganization(id: $id)
+}

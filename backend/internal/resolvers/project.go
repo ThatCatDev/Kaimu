@@ -109,6 +109,41 @@ func ProjectOrganization(ctx context.Context, projSvc projectService.Service, pr
 	return organizationToModel(org), nil
 }
 
+// DeleteProject deletes a project by ID
+func DeleteProject(ctx context.Context, orgSvc orgService.Service, projSvc projectService.Service, id string) (bool, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return false, ErrUnauthorized
+	}
+
+	projID, err := uuid.Parse(id)
+	if err != nil {
+		return false, err
+	}
+
+	// Get project to check organization membership
+	proj, err := projSvc.GetProject(ctx, projID)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if user is a member of the organization
+	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	if err != nil {
+		return false, err
+	}
+	if !isMember {
+		return false, ErrUnauthorized
+	}
+
+	err = projSvc.DeleteProject(ctx, projID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func projectToModel(proj *project.Project) *model.Project {
 	var description *string
 	if proj.Description != "" {

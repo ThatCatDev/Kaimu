@@ -2,6 +2,8 @@ import { graphql } from './client';
 import type {
   CreateOrganizationMutation,
   CreateOrganizationMutationVariables,
+  DeleteOrganizationMutation,
+  DeleteOrganizationMutationVariables,
   OrganizationsQuery,
   OrganizationQuery,
   OrganizationQueryVariables,
@@ -81,4 +83,18 @@ export async function getOrganization(id: string): Promise<OrganizationWithProje
     id,
   } as OrganizationQueryVariables);
   return data.organization ?? null;
+}
+
+const DELETE_ORGANIZATION_MUTATION = `
+  mutation DeleteOrganization($id: ID!) {
+    deleteOrganization(id: $id)
+  }
+`;
+
+export async function deleteOrganization(id: string): Promise<boolean> {
+  const data = await graphql<DeleteOrganizationMutation>(
+    DELETE_ORGANIZATION_MUTATION,
+    { id } as DeleteOrganizationMutationVariables
+  );
+  return data.deleteOrganization;
 }

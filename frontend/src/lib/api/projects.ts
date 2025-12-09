@@ -2,6 +2,8 @@ import { graphql } from './client';
 import type {
   CreateProjectMutation,
   CreateProjectMutationVariables,
+  DeleteProjectMutation,
+  DeleteProjectMutationVariables,
   ProjectQuery,
   ProjectQueryVariables,
 } from '../graphql/generated';
@@ -57,4 +59,18 @@ export async function getProject(id: string): Promise<ProjectWithOrg | null> {
     id,
   } as ProjectQueryVariables);
   return data.project ?? null;
+}
+
+const DELETE_PROJECT_MUTATION = `
+  mutation DeleteProject($id: ID!) {
+    deleteProject(id: $id)
+  }
+`;
+
+export async function deleteProject(id: string): Promise<boolean> {
+  const data = await graphql<DeleteProjectMutation>(
+    DELETE_PROJECT_MUTATION,
+    { id } as DeleteProjectMutationVariables
+  );
+  return data.deleteProject;
 }

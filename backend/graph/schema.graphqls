@@ -30,8 +30,12 @@ type Mutation {
     logout: Boolean!
     "Create a new organization"
     createOrganization(input: CreateOrganizationInput!): Organization!
+    "Delete an organization"
+    deleteOrganization(id: ID!): Boolean!
     "Create a new project"
     createProject(input: CreateProjectInput!): Project!
+    "Delete a project"
+    deleteProject(id: ID!): Boolean!
 
     "Create a new board"
     createBoard(input: CreateBoardInput!): Board!

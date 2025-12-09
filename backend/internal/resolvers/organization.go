@@ -159,6 +159,35 @@ func OrganizationProjects(ctx context.Context, projectSvc projectService.Service
 	return result, nil
 }
 
+// DeleteOrganization deletes an organization by ID
+func DeleteOrganization(ctx context.Context, svc orgService.Service, id string) (bool, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return false, ErrUnauthorized
+	}
+
+	orgID, err := uuid.Parse(id)
+	if err != nil {
+		return false, err
+	}
+
+	// Check if user is a member (and ideally owner, but for now just member)
+	isMember, err := svc.IsMember(ctx, orgID, *userID)
+	if err != nil {
+		return false, err
+	}
+	if !isMember {
+		return false, ErrUnauthorized
+	}
+
+	err = svc.DeleteOrganization(ctx, orgID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 // OrganizationMemberUser resolves the user field of an OrganizationMember
 // Note: The member model needs a UserID field to make this work properly.
 // For now, we'll need to store the user ID in the model temporarily.
