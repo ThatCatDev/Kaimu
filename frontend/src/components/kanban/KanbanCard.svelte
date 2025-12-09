@@ -85,7 +85,7 @@
 </script>
 
 <div
-  class="group relative w-full text-left bg-white rounded-lg shadow-sm border border-gray-200 p-3 hover:shadow-md transition-shadow cursor-pointer {priorityStyle === 'border' && card.priority !== CardPriority.None ? `border-l-4 ${priorityColors[card.priority]}` : ''}"
+  class="group relative w-full text-left bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer {priorityStyle === 'border' && card.priority !== CardPriority.None ? `border-l-4 ${priorityColors[card.priority]}` : ''}"
   onclick={handleClick}
   onkeydown={handleKeydown}
   role="button"
@@ -138,7 +138,7 @@
     <div class="flex items-center gap-2">
       {#if priorityStyle === 'badge' && card.priority !== CardPriority.None}
         <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium {priorityBadgeStyles[card.priority].bg} {priorityBadgeStyles[card.priority].text}">
-          <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd" />
           </svg>
           {priorityBadgeStyles[card.priority].label}
@@ -146,7 +146,7 @@
       {/if}
       {#if card.dueDate}
         <span class="flex items-center gap-1 {isOverdue(card.dueDate) ? 'text-red-600' : ''}">
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
           </svg>
           {formatDueDate(card.dueDate)}

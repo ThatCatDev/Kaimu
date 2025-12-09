@@ -127,6 +127,16 @@
       }
     }
   }
+
+  function handleBlur(e: FocusEvent) {
+    // Delay to allow click events on dropdown items to fire first
+    setTimeout(() => {
+      const relatedTarget = e.relatedTarget as HTMLElement | null;
+      if (!relatedTarget?.closest('.tag-picker-dropdown')) {
+        showTagDropdown = false;
+      }
+    }, 150);
+  }
 </script>
 
 <div class="relative">
@@ -155,7 +165,7 @@
             onclick={(e) => { e.stopPropagation(); toggleTag(tag.id); }}
             {disabled}
           >
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -170,22 +180,23 @@
       type="text"
       bind:value={tagSearch}
       onfocus={() => showTagDropdown = true}
+      onblur={handleBlur}
       onkeydown={handleTagKeydown}
       placeholder="Type to search or create tags..."
       disabled={disabled || creatingTag}
-      class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm disabled:bg-gray-50 disabled:text-gray-500"
+      class="block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm disabled:bg-gray-50 disabled:text-gray-500"
     />
 
     {#if showTagDropdown && (filteredTags.length > 0 || (tagSearch.trim() && !exactMatch))}
-      <div class="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+      <div class="tag-picker-dropdown absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto animate-in fade-in-0 zoom-in-95">
         {#each filteredTags as tag}
           <button
             type="button"
-            class="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 {selectedTagIds.includes(tag.id) ? 'bg-gray-50' : ''}"
+            class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 {selectedTagIds.includes(tag.id) ? 'bg-gray-50' : ''}"
             onclick={() => selectTag(tag.id)}
           >
             <span
-              class="w-3 h-3 rounded-full flex-shrink-0"
+              class="w-4 h-4 rounded-full flex-shrink-0"
               style="background-color: {tag.color};"
             ></span>
             <span class="flex-1">{tag.name}</span>
@@ -200,7 +211,7 @@
         {#if tagSearch.trim() && !exactMatch && projectId}
           <button
             type="button"
-            class="w-full px-3 py-2 text-left text-sm hover:bg-indigo-50 text-indigo-600 border-t border-gray-100 flex items-center gap-2"
+            class="w-full px-4 py-2 text-left text-sm hover:bg-indigo-50 text-indigo-600 border-t border-gray-100 flex items-center gap-2"
             onclick={() => openColorPicker(tagSearch.trim())}
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -215,8 +226,8 @@
 
   <!-- Color Picker -->
   {#if showColorPicker}
-    <div class="absolute z-20 mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-4">
-      <div class="flex items-center justify-between mb-3">
+    <div class="absolute z-20 mt-1 left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg p-4 animate-in fade-in-0 zoom-in-95">
+      <div class="flex items-center justify-between mb-4">
         <span class="text-sm font-medium text-gray-700">
           {editingTag ? 'Edit color for' : 'Choose color for'} "{newTagName}"
         </span>
@@ -232,7 +243,7 @@
       </div>
 
       <!-- Preview -->
-      <div class="mb-3">
+      <div class="mb-4">
         <span
           class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
           style="background-color: {selectedColor}25; color: {selectedColor};"
@@ -242,7 +253,7 @@
       </div>
 
       <!-- Color grid -->
-      <div class="grid grid-cols-8 gap-2 mb-3">
+      <div class="grid grid-cols-8 gap-2 mb-4">
         {#each presetColors as color}
           <button
             type="button"
@@ -278,3 +289,4 @@
     </div>
   {/if}
 </div>
+

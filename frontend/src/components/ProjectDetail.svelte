@@ -139,14 +139,14 @@
             {project.key}
           </span>
           {#if project.description}
-            <p class="mt-3 text-gray-600">{project.description}</p>
+            <p class="mt-4 text-gray-600">{project.description}</p>
           {/if}
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-4">
           <button
             type="button"
             onclick={() => showDeleteProjectModal = true}
-            class="inline-flex items-center px-3 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            class="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
           >
             <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -158,7 +158,7 @@
             onclick={() => showCreateBoardModal = true}
             class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             New Board
@@ -173,7 +173,7 @@
           href={`/projects/${projectId}/board/${defaultBoard.id}`}
           class="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow group"
         >
-          <div class="flex items-center gap-3 mb-2">
+          <div class="flex items-center gap-4 mb-2">
             <div class="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
               <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
@@ -192,7 +192,7 @@
 
       {#if boards.length > 1}
         <div class="bg-white shadow rounded-lg p-6">
-          <h3 class="text-lg font-medium text-gray-900 mb-3">Other Boards</h3>
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Other Boards</h3>
           <ul class="space-y-2">
             {#each boards.filter(b => !b.isDefault) as board}
               <li class="flex items-center justify-between group">
@@ -245,7 +245,7 @@
                 class="text-gray-400 hover:text-gray-600 transition-colors"
                 onclick={() => showCreateBoardModal = false}
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -269,7 +269,7 @@
               />
             </div>
 
-            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+            <div class="px-6 py-4 border-t border-gray-200 flex justify-end gap-4">
               <Button variant="secondary" onclick={() => showCreateBoardModal = false} disabled={creatingBoard}>
                 Cancel
               </Button>

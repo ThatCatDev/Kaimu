@@ -50,12 +50,12 @@
       class="bg-white rounded-xl shadow-2xl max-w-md w-full animate-scale-in"
       onclick={(e) => e.stopPropagation()}
     >
-      <div class="px-6 py-5">
+      <div class="px-6 py-4">
         <h3 class="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
         <p class="text-sm text-gray-600">{message}</p>
       </div>
 
-      <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end gap-3">
+      <div class="px-6 py-4 bg-gray-50 rounded-b-xl flex justify-end gap-4">
         <Button variant="secondary" onclick={onCancel}>
           {cancelText}
         </Button>

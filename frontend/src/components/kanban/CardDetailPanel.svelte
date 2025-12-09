@@ -156,7 +156,7 @@
   {#if card}
     <form onsubmit={handleSubmit} class="flex flex-col h-full">
       <!-- Header -->
-      <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
+      <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
         <h2 class="text-lg font-semibold text-gray-900">Card Details</h2>
         <div class="flex items-center gap-1">
           <button
@@ -165,7 +165,7 @@
             onclick={() => onViewModeChange('modal')}
             title="Switch to modal view"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6z" />
             </svg>
           </button>
@@ -174,7 +174,7 @@
             class="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-colors"
             onclick={handleClose}
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -182,7 +182,7 @@
       </div>
 
       <!-- Content -->
-      <div class="flex-1 overflow-y-auto px-5 py-4">
+      <div class="flex-1 overflow-y-auto px-6 py-4">
         <CardForm
           {title}
           {description}
@@ -212,12 +212,12 @@
       </div>
 
       <!-- Footer -->
-      <div class="px-5 py-4 border-t border-gray-200 flex-shrink-0">
-        <div class="flex items-center justify-between mb-3">
+      <div class="px-6 py-4 border-t border-gray-200 flex-shrink-0">
+        <div class="flex items-center justify-between mb-4">
           <Button variant="danger" size="sm" onclick={handleDeleteClick} disabled={deleting || saving}>
             {deleting ? 'Deleting...' : 'Delete'}
           </Button>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-4">
             {#if saving}
               <span class="text-xs text-gray-400">Saving...</span>
             {:else if getCurrentDataHash() === lastSavedData}

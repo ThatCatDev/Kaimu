@@ -1,8 +1,16 @@
 <script lang="ts">
   import { CardPriority } from '../../lib/graphql/generated';
-  import { Input, Textarea, Select } from '../ui';
+  import { Input, Textarea, BitsSelect, DatePicker } from '../ui';
   import TagPicker from './TagPicker.svelte';
   import type { Tag } from '../../lib/api/boards';
+
+  const priorityOptions = [
+    { value: CardPriority.None, label: 'None' },
+    { value: CardPriority.Low, label: 'Low' },
+    { value: CardPriority.Medium, label: 'Medium' },
+    { value: CardPriority.High, label: 'High' },
+    { value: CardPriority.Urgent, label: 'Urgent' },
+  ];
 
   interface Props {
     title: string;
@@ -73,7 +81,7 @@
 
 <div class="space-y-4">
   {#if error}
-    <div class="rounded-md bg-red-50 p-3">
+    <div class="rounded-md bg-red-50 p-4">
       <p class="text-sm text-red-700">{error}</p>
     </div>
   {/if}
@@ -97,20 +105,20 @@
   />
 
   <div class="grid grid-cols-2 gap-4">
-    <Select id="{idPrefix}priority" label="Priority" bind:value={localPriority} {disabled}>
-      <option value={CardPriority.None}>None</option>
-      <option value={CardPriority.Low}>Low</option>
-      <option value={CardPriority.Medium}>Medium</option>
-      <option value={CardPriority.High}>High</option>
-      <option value={CardPriority.Urgent}>Urgent</option>
-    </Select>
+    <BitsSelect
+      id="{idPrefix}priority"
+      label="Priority"
+      options={priorityOptions}
+      bind:value={localPriority}
+      placeholder="Select priority..."
+      disabled={disabled}
+    />
 
-    <Input
-      type="date"
+    <DatePicker
       id="{idPrefix}dueDate"
       label="Due Date"
       bind:value={localDueDate}
-      {disabled}
+      disabled={disabled}
     />
   </div>
 

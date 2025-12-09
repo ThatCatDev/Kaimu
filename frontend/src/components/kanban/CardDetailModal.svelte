@@ -160,7 +160,7 @@
             onclick={() => onViewModeChange('panel')}
             title="Switch to side panel view"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3h12v18H9M3 9h6M3 15h6" />
             </svg>
           </button>
@@ -209,7 +209,7 @@
           <Button variant="danger" onclick={handleDeleteClick} disabled={deleting || saving}>
             {deleting ? 'Deleting...' : 'Delete Card'}
           </Button>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-4">
             {#if saving}
               <span class="text-xs text-gray-400">Saving...</span>
             {:else if getCurrentDataHash() === lastSavedData}
