@@ -42,6 +42,12 @@
         {#if isLoading}
           <span class="text-gray-400">Loading...</span>
         {:else if user}
+          <a
+            href="/dashboard"
+            class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900"
+          >
+            Dashboard
+          </a>
           <span class="text-gray-600">Hello, {user.username}</span>
           <button
             onclick={handleLogout}

@@ -1,0 +1,40 @@
+mutation CreateOrganization($input: CreateOrganizationInput!) {
+  createOrganization(input: $input) {
+    id
+    name
+    slug
+    description
+    createdAt
+    updatedAt
+  }
+}
+
+query Organizations {
+  organizations {
+    id
+    name
+    slug
+    description
+    createdAt
+    updatedAt
+  }
+}
+
+query Organization($id: ID!) {
+  organization(id: $id) {
+    id
+    name
+    slug
+    description
+    createdAt
+    updatedAt
+    projects {
+      id
+      name
+      key
+      description
+      createdAt
+      updatedAt
+    }
+  }
+}

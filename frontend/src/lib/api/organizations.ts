@@ -1,0 +1,84 @@
+import { graphql } from './client';
+import type {
+  CreateOrganizationMutation,
+  CreateOrganizationMutationVariables,
+  OrganizationsQuery,
+  OrganizationQuery,
+  OrganizationQueryVariables,
+} from '../graphql/generated';
+
+type CreatedOrganization = CreateOrganizationMutation['createOrganization'];
+type OrganizationListItem = OrganizationsQuery['organizations'][number];
+type OrganizationWithProjects = NonNullable<OrganizationQuery['organization']>;
+
+const CREATE_ORGANIZATION_MUTATION = `
+  mutation CreateOrganization($input: CreateOrganizationInput!) {
+    createOrganization(input: $input) {
+      id
+      name
+      slug
+      description
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+const ORGANIZATIONS_QUERY = `
+  query Organizations {
+    organizations {
+      id
+      name
+      slug
+      description
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+const ORGANIZATION_QUERY = `
+  query Organization($id: ID!) {
+    organization(id: $id) {
+      id
+      name
+      slug
+      description
+      createdAt
+      updatedAt
+      projects {
+        id
+        name
+        key
+        description
+        createdAt
+        updatedAt
+      }
+    }
+  }
+`;
+
+export async function createOrganization(
+  name: string,
+  description?: string
+): Promise<CreatedOrganization> {
+  const data = await graphql<CreateOrganizationMutation>(
+    CREATE_ORGANIZATION_MUTATION,
+    {
+      input: { name, description },
+    } as CreateOrganizationMutationVariables
+  );
+  return data.createOrganization;
+}
+
+export async function getOrganizations(): Promise<OrganizationListItem[]> {
+  const data = await graphql<OrganizationsQuery>(ORGANIZATIONS_QUERY);
+  return data.organizations;
+}
+
+export async function getOrganization(id: string): Promise<OrganizationWithProjects | null> {
+  const data = await graphql<OrganizationQuery>(ORGANIZATION_QUERY, {
+    id,
+  } as OrganizationQueryVariables);
+  return data.organization ?? null;
+}

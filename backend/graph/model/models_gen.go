@@ -10,9 +10,50 @@ type AuthPayload struct {
 	User *User `json:"user"`
 }
 
+type CreateOrganizationInput struct {
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+}
+
+type CreateProjectInput struct {
+	OrganizationID string  `json:"organizationId"`
+	Name           string  `json:"name"`
+	Key            string  `json:"key"`
+	Description    *string `json:"description,omitempty"`
+}
+
 type LoginInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type Organization struct {
+	ID          string                `json:"id"`
+	Name        string                `json:"name"`
+	Slug        string                `json:"slug"`
+	Description *string               `json:"description,omitempty"`
+	Owner       *User                 `json:"owner"`
+	Members     []*OrganizationMember `json:"members"`
+	Projects    []*Project            `json:"projects"`
+	CreatedAt   time.Time             `json:"createdAt"`
+	UpdatedAt   time.Time             `json:"updatedAt"`
+}
+
+type OrganizationMember struct {
+	ID        string    `json:"id"`
+	User      *User     `json:"user"`
+	Role      string    `json:"role"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type Project struct {
+	ID           string        `json:"id"`
+	Organization *Organization `json:"organization"`
+	Name         string        `json:"name"`
+	Key          string        `json:"key"`
+	Description  *string       `json:"description,omitempty"`
+	CreatedAt    time.Time     `json:"createdAt"`
+	UpdatedAt    time.Time     `json:"updatedAt"`
 }
 
 type RegisterInput struct {

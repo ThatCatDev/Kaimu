@@ -29,6 +29,16 @@ func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
 	return resolvers.Logout(ctx)
 }
 
+// CreateOrganization is the resolver for the createOrganization field.
+func (r *mutationResolver) CreateOrganization(ctx context.Context, input model.CreateOrganizationInput) (*model.Organization, error) {
+	return resolvers.CreateOrganization(ctx, r.OrganizationService, input)
+}
+
+// CreateProject is the resolver for the createProject field.
+func (r *mutationResolver) CreateProject(ctx context.Context, input model.CreateProjectInput) (*model.Project, error) {
+	return resolvers.CreateProject(ctx, r.OrganizationService, r.ProjectService, input)
+}
+
 // HelloWorld is the resolver for the helloWorld field.
 func (r *queryResolver) HelloWorld(ctx context.Context) (string, error) {
 	return resolvers.Hello(), nil
@@ -37,6 +47,21 @@ func (r *queryResolver) HelloWorld(ctx context.Context) (string, error) {
 // Me is the resolver for the me field.
 func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	return resolvers.Me(ctx, r.AuthService)
+}
+
+// Organizations is the resolver for the organizations field.
+func (r *queryResolver) Organizations(ctx context.Context) ([]*model.Organization, error) {
+	return resolvers.Organizations(ctx, r.OrganizationService)
+}
+
+// Organization is the resolver for the organization field.
+func (r *queryResolver) Organization(ctx context.Context, id string) (*model.Organization, error) {
+	return resolvers.Organization(ctx, r.OrganizationService, r.ProjectService, id)
+}
+
+// Project is the resolver for the project field.
+func (r *queryResolver) Project(ctx context.Context, id string) (*model.Project, error) {
+	return resolvers.Project(ctx, r.OrganizationService, r.ProjectService, id)
 }
 
 // Mutation returns generated.MutationResolver implementation.

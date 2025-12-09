@@ -1,0 +1,26 @@
+mutation CreateProject($input: CreateProjectInput!) {
+  createProject(input: $input) {
+    id
+    name
+    key
+    description
+    createdAt
+    updatedAt
+  }
+}
+
+query Project($id: ID!) {
+  project(id: $id) {
+    id
+    name
+    key
+    description
+    createdAt
+    updatedAt
+    organization {
+      id
+      name
+      slug
+    }
+  }
+}

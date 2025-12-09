@@ -17,3 +17,44 @@ input LoginInput {
     username: String!
     password: String!
 }
+
+type Organization {
+    id: ID!
+    name: String!
+    slug: String!
+    description: String
+    owner: User!
+    members: [OrganizationMember!]!
+    projects: [Project!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type OrganizationMember {
+    id: ID!
+    user: User!
+    role: String!
+    createdAt: Time!
+}
+
+type Project {
+    id: ID!
+    organization: Organization!
+    name: String!
+    key: String!
+    description: String
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+input CreateOrganizationInput {
+    name: String!
+    description: String
+}
+
+input CreateProjectInput {
+    organizationId: ID!
+    name: String!
+    key: String!
+    description: String
+}

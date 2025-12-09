@@ -3,6 +3,12 @@ type Query {
     helloWorld: String!
     "Get current authenticated user"
     me: User
+    "Get all organizations for the current user"
+    organizations: [Organization!]!
+    "Get a specific organization by ID"
+    organization(id: ID!): Organization
+    "Get a specific project by ID"
+    project(id: ID!): Project
 }
 
 type Mutation {
@@ -12,4 +18,8 @@ type Mutation {
     login(input: LoginInput!): AuthPayload!
     "Logout current user"
     logout: Boolean!
+    "Create a new organization"
+    createOrganization(input: CreateOrganizationInput!): Organization!
+    "Create a new project"
+    createProject(input: CreateProjectInput!): Project!
 }
