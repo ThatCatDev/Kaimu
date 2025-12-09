@@ -1,0 +1,973 @@
+package integration
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/thatcatdev/pulse-backend/config"
+	"github.com/thatcatdev/pulse-backend/graph"
+	"github.com/thatcatdev/pulse-backend/graph/generated"
+	"github.com/thatcatdev/pulse-backend/http/middleware"
+	boardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board"
+	columnRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board_column"
+	cardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
+	cardLabelRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_label"
+	labelRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/label"
+	orgRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
+	memberRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
+	projectRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/project"
+	userRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
+	"github.com/thatcatdev/pulse-backend/internal/directives"
+	"github.com/thatcatdev/pulse-backend/internal/services/auth"
+	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
+	cardService "github.com/thatcatdev/pulse-backend/internal/services/card"
+	labelService "github.com/thatcatdev/pulse-backend/internal/services/label"
+	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
+	projectService "github.com/thatcatdev/pulse-backend/internal/services/project"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+type BoardTestServer struct {
+	handler http.Handler
+	db      *gorm.DB
+}
+
+func setupBoardTestServer(t *testing.T) *BoardTestServer {
+	dbHost := os.Getenv("TEST_DB_HOST")
+	if dbHost == "" {
+		dbHost = "localhost"
+	}
+	dbPort := os.Getenv("TEST_DB_PORT")
+	if dbPort == "" {
+		dbPort = "5432"
+	}
+	dbUser := os.Getenv("TEST_DB_USER")
+	if dbUser == "" {
+		dbUser = "pulse"
+	}
+	dbPassword := os.Getenv("TEST_DB_PASSWORD")
+	if dbPassword == "" {
+		dbPassword = "mysecretpassword"
+	}
+	dbName := os.Getenv("TEST_DB_NAME")
+	if dbName == "" {
+		dbName = "pulse_test"
+	}
+
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+		dbHost, dbUser, dbPassword, dbName, dbPort)
+
+	testDB, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		t.Skipf("Skipping integration test: could not connect to test database: %v", err)
+	}
+
+	// Run migrations for all tables
+	err = testDB.Exec(`
+		CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+		CREATE TABLE IF NOT EXISTS users (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			username VARCHAR(255) NOT NULL UNIQUE,
+			password_hash VARCHAR(255) NOT NULL,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS organizations (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			name VARCHAR(255) NOT NULL,
+			slug VARCHAR(255) NOT NULL UNIQUE,
+			description TEXT,
+			owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS organization_members (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			role VARCHAR(50) NOT NULL DEFAULT 'member',
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			UNIQUE(organization_id, user_id)
+		);
+
+		CREATE TABLE IF NOT EXISTS projects (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+			name VARCHAR(255) NOT NULL,
+			key VARCHAR(10) NOT NULL,
+			description TEXT,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			UNIQUE(organization_id, key)
+		);
+
+		CREATE TABLE IF NOT EXISTS boards (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+			name VARCHAR(255) NOT NULL,
+			description TEXT,
+			is_default BOOLEAN NOT NULL DEFAULT FALSE,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			created_by UUID REFERENCES users(id) ON DELETE SET NULL
+		);
+
+		CREATE TABLE IF NOT EXISTS board_columns (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			board_id UUID NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
+			name VARCHAR(255) NOT NULL,
+			position INTEGER NOT NULL DEFAULT 0,
+			is_backlog BOOLEAN NOT NULL DEFAULT FALSE,
+			is_hidden BOOLEAN NOT NULL DEFAULT FALSE,
+			color VARCHAR(7) DEFAULT '#6B7280',
+			wip_limit INTEGER,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS labels (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+			name VARCHAR(100) NOT NULL,
+			color VARCHAR(7) NOT NULL DEFAULT '#6B7280',
+			description TEXT,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			UNIQUE (project_id, name)
+		);
+
+		DO $$ BEGIN
+			CREATE TYPE card_priority AS ENUM ('none', 'low', 'medium', 'high', 'urgent');
+		EXCEPTION
+			WHEN duplicate_object THEN null;
+		END $$;
+
+		CREATE TABLE IF NOT EXISTS cards (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			column_id UUID NOT NULL REFERENCES board_columns(id) ON DELETE CASCADE,
+			board_id UUID NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
+			title VARCHAR(500) NOT NULL,
+			description TEXT,
+			position FLOAT NOT NULL DEFAULT 0,
+			priority card_priority NOT NULL DEFAULT 'none',
+			assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
+			due_date TIMESTAMP WITH TIME ZONE,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			created_by UUID REFERENCES users(id) ON DELETE SET NULL
+		);
+
+		CREATE TABLE IF NOT EXISTS card_labels (
+			card_id UUID NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+			label_id UUID NOT NULL REFERENCES labels(id) ON DELETE CASCADE,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			PRIMARY KEY (card_id, label_id)
+		);
+	`).Error
+	if err != nil {
+		t.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	// Clean up tables before test (order matters due to foreign keys)
+	testDB.Exec("DELETE FROM card_labels")
+	testDB.Exec("DELETE FROM cards")
+	testDB.Exec("DELETE FROM labels")
+	testDB.Exec("DELETE FROM board_columns")
+	testDB.Exec("DELETE FROM boards")
+	testDB.Exec("DELETE FROM projects")
+	testDB.Exec("DELETE FROM organization_members")
+	testDB.Exec("DELETE FROM organizations")
+	testDB.Exec("DELETE FROM users")
+
+	// Create repositories
+	userRepository := userRepo.NewRepository(testDB)
+	orgRepository := orgRepo.NewRepository(testDB)
+	memberRepository := memberRepo.NewRepository(testDB)
+	projectRepository := projectRepo.NewRepository(testDB)
+	boardRepository := boardRepo.NewRepository(testDB)
+	columnRepository := columnRepo.NewRepository(testDB)
+	cardRepository := cardRepo.NewRepository(testDB)
+	labelRepository := labelRepo.NewRepository(testDB)
+	cardLabelRepository := cardLabelRepo.NewRepository(testDB)
+
+	// Create services
+	authSvc := auth.NewService(userRepository, "test-jwt-secret", 24)
+	orgSvc := orgService.NewService(orgRepository, memberRepository, userRepository)
+	projSvc := projectService.NewService(projectRepository, orgRepository)
+	boardSvc := boardService.NewService(boardRepository, columnRepository, projectRepository)
+	cardSvc := cardService.NewService(cardRepository, columnRepository, boardRepository, labelRepository, cardLabelRepository)
+	labelSvc := labelService.NewService(labelRepository, projectRepository)
+
+	// Create resolver
+	cfg := config.Config{
+		AppConfig: config.AppConfig{
+			Env: "test",
+		},
+	}
+	resolver := &graph.Resolver{
+		Config:              cfg,
+		AuthService:         authSvc,
+		OrganizationService: orgSvc,
+		ProjectService:      projSvc,
+		BoardService:        boardSvc,
+		CardService:         cardSvc,
+		LabelService:        labelSvc,
+	}
+
+	// Create GraphQL handler
+	gqlConfig := generated.Config{
+		Resolvers:  resolver,
+		Directives: directives.GetDirectives(),
+	}
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(gqlConfig))
+
+	// Wrap with auth middleware
+	wrappedHandler := middleware.AuthMiddleware(authSvc)(srv)
+
+	return &BoardTestServer{
+		handler: wrappedHandler,
+		db:      testDB,
+	}
+}
+
+func (s *BoardTestServer) cleanup() {
+	s.db.Exec("DELETE FROM card_labels")
+	s.db.Exec("DELETE FROM cards")
+	s.db.Exec("DELETE FROM labels")
+	s.db.Exec("DELETE FROM board_columns")
+	s.db.Exec("DELETE FROM boards")
+	s.db.Exec("DELETE FROM projects")
+	s.db.Exec("DELETE FROM organization_members")
+	s.db.Exec("DELETE FROM organizations")
+	s.db.Exec("DELETE FROM users")
+}
+
+type graphQLResponse struct {
+	Data   json.RawMessage        `json:"data"`
+	Errors []map[string]interface{} `json:"errors"`
+}
+
+func (s *BoardTestServer) executeQuery(query string, cookie string) *graphQLResponse {
+	body, _ := json.Marshal(map[string]string{"query": query})
+	req := httptest.NewRequest("POST", "/graphql", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	if cookie != "" {
+		req.AddCookie(&http.Cookie{Name: "pulse_token", Value: cookie})
+	}
+
+	w := httptest.NewRecorder()
+	s.handler.ServeHTTP(w, req)
+
+	var resp graphQLResponse
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	return &resp
+}
+
+func (s *BoardTestServer) registerUser(username, password string) (string, error) {
+	query := fmt.Sprintf(`mutation {
+		register(input: { username: "%s", password: "%s" }) {
+			user { id username }
+		}
+	}`, username, password)
+
+	body, _ := json.Marshal(map[string]string{"query": query})
+	req := httptest.NewRequest("POST", "/graphql", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	s.handler.ServeHTTP(w, req)
+
+	// Extract cookie from response
+	cookies := w.Result().Cookies()
+	for _, c := range cookies {
+		if c.Name == "pulse_token" {
+			return c.Value, nil
+		}
+	}
+	return "", fmt.Errorf("no auth cookie returned")
+}
+
+func TestBoardCreationWithProject(t *testing.T) {
+	server := setupBoardTestServer(t)
+	defer server.cleanup()
+
+	// Register user and get token
+	token, err := server.registerUser("boarduser", "password123")
+	require.NoError(t, err)
+
+	// Create organization
+	createOrgQuery := `mutation {
+		createOrganization(input: { name: "Board Test Org" }) {
+			id name slug
+		}
+	}`
+	orgResp := server.executeQuery(createOrgQuery, token)
+	require.Empty(t, orgResp.Errors)
+
+	var orgData struct {
+		CreateOrganization struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"createOrganization"`
+	}
+	json.Unmarshal(orgResp.Data, &orgData)
+	orgID := orgData.CreateOrganization.ID
+	require.NotEmpty(t, orgID)
+
+	// Create project (should auto-create default board)
+	createProjectQuery := fmt.Sprintf(`mutation {
+		createProject(input: { organizationId: "%s", name: "Board Test Project", key: "BTP" }) {
+			id
+			name
+			boards { id name isDefault }
+			defaultBoard {
+				id
+				name
+				isDefault
+				columns { id name position isBacklog isHidden }
+			}
+		}
+	}`, orgID)
+
+	projResp := server.executeQuery(createProjectQuery, token)
+	require.Empty(t, projResp.Errors, "Expected no errors but got: %v", projResp.Errors)
+
+	var projData struct {
+		CreateProject struct {
+			ID     string `json:"id"`
+			Name   string `json:"name"`
+			Boards []struct {
+				ID        string `json:"id"`
+				Name      string `json:"name"`
+				IsDefault bool   `json:"isDefault"`
+			} `json:"boards"`
+			DefaultBoard struct {
+				ID        string `json:"id"`
+				Name      string `json:"name"`
+				IsDefault bool   `json:"isDefault"`
+				Columns   []struct {
+					ID        string `json:"id"`
+					Name      string `json:"name"`
+					Position  int    `json:"position"`
+					IsBacklog bool   `json:"isBacklog"`
+					IsHidden  bool   `json:"isHidden"`
+				} `json:"columns"`
+			} `json:"defaultBoard"`
+		} `json:"createProject"`
+	}
+	json.Unmarshal(projResp.Data, &projData)
+
+	// Verify default board was created
+	assert.Equal(t, 1, len(projData.CreateProject.Boards))
+	assert.True(t, projData.CreateProject.Boards[0].IsDefault)
+	assert.Equal(t, "Default Board", projData.CreateProject.DefaultBoard.Name)
+
+	// Verify default columns were created
+	columns := projData.CreateProject.DefaultBoard.Columns
+	assert.Equal(t, 4, len(columns))
+
+	// Check column names and properties
+	columnNames := make(map[string]bool)
+	for _, col := range columns {
+		columnNames[col.Name] = true
+		if col.Name == "Backlog" {
+			assert.True(t, col.IsBacklog)
+			assert.True(t, col.IsHidden)
+		} else {
+			assert.False(t, col.IsBacklog)
+			assert.False(t, col.IsHidden)
+		}
+	}
+	assert.True(t, columnNames["Backlog"])
+	assert.True(t, columnNames["Todo"])
+	assert.True(t, columnNames["In Progress"])
+	assert.True(t, columnNames["Done"])
+}
+
+func TestCardCRUD(t *testing.T) {
+	server := setupBoardTestServer(t)
+	defer server.cleanup()
+
+	// Setup: Register user, create org, project
+	token, err := server.registerUser("carduser", "password123")
+	require.NoError(t, err)
+
+	// Create organization
+	createOrgQuery := `mutation {
+		createOrganization(input: { name: "Card Test Org" }) {
+			id
+		}
+	}`
+	orgResp := server.executeQuery(createOrgQuery, token)
+	require.Empty(t, orgResp.Errors)
+
+	var orgData struct {
+		CreateOrganization struct {
+			ID string `json:"id"`
+		} `json:"createOrganization"`
+	}
+	json.Unmarshal(orgResp.Data, &orgData)
+
+	// Create project
+	createProjectQuery := fmt.Sprintf(`mutation {
+		createProject(input: { organizationId: "%s", name: "Card Test Project", key: "CTP" }) {
+			id
+			defaultBoard {
+				id
+				columns { id name }
+			}
+		}
+	}`, orgData.CreateOrganization.ID)
+
+	projResp := server.executeQuery(createProjectQuery, token)
+	require.Empty(t, projResp.Errors)
+
+	var projData struct {
+		CreateProject struct {
+			ID           string `json:"id"`
+			DefaultBoard struct {
+				ID      string `json:"id"`
+				Columns []struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"columns"`
+			} `json:"defaultBoard"`
+		} `json:"createProject"`
+	}
+	json.Unmarshal(projResp.Data, &projData)
+
+	// Find the Todo column
+	var todoColumnID string
+	for _, col := range projData.CreateProject.DefaultBoard.Columns {
+		if col.Name == "Todo" {
+			todoColumnID = col.ID
+			break
+		}
+	}
+	require.NotEmpty(t, todoColumnID)
+
+	// Test: Create a card
+	createCardQuery := fmt.Sprintf(`mutation {
+		createCard(input: {
+			columnId: "%s"
+			title: "Test Card"
+			description: "This is a test card"
+			priority: MEDIUM
+		}) {
+			id
+			title
+			description
+			priority
+			position
+			column { id name }
+		}
+	}`, todoColumnID)
+
+	cardResp := server.executeQuery(createCardQuery, token)
+	require.Empty(t, cardResp.Errors, "Create card errors: %v", cardResp.Errors)
+
+	var cardData struct {
+		CreateCard struct {
+			ID          string  `json:"id"`
+			Title       string  `json:"title"`
+			Description string  `json:"description"`
+			Priority    string  `json:"priority"`
+			Position    float64 `json:"position"`
+			Column      struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"column"`
+		} `json:"createCard"`
+	}
+	json.Unmarshal(cardResp.Data, &cardData)
+
+	assert.Equal(t, "Test Card", cardData.CreateCard.Title)
+	assert.Equal(t, "This is a test card", cardData.CreateCard.Description)
+	assert.Equal(t, "MEDIUM", cardData.CreateCard.Priority)
+	assert.Equal(t, float64(1000), cardData.CreateCard.Position)
+	assert.Equal(t, "Todo", cardData.CreateCard.Column.Name)
+
+	cardID := cardData.CreateCard.ID
+
+	// Test: Update card
+	updateCardQuery := fmt.Sprintf(`mutation {
+		updateCard(input: {
+			id: "%s"
+			title: "Updated Card Title"
+			priority: HIGH
+		}) {
+			id
+			title
+			priority
+		}
+	}`, cardID)
+
+	updateResp := server.executeQuery(updateCardQuery, token)
+	require.Empty(t, updateResp.Errors)
+
+	var updateData struct {
+		UpdateCard struct {
+			ID       string `json:"id"`
+			Title    string `json:"title"`
+			Priority string `json:"priority"`
+		} `json:"updateCard"`
+	}
+	json.Unmarshal(updateResp.Data, &updateData)
+
+	assert.Equal(t, "Updated Card Title", updateData.UpdateCard.Title)
+	assert.Equal(t, "HIGH", updateData.UpdateCard.Priority)
+
+	// Test: Query card
+	queryCardQuery := fmt.Sprintf(`query {
+		card(id: "%s") {
+			id
+			title
+			priority
+		}
+	}`, cardID)
+
+	getResp := server.executeQuery(queryCardQuery, token)
+	require.Empty(t, getResp.Errors)
+
+	// Test: Delete card
+	deleteCardQuery := fmt.Sprintf(`mutation {
+		deleteCard(id: "%s")
+	}`, cardID)
+
+	deleteResp := server.executeQuery(deleteCardQuery, token)
+	require.Empty(t, deleteResp.Errors)
+}
+
+func TestMoveCard(t *testing.T) {
+	server := setupBoardTestServer(t)
+	defer server.cleanup()
+
+	// Setup
+	token, err := server.registerUser("moveuser", "password123")
+	require.NoError(t, err)
+
+	createOrgQuery := `mutation { createOrganization(input: { name: "Move Test Org" }) { id } }`
+	orgResp := server.executeQuery(createOrgQuery, token)
+	var orgData struct {
+		CreateOrganization struct{ ID string `json:"id"` } `json:"createOrganization"`
+	}
+	json.Unmarshal(orgResp.Data, &orgData)
+
+	createProjectQuery := fmt.Sprintf(`mutation {
+		createProject(input: { organizationId: "%s", name: "Move Test", key: "MVT" }) {
+			defaultBoard { columns { id name } }
+		}
+	}`, orgData.CreateOrganization.ID)
+	projResp := server.executeQuery(createProjectQuery, token)
+
+	var projData struct {
+		CreateProject struct {
+			DefaultBoard struct {
+				Columns []struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"columns"`
+			} `json:"defaultBoard"`
+		} `json:"createProject"`
+	}
+	json.Unmarshal(projResp.Data, &projData)
+
+	var todoColID, inProgressColID string
+	for _, col := range projData.CreateProject.DefaultBoard.Columns {
+		if col.Name == "Todo" {
+			todoColID = col.ID
+		}
+		if col.Name == "In Progress" {
+			inProgressColID = col.ID
+		}
+	}
+
+	// Create card in Todo
+	createCardQuery := fmt.Sprintf(`mutation {
+		createCard(input: { columnId: "%s", title: "Card to Move" }) {
+			id
+			column { name }
+			position
+		}
+	}`, todoColID)
+	cardResp := server.executeQuery(createCardQuery, token)
+
+	var cardData struct {
+		CreateCard struct {
+			ID       string  `json:"id"`
+			Position float64 `json:"position"`
+			Column   struct {
+				Name string `json:"name"`
+			} `json:"column"`
+		} `json:"createCard"`
+	}
+	json.Unmarshal(cardResp.Data, &cardData)
+	cardID := cardData.CreateCard.ID
+	assert.Equal(t, "Todo", cardData.CreateCard.Column.Name)
+
+	// Move card to In Progress
+	moveCardQuery := fmt.Sprintf(`mutation {
+		moveCard(input: {
+			cardId: "%s"
+			targetColumnId: "%s"
+		}) {
+			id
+			column { id name }
+			position
+		}
+	}`, cardID, inProgressColID)
+
+	moveResp := server.executeQuery(moveCardQuery, token)
+	require.Empty(t, moveResp.Errors, "Move card errors: %v", moveResp.Errors)
+
+	var moveData struct {
+		MoveCard struct {
+			ID       string  `json:"id"`
+			Position float64 `json:"position"`
+			Column   struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"column"`
+		} `json:"moveCard"`
+	}
+	json.Unmarshal(moveResp.Data, &moveData)
+
+	assert.Equal(t, "In Progress", moveData.MoveCard.Column.Name)
+}
+
+func TestLabelCRUD(t *testing.T) {
+	server := setupBoardTestServer(t)
+	defer server.cleanup()
+
+	// Setup
+	token, err := server.registerUser("labeluser", "password123")
+	require.NoError(t, err)
+
+	createOrgQuery := `mutation { createOrganization(input: { name: "Label Test Org" }) { id } }`
+	orgResp := server.executeQuery(createOrgQuery, token)
+	var orgData struct {
+		CreateOrganization struct{ ID string `json:"id"` } `json:"createOrganization"`
+	}
+	json.Unmarshal(orgResp.Data, &orgData)
+
+	createProjectQuery := fmt.Sprintf(`mutation {
+		createProject(input: { organizationId: "%s", name: "Label Test", key: "LBL" }) {
+			id
+		}
+	}`, orgData.CreateOrganization.ID)
+	projResp := server.executeQuery(createProjectQuery, token)
+	var projData struct {
+		CreateProject struct{ ID string `json:"id"` } `json:"createProject"`
+	}
+	json.Unmarshal(projResp.Data, &projData)
+	projectID := projData.CreateProject.ID
+
+	// Create label
+	createLabelQuery := fmt.Sprintf(`mutation {
+		createLabel(input: {
+			projectId: "%s"
+			name: "Bug"
+			color: "#EF4444"
+			description: "Bug fixes"
+		}) {
+			id
+			name
+			color
+			description
+		}
+	}`, projectID)
+
+	labelResp := server.executeQuery(createLabelQuery, token)
+	require.Empty(t, labelResp.Errors, "Create label errors: %v", labelResp.Errors)
+
+	var labelData struct {
+		CreateLabel struct {
+			ID          string `json:"id"`
+			Name        string `json:"name"`
+			Color       string `json:"color"`
+			Description string `json:"description"`
+		} `json:"createLabel"`
+	}
+	json.Unmarshal(labelResp.Data, &labelData)
+
+	assert.Equal(t, "Bug", labelData.CreateLabel.Name)
+	assert.Equal(t, "#EF4444", labelData.CreateLabel.Color)
+	labelID := labelData.CreateLabel.ID
+
+	// Query labels
+	queryLabelsQuery := fmt.Sprintf(`query {
+		labels(projectId: "%s") {
+			id
+			name
+			color
+		}
+	}`, projectID)
+
+	queryResp := server.executeQuery(queryLabelsQuery, token)
+	require.Empty(t, queryResp.Errors)
+
+	var queryData struct {
+		Labels []struct {
+			ID    string `json:"id"`
+			Name  string `json:"name"`
+			Color string `json:"color"`
+		} `json:"labels"`
+	}
+	json.Unmarshal(queryResp.Data, &queryData)
+	assert.Equal(t, 1, len(queryData.Labels))
+
+	// Update label
+	updateLabelQuery := fmt.Sprintf(`mutation {
+		updateLabel(input: {
+			id: "%s"
+			name: "Critical Bug"
+			color: "#DC2626"
+		}) {
+			id
+			name
+			color
+		}
+	}`, labelID)
+
+	updateResp := server.executeQuery(updateLabelQuery, token)
+	require.Empty(t, updateResp.Errors)
+
+	var updateData struct {
+		UpdateLabel struct {
+			Name  string `json:"name"`
+			Color string `json:"color"`
+		} `json:"updateLabel"`
+	}
+	json.Unmarshal(updateResp.Data, &updateData)
+	assert.Equal(t, "Critical Bug", updateData.UpdateLabel.Name)
+
+	// Delete label
+	deleteLabelQuery := fmt.Sprintf(`mutation { deleteLabel(id: "%s") }`, labelID)
+	deleteResp := server.executeQuery(deleteLabelQuery, token)
+	require.Empty(t, deleteResp.Errors)
+}
+
+func TestCardWithLabels(t *testing.T) {
+	server := setupBoardTestServer(t)
+	defer server.cleanup()
+
+	// Setup
+	token, err := server.registerUser("cardlabeluser", "password123")
+	require.NoError(t, err)
+
+	createOrgQuery := `mutation { createOrganization(input: { name: "Card Label Org" }) { id } }`
+	orgResp := server.executeQuery(createOrgQuery, token)
+	var orgData struct {
+		CreateOrganization struct{ ID string `json:"id"` } `json:"createOrganization"`
+	}
+	json.Unmarshal(orgResp.Data, &orgData)
+
+	createProjectQuery := fmt.Sprintf(`mutation {
+		createProject(input: { organizationId: "%s", name: "Card Label Test", key: "CLT" }) {
+			id
+			defaultBoard { columns { id name } }
+		}
+	}`, orgData.CreateOrganization.ID)
+	projResp := server.executeQuery(createProjectQuery, token)
+	var projData struct {
+		CreateProject struct {
+			ID           string `json:"id"`
+			DefaultBoard struct {
+				Columns []struct {
+					ID   string `json:"id"`
+					Name string `json:"name"`
+				} `json:"columns"`
+			} `json:"defaultBoard"`
+		} `json:"createProject"`
+	}
+	json.Unmarshal(projResp.Data, &projData)
+	projectID := projData.CreateProject.ID
+
+	var todoColID string
+	for _, col := range projData.CreateProject.DefaultBoard.Columns {
+		if col.Name == "Todo" {
+			todoColID = col.ID
+			break
+		}
+	}
+
+	// Create labels
+	label1Query := fmt.Sprintf(`mutation {
+		createLabel(input: { projectId: "%s", name: "Bug", color: "#EF4444" }) { id }
+	}`, projectID)
+	label1Resp := server.executeQuery(label1Query, token)
+	var label1Data struct {
+		CreateLabel struct{ ID string `json:"id"` } `json:"createLabel"`
+	}
+	json.Unmarshal(label1Resp.Data, &label1Data)
+	label1ID := label1Data.CreateLabel.ID
+
+	label2Query := fmt.Sprintf(`mutation {
+		createLabel(input: { projectId: "%s", name: "Feature", color: "#10B981" }) { id }
+	}`, projectID)
+	label2Resp := server.executeQuery(label2Query, token)
+	var label2Data struct {
+		CreateLabel struct{ ID string `json:"id"` } `json:"createLabel"`
+	}
+	json.Unmarshal(label2Resp.Data, &label2Data)
+	label2ID := label2Data.CreateLabel.ID
+
+	// Create card with labels
+	createCardQuery := fmt.Sprintf(`mutation {
+		createCard(input: {
+			columnId: "%s"
+			title: "Card with Labels"
+			labelIds: ["%s", "%s"]
+		}) {
+			id
+			title
+			labels { id name color }
+		}
+	}`, todoColID, label1ID, label2ID)
+
+	cardResp := server.executeQuery(createCardQuery, token)
+	require.Empty(t, cardResp.Errors, "Create card with labels errors: %v", cardResp.Errors)
+
+	var cardData struct {
+		CreateCard struct {
+			ID     string `json:"id"`
+			Title  string `json:"title"`
+			Labels []struct {
+				ID    string `json:"id"`
+				Name  string `json:"name"`
+				Color string `json:"color"`
+			} `json:"labels"`
+		} `json:"createCard"`
+	}
+	json.Unmarshal(cardResp.Data, &cardData)
+
+	assert.Equal(t, 2, len(cardData.CreateCard.Labels))
+
+	// Update card to remove one label
+	updateCardQuery := fmt.Sprintf(`mutation {
+		updateCard(input: {
+			id: "%s"
+			labelIds: ["%s"]
+		}) {
+			labels { id name }
+		}
+	}`, cardData.CreateCard.ID, label1ID)
+
+	updateResp := server.executeQuery(updateCardQuery, token)
+	require.Empty(t, updateResp.Errors)
+
+	var updateData struct {
+		UpdateCard struct {
+			Labels []struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+			} `json:"labels"`
+		} `json:"updateCard"`
+	}
+	json.Unmarshal(updateResp.Data, &updateData)
+	assert.Equal(t, 1, len(updateData.UpdateCard.Labels))
+	assert.Equal(t, "Bug", updateData.UpdateCard.Labels[0].Name)
+}
+
+func TestColumnOperations(t *testing.T) {
+	server := setupBoardTestServer(t)
+	defer server.cleanup()
+
+	// Setup
+	token, err := server.registerUser("columnuser", "password123")
+	require.NoError(t, err)
+
+	createOrgQuery := `mutation { createOrganization(input: { name: "Column Test Org" }) { id } }`
+	orgResp := server.executeQuery(createOrgQuery, token)
+	var orgData struct {
+		CreateOrganization struct{ ID string `json:"id"` } `json:"createOrganization"`
+	}
+	json.Unmarshal(orgResp.Data, &orgData)
+
+	createProjectQuery := fmt.Sprintf(`mutation {
+		createProject(input: { organizationId: "%s", name: "Column Test", key: "COL" }) {
+			defaultBoard { id columns { id name position } }
+		}
+	}`, orgData.CreateOrganization.ID)
+	projResp := server.executeQuery(createProjectQuery, token)
+	var projData struct {
+		CreateProject struct {
+			DefaultBoard struct {
+				ID      string `json:"id"`
+				Columns []struct {
+					ID       string `json:"id"`
+					Name     string `json:"name"`
+					Position int    `json:"position"`
+				} `json:"columns"`
+			} `json:"defaultBoard"`
+		} `json:"createProject"`
+	}
+	json.Unmarshal(projResp.Data, &projData)
+	boardID := projData.CreateProject.DefaultBoard.ID
+
+	// Create new column
+	createColumnQuery := fmt.Sprintf(`mutation {
+		createColumn(input: { boardId: "%s", name: "Review" }) {
+			id
+			name
+			position
+		}
+	}`, boardID)
+
+	colResp := server.executeQuery(createColumnQuery, token)
+	require.Empty(t, colResp.Errors, "Create column errors: %v", colResp.Errors)
+
+	var colData struct {
+		CreateColumn struct {
+			ID       string `json:"id"`
+			Name     string `json:"name"`
+			Position int    `json:"position"`
+		} `json:"createColumn"`
+	}
+	json.Unmarshal(colResp.Data, &colData)
+
+	assert.Equal(t, "Review", colData.CreateColumn.Name)
+	assert.Equal(t, 4, colData.CreateColumn.Position) // After the 4 default columns (0-3)
+
+	// Update column
+	updateColumnQuery := fmt.Sprintf(`mutation {
+		updateColumn(input: { id: "%s", name: "Code Review", color: "#8B5CF6" }) {
+			id
+			name
+			color
+		}
+	}`, colData.CreateColumn.ID)
+
+	updateResp := server.executeQuery(updateColumnQuery, token)
+	require.Empty(t, updateResp.Errors)
+
+	// Toggle visibility
+	toggleQuery := fmt.Sprintf(`mutation {
+		toggleColumnVisibility(id: "%s") {
+			id
+			isHidden
+		}
+	}`, colData.CreateColumn.ID)
+
+	toggleResp := server.executeQuery(toggleQuery, token)
+	require.Empty(t, toggleResp.Errors)
+
+	var toggleData struct {
+		ToggleColumnVisibility struct {
+			IsHidden bool `json:"isHidden"`
+		} `json:"toggleColumnVisibility"`
+	}
+	json.Unmarshal(toggleResp.Data, &toggleData)
+	assert.True(t, toggleData.ToggleColumnVisibility.IsHidden)
+}

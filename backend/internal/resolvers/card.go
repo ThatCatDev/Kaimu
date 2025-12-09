@@ -1,0 +1,444 @@
+package resolvers
+
+import (
+	"context"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/thatcatdev/pulse-backend/graph/model"
+	"github.com/thatcatdev/pulse-backend/http/middleware"
+	"github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
+	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
+	cardService "github.com/thatcatdev/pulse-backend/internal/services/card"
+	labelService "github.com/thatcatdev/pulse-backend/internal/services/label"
+	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
+)
+
+// Card returns a card by ID
+func Card(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Service, boardSvc boardService.Service, id string) (*model.Card, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return nil, ErrUnauthorized
+	}
+
+	cardID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	c, err := cardSvc.GetCard(ctx, cardID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check membership via board -> project -> org
+	b, err := cardSvc.GetBoardByCardID(ctx, cardID)
+	if err != nil {
+		return nil, err
+	}
+
+	proj, err := boardSvc.GetProject(ctx, b.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, ErrUnauthorized
+	}
+
+	return cardToModel(c), nil
+}
+
+// MyCards returns all cards assigned to the current user
+func MyCards(ctx context.Context, cardSvc cardService.Service) ([]*model.Card, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return nil, ErrUnauthorized
+	}
+
+	cards, err := cardSvc.GetCardsByAssigneeID(ctx, *userID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.Card, len(cards))
+	for i, c := range cards {
+		result[i] = cardToModel(c)
+	}
+	return result, nil
+}
+
+// CreateCard creates a new card
+func CreateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.CreateCardInput) (*model.Card, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return nil, ErrUnauthorized
+	}
+
+	colID, err := uuid.Parse(input.ColumnID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check membership via column -> board -> project -> org
+	b, err := boardSvc.GetBoardByColumnID(ctx, colID)
+	if err != nil {
+		return nil, err
+	}
+
+	proj, err := boardSvc.GetProject(ctx, b.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, ErrUnauthorized
+	}
+
+	createInput := cardService.CreateCardInput{
+		ColumnID:  colID,
+		Title:     input.Title,
+		Priority:  card.PriorityNone,
+		CreatedBy: userID,
+	}
+
+	if input.Description != nil {
+		createInput.Description = *input.Description
+	}
+	if input.Priority != nil {
+		createInput.Priority = modelPriorityToCard(*input.Priority)
+	}
+	if input.AssigneeID != nil {
+		assigneeID, err := uuid.Parse(*input.AssigneeID)
+		if err != nil {
+			return nil, err
+		}
+		createInput.AssigneeID = &assigneeID
+	}
+	if input.LabelIds != nil {
+		labelIDs := make([]uuid.UUID, len(input.LabelIds))
+		for i, id := range input.LabelIds {
+			labelID, err := uuid.Parse(id)
+			if err != nil {
+				return nil, err
+			}
+			labelIDs[i] = labelID
+		}
+		createInput.LabelIDs = labelIDs
+	}
+	if input.DueDate != nil {
+		createInput.DueDate = input.DueDate
+	}
+
+	c, err := cardSvc.CreateCard(ctx, createInput)
+	if err != nil {
+		return nil, err
+	}
+
+	return cardToModel(c), nil
+}
+
+// UpdateCard updates a card
+func UpdateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.UpdateCardInput) (*model.Card, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return nil, ErrUnauthorized
+	}
+
+	cardID, err := uuid.Parse(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check membership
+	b, err := cardSvc.GetBoardByCardID(ctx, cardID)
+	if err != nil {
+		return nil, err
+	}
+
+	proj, err := boardSvc.GetProject(ctx, b.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, ErrUnauthorized
+	}
+
+	updateInput := cardService.UpdateCardInput{
+		ID: cardID,
+	}
+
+	if input.Title != nil {
+		updateInput.Title = input.Title
+	}
+	if input.Description != nil {
+		updateInput.Description = input.Description
+	}
+	if input.Priority != nil {
+		p := modelPriorityToCard(*input.Priority)
+		updateInput.Priority = &p
+	}
+	if input.AssigneeID != nil {
+		assigneeID, err := uuid.Parse(*input.AssigneeID)
+		if err != nil {
+			return nil, err
+		}
+		updateInput.AssigneeID = &assigneeID
+	}
+	if input.LabelIds != nil {
+		labelIDs := make([]uuid.UUID, len(input.LabelIds))
+		for i, id := range input.LabelIds {
+			labelID, err := uuid.Parse(id)
+			if err != nil {
+				return nil, err
+			}
+			labelIDs[i] = labelID
+		}
+		updateInput.LabelIDs = labelIDs
+	}
+	if input.DueDate != nil {
+		updateInput.DueDate = input.DueDate
+	}
+
+	c, err := cardSvc.UpdateCard(ctx, updateInput)
+	if err != nil {
+		return nil, err
+	}
+
+	return cardToModel(c), nil
+}
+
+// MoveCard moves a card to a different column
+func MoveCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.MoveCardInput) (*model.Card, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return nil, ErrUnauthorized
+	}
+
+	cardID, err := uuid.Parse(input.CardID)
+	if err != nil {
+		return nil, err
+	}
+
+	targetColID, err := uuid.Parse(input.TargetColumnID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check membership
+	b, err := cardSvc.GetBoardByCardID(ctx, cardID)
+	if err != nil {
+		return nil, err
+	}
+
+	proj, err := boardSvc.GetProject(ctx, b.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, ErrUnauthorized
+	}
+
+	var afterCardID *uuid.UUID
+	if input.AfterCardID != nil {
+		id, err := uuid.Parse(*input.AfterCardID)
+		if err != nil {
+			return nil, err
+		}
+		afterCardID = &id
+	}
+
+	c, err := cardSvc.MoveCard(ctx, cardID, targetColID, afterCardID)
+	if err != nil {
+		return nil, err
+	}
+
+	return cardToModel(c), nil
+}
+
+// DeleteCard deletes a card
+func DeleteCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Service, boardSvc boardService.Service, id string) (bool, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return false, ErrUnauthorized
+	}
+
+	cardID, err := uuid.Parse(id)
+	if err != nil {
+		return false, err
+	}
+
+	// Check membership
+	b, err := cardSvc.GetBoardByCardID(ctx, cardID)
+	if err != nil {
+		return false, err
+	}
+
+	proj, err := boardSvc.GetProject(ctx, b.ID)
+	if err != nil {
+		return false, err
+	}
+
+	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	if err != nil {
+		return false, err
+	}
+	if !isMember {
+		return false, ErrUnauthorized
+	}
+
+	if err := cardSvc.DeleteCard(ctx, cardID); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// CardColumn resolves the column field of a Card
+func CardColumn(ctx context.Context, cardSvc cardService.Service, c *model.Card) (*model.BoardColumn, error) {
+	cardID, err := uuid.Parse(c.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	col, err := cardSvc.GetColumnByCardID(ctx, cardID)
+	if err != nil {
+		return nil, err
+	}
+
+	return columnToModel(col), nil
+}
+
+// CardBoard resolves the board field of a Card
+func CardBoard(ctx context.Context, cardSvc cardService.Service, c *model.Card) (*model.Board, error) {
+	cardID, err := uuid.Parse(c.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := cardSvc.GetBoardByCardID(ctx, cardID)
+	if err != nil {
+		return nil, err
+	}
+
+	return boardToModel(b), nil
+}
+
+// CardLabels resolves the labels field of a Card
+func CardLabels(ctx context.Context, cardSvc cardService.Service, c *model.Card) ([]*model.Label, error) {
+	cardID, err := uuid.Parse(c.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	labels, err := cardSvc.GetLabelsForCard(ctx, cardID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.Label, len(labels))
+	for i, l := range labels {
+		result[i] = labelToModel(l)
+	}
+	return result, nil
+}
+
+// CardAssignee resolves the assignee field of a Card
+// Returns nil for now - user lookup can be added later
+func CardAssignee(ctx context.Context, cardSvc cardService.Service, c *model.Card) (*model.User, error) {
+	return nil, nil
+}
+
+// CardCreatedBy resolves the createdBy field of a Card
+// Returns nil for now - user lookup can be added later
+func CardCreatedBy(ctx context.Context, cardSvc cardService.Service, c *model.Card) (*model.User, error) {
+	return nil, nil
+}
+
+func cardToModel(c *card.Card) *model.Card {
+	var description *string
+	if c.Description != "" {
+		description = &c.Description
+	}
+	var dueDate *time.Time
+	if c.DueDate != nil {
+		dueDate = c.DueDate
+	}
+	return &model.Card{
+		ID:          c.ID.String(),
+		Title:       c.Title,
+		Description: description,
+		Position:    c.Position,
+		Priority:    cardPriorityToModel(c.Priority),
+		DueDate:     dueDate,
+		CreatedAt:   c.CreatedAt,
+		UpdatedAt:   c.UpdatedAt,
+	}
+}
+
+func cardPriorityToModel(p card.CardPriority) model.CardPriority {
+	switch p {
+	case card.PriorityLow:
+		return model.CardPriorityLow
+	case card.PriorityMedium:
+		return model.CardPriorityMedium
+	case card.PriorityHigh:
+		return model.CardPriorityHigh
+	case card.PriorityUrgent:
+		return model.CardPriorityUrgent
+	default:
+		return model.CardPriorityNone
+	}
+}
+
+func modelPriorityToCard(p model.CardPriority) card.CardPriority {
+	switch p {
+	case model.CardPriorityLow:
+		return card.PriorityLow
+	case model.CardPriorityMedium:
+		return card.PriorityMedium
+	case model.CardPriorityHigh:
+		return card.PriorityHigh
+	case model.CardPriorityUrgent:
+		return card.PriorityUrgent
+	default:
+		return card.PriorityNone
+	}
+}
+
+// ProjectLabels resolves the labels field of a Project
+func ProjectLabels(ctx context.Context, labelSvc labelService.Service, proj *model.Project) ([]*model.Label, error) {
+	projID, err := uuid.Parse(proj.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	labels, err := labelSvc.GetLabelsByProjectID(ctx, projID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.Label, len(labels))
+	for i, l := range labels {
+		result[i] = labelToModel(l)
+	}
+	return result, nil
+}

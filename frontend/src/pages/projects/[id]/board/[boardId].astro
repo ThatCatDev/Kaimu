@@ -1,0 +1,30 @@
+---
+import Layout from '../../../../layouts/Layout.astro';
+import Nav from '../../../../components/Nav.svelte';
+import KanbanBoard from '../../../../components/kanban/KanbanBoard.svelte';
+
+export const prerender = false;
+
+const { id: projectId, boardId } = Astro.params;
+---
+
+<Layout title="Board - Pulse">
+  <Nav client:load />
+
+  <main class="h-[calc(100vh-4rem)] overflow-hidden">
+    <div class="max-w-full mx-auto py-4 px-4 sm:px-6 lg:px-8 h-full">
+      <div class="mb-4">
+        <nav class="text-sm text-gray-500">
+          <a href="/dashboard" class="hover:text-gray-700">Dashboard</a>
+          <span class="mx-2">/</span>
+          <a href={`/projects/${projectId}`} class="hover:text-gray-700">Project</a>
+          <span class="mx-2">/</span>
+          <span class="text-gray-900">Board</span>
+        </nav>
+      </div>
+      <div class="h-[calc(100%-3rem)]">
+        <KanbanBoard client:load boardId={boardId!} />
+      </div>
+    </div>
+  </main>
+</Layout>

@@ -36,7 +36,82 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input model.C
 
 // CreateProject is the resolver for the createProject field.
 func (r *mutationResolver) CreateProject(ctx context.Context, input model.CreateProjectInput) (*model.Project, error) {
-	return resolvers.CreateProject(ctx, r.OrganizationService, r.ProjectService, input)
+	return resolvers.CreateProject(ctx, r.OrganizationService, r.ProjectService, r.BoardService, input)
+}
+
+// CreateBoard is the resolver for the createBoard field.
+func (r *mutationResolver) CreateBoard(ctx context.Context, input model.CreateBoardInput) (*model.Board, error) {
+	return resolvers.CreateBoard(ctx, r.OrganizationService, r.BoardService, r.ProjectService, input)
+}
+
+// UpdateBoard is the resolver for the updateBoard field.
+func (r *mutationResolver) UpdateBoard(ctx context.Context, input model.UpdateBoardInput) (*model.Board, error) {
+	return resolvers.UpdateBoard(ctx, r.OrganizationService, r.BoardService, input)
+}
+
+// DeleteBoard is the resolver for the deleteBoard field.
+func (r *mutationResolver) DeleteBoard(ctx context.Context, id string) (bool, error) {
+	return resolvers.DeleteBoard(ctx, r.OrganizationService, r.BoardService, id)
+}
+
+// CreateColumn is the resolver for the createColumn field.
+func (r *mutationResolver) CreateColumn(ctx context.Context, input model.CreateColumnInput) (*model.BoardColumn, error) {
+	return resolvers.CreateColumn(ctx, r.OrganizationService, r.BoardService, input)
+}
+
+// UpdateColumn is the resolver for the updateColumn field.
+func (r *mutationResolver) UpdateColumn(ctx context.Context, input model.UpdateColumnInput) (*model.BoardColumn, error) {
+	return resolvers.UpdateColumn(ctx, r.OrganizationService, r.BoardService, input)
+}
+
+// ReorderColumns is the resolver for the reorderColumns field.
+func (r *mutationResolver) ReorderColumns(ctx context.Context, input model.ReorderColumnsInput) ([]*model.BoardColumn, error) {
+	return resolvers.ReorderColumns(ctx, r.OrganizationService, r.BoardService, input)
+}
+
+// ToggleColumnVisibility is the resolver for the toggleColumnVisibility field.
+func (r *mutationResolver) ToggleColumnVisibility(ctx context.Context, id string) (*model.BoardColumn, error) {
+	return resolvers.ToggleColumnVisibility(ctx, r.OrganizationService, r.BoardService, id)
+}
+
+// DeleteColumn is the resolver for the deleteColumn field.
+func (r *mutationResolver) DeleteColumn(ctx context.Context, id string) (bool, error) {
+	return resolvers.DeleteColumn(ctx, r.OrganizationService, r.BoardService, id)
+}
+
+// CreateCard is the resolver for the createCard field.
+func (r *mutationResolver) CreateCard(ctx context.Context, input model.CreateCardInput) (*model.Card, error) {
+	return resolvers.CreateCard(ctx, r.OrganizationService, r.CardService, r.BoardService, input)
+}
+
+// UpdateCard is the resolver for the updateCard field.
+func (r *mutationResolver) UpdateCard(ctx context.Context, input model.UpdateCardInput) (*model.Card, error) {
+	return resolvers.UpdateCard(ctx, r.OrganizationService, r.CardService, r.BoardService, input)
+}
+
+// MoveCard is the resolver for the moveCard field.
+func (r *mutationResolver) MoveCard(ctx context.Context, input model.MoveCardInput) (*model.Card, error) {
+	return resolvers.MoveCard(ctx, r.OrganizationService, r.CardService, r.BoardService, input)
+}
+
+// DeleteCard is the resolver for the deleteCard field.
+func (r *mutationResolver) DeleteCard(ctx context.Context, id string) (bool, error) {
+	return resolvers.DeleteCard(ctx, r.OrganizationService, r.CardService, r.BoardService, id)
+}
+
+// CreateLabel is the resolver for the createLabel field.
+func (r *mutationResolver) CreateLabel(ctx context.Context, input model.CreateLabelInput) (*model.Label, error) {
+	return resolvers.CreateLabel(ctx, r.OrganizationService, r.LabelService, r.ProjectService, input)
+}
+
+// UpdateLabel is the resolver for the updateLabel field.
+func (r *mutationResolver) UpdateLabel(ctx context.Context, input model.UpdateLabelInput) (*model.Label, error) {
+	return resolvers.UpdateLabel(ctx, r.OrganizationService, r.LabelService, input)
+}
+
+// DeleteLabel is the resolver for the deleteLabel field.
+func (r *mutationResolver) DeleteLabel(ctx context.Context, id string) (bool, error) {
+	return resolvers.DeleteLabel(ctx, r.OrganizationService, r.LabelService, id)
 }
 
 // HelloWorld is the resolver for the helloWorld field.
@@ -62,6 +137,31 @@ func (r *queryResolver) Organization(ctx context.Context, id string) (*model.Org
 // Project is the resolver for the project field.
 func (r *queryResolver) Project(ctx context.Context, id string) (*model.Project, error) {
 	return resolvers.Project(ctx, r.OrganizationService, r.ProjectService, id)
+}
+
+// Board is the resolver for the board field.
+func (r *queryResolver) Board(ctx context.Context, id string) (*model.Board, error) {
+	return resolvers.Board(ctx, r.OrganizationService, r.BoardService, r.ProjectService, id)
+}
+
+// Boards is the resolver for the boards field.
+func (r *queryResolver) Boards(ctx context.Context, projectID string) ([]*model.Board, error) {
+	return resolvers.Boards(ctx, r.OrganizationService, r.BoardService, r.ProjectService, projectID)
+}
+
+// Card is the resolver for the card field.
+func (r *queryResolver) Card(ctx context.Context, id string) (*model.Card, error) {
+	return resolvers.Card(ctx, r.OrganizationService, r.CardService, r.BoardService, id)
+}
+
+// MyCards is the resolver for the myCards field.
+func (r *queryResolver) MyCards(ctx context.Context) ([]*model.Card, error) {
+	return resolvers.MyCards(ctx, r.CardService)
+}
+
+// Labels is the resolver for the labels field.
+func (r *queryResolver) Labels(ctx context.Context, projectID string) ([]*model.Label, error) {
+	return resolvers.Labels(ctx, r.OrganizationService, r.LabelService, r.ProjectService, projectID)
 }
 
 // Mutation returns generated.MutationResolver implementation.

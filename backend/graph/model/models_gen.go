@@ -3,11 +3,84 @@
 package model
 
 import (
+	"fmt"
+	"io"
+	"strconv"
 	"time"
 )
 
 type AuthPayload struct {
 	User *User `json:"user"`
+}
+
+type Board struct {
+	ID          string         `json:"id"`
+	Project     *Project       `json:"project"`
+	Name        string         `json:"name"`
+	Description *string        `json:"description,omitempty"`
+	IsDefault   bool           `json:"isDefault"`
+	Columns     []*BoardColumn `json:"columns"`
+	CreatedAt   time.Time      `json:"createdAt"`
+	UpdatedAt   time.Time      `json:"updatedAt"`
+}
+
+type BoardColumn struct {
+	ID        string    `json:"id"`
+	Board     *Board    `json:"board"`
+	Name      string    `json:"name"`
+	Position  int       `json:"position"`
+	IsBacklog bool      `json:"isBacklog"`
+	IsHidden  bool      `json:"isHidden"`
+	Color     *string   `json:"color,omitempty"`
+	WipLimit  *int      `json:"wipLimit,omitempty"`
+	Cards     []*Card   `json:"cards"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type Card struct {
+	ID          string       `json:"id"`
+	Column      *BoardColumn `json:"column"`
+	Board       *Board       `json:"board"`
+	Title       string       `json:"title"`
+	Description *string      `json:"description,omitempty"`
+	Position    float64      `json:"position"`
+	Priority    CardPriority `json:"priority"`
+	Assignee    *User        `json:"assignee,omitempty"`
+	Labels      []*Label     `json:"labels"`
+	DueDate     *time.Time   `json:"dueDate,omitempty"`
+	CreatedAt   time.Time    `json:"createdAt"`
+	UpdatedAt   time.Time    `json:"updatedAt"`
+	CreatedBy   *User        `json:"createdBy,omitempty"`
+}
+
+type CreateBoardInput struct {
+	ProjectID   string  `json:"projectId"`
+	Name        string  `json:"name"`
+	Description *string `json:"description,omitempty"`
+}
+
+type CreateCardInput struct {
+	ColumnID    string        `json:"columnId"`
+	Title       string        `json:"title"`
+	Description *string       `json:"description,omitempty"`
+	Priority    *CardPriority `json:"priority,omitempty"`
+	AssigneeID  *string       `json:"assigneeId,omitempty"`
+	LabelIds    []string      `json:"labelIds,omitempty"`
+	DueDate     *time.Time    `json:"dueDate,omitempty"`
+}
+
+type CreateColumnInput struct {
+	BoardID   string `json:"boardId"`
+	Name      string `json:"name"`
+	IsBacklog *bool  `json:"isBacklog,omitempty"`
+}
+
+type CreateLabelInput struct {
+	ProjectID   string  `json:"projectId"`
+	Name        string  `json:"name"`
+	Color       string  `json:"color"`
+	Description *string `json:"description,omitempty"`
 }
 
 type CreateOrganizationInput struct {
@@ -22,9 +95,24 @@ type CreateProjectInput struct {
 	Description    *string `json:"description,omitempty"`
 }
 
+type Label struct {
+	ID          string    `json:"id"`
+	Project     *Project  `json:"project"`
+	Name        string    `json:"name"`
+	Color       string    `json:"color"`
+	Description *string   `json:"description,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
+
 type LoginInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type MoveCardInput struct {
+	CardID         string  `json:"cardId"`
+	TargetColumnID string  `json:"targetColumnId"`
+	AfterCardID    *string `json:"afterCardId,omitempty"`
 }
 
 type Organization struct {
@@ -52,6 +140,9 @@ type Project struct {
 	Name         string        `json:"name"`
 	Key          string        `json:"key"`
 	Description  *string       `json:"description,omitempty"`
+	Boards       []*Board      `json:"boards"`
+	DefaultBoard *Board        `json:"defaultBoard,omitempty"`
+	Labels       []*Label      `json:"labels"`
 	CreatedAt    time.Time     `json:"createdAt"`
 	UpdatedAt    time.Time     `json:"updatedAt"`
 }
@@ -61,8 +152,90 @@ type RegisterInput struct {
 	Password string `json:"password"`
 }
 
+type ReorderColumnsInput struct {
+	BoardID   string   `json:"boardId"`
+	ColumnIds []string `json:"columnIds"`
+}
+
+type UpdateBoardInput struct {
+	ID          string  `json:"id"`
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+type UpdateCardInput struct {
+	ID          string        `json:"id"`
+	Title       *string       `json:"title,omitempty"`
+	Description *string       `json:"description,omitempty"`
+	Priority    *CardPriority `json:"priority,omitempty"`
+	AssigneeID  *string       `json:"assigneeId,omitempty"`
+	LabelIds    []string      `json:"labelIds,omitempty"`
+	DueDate     *time.Time    `json:"dueDate,omitempty"`
+}
+
+type UpdateColumnInput struct {
+	ID       string  `json:"id"`
+	Name     *string `json:"name,omitempty"`
+	Color    *string `json:"color,omitempty"`
+	WipLimit *int    `json:"wipLimit,omitempty"`
+}
+
+type UpdateLabelInput struct {
+	ID          string  `json:"id"`
+	Name        *string `json:"name,omitempty"`
+	Color       *string `json:"color,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
 type User struct {
 	ID        string    `json:"id"`
 	Username  string    `json:"username"`
 	CreatedAt time.Time `json:"createdAt"`
+}
+
+type CardPriority string
+
+const (
+	CardPriorityNone   CardPriority = "NONE"
+	CardPriorityLow    CardPriority = "LOW"
+	CardPriorityMedium CardPriority = "MEDIUM"
+	CardPriorityHigh   CardPriority = "HIGH"
+	CardPriorityUrgent CardPriority = "URGENT"
+)
+
+var AllCardPriority = []CardPriority{
+	CardPriorityNone,
+	CardPriorityLow,
+	CardPriorityMedium,
+	CardPriorityHigh,
+	CardPriorityUrgent,
+}
+
+func (e CardPriority) IsValid() bool {
+	switch e {
+	case CardPriorityNone, CardPriorityLow, CardPriorityMedium, CardPriorityHigh, CardPriorityUrgent:
+		return true
+	}
+	return false
+}
+
+func (e CardPriority) String() string {
+	return string(e)
+}
+
+func (e *CardPriority) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CardPriority(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CardPriority", str)
+	}
+	return nil
+}
+
+func (e CardPriority) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

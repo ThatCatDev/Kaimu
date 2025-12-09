@@ -23,6 +23,87 @@ export type AuthPayload = {
   user: User;
 };
 
+export type Board = {
+  __typename?: 'Board';
+  columns: Array<BoardColumn>;
+  createdAt: Scalars['Time']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  isDefault: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  project: Project;
+  updatedAt: Scalars['Time']['output'];
+};
+
+export type BoardColumn = {
+  __typename?: 'BoardColumn';
+  board: Board;
+  cards: Array<Card>;
+  color?: Maybe<Scalars['String']['output']>;
+  createdAt: Scalars['Time']['output'];
+  id: Scalars['ID']['output'];
+  isBacklog: Scalars['Boolean']['output'];
+  isHidden: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  position: Scalars['Int']['output'];
+  updatedAt: Scalars['Time']['output'];
+  wipLimit?: Maybe<Scalars['Int']['output']>;
+};
+
+export type Card = {
+  __typename?: 'Card';
+  assignee?: Maybe<User>;
+  board: Board;
+  column: BoardColumn;
+  createdAt: Scalars['Time']['output'];
+  createdBy?: Maybe<User>;
+  description?: Maybe<Scalars['String']['output']>;
+  dueDate?: Maybe<Scalars['Time']['output']>;
+  id: Scalars['ID']['output'];
+  labels: Array<Label>;
+  position: Scalars['Float']['output'];
+  priority: CardPriority;
+  title: Scalars['String']['output'];
+  updatedAt: Scalars['Time']['output'];
+};
+
+export enum CardPriority {
+  High = 'HIGH',
+  Low = 'LOW',
+  Medium = 'MEDIUM',
+  None = 'NONE',
+  Urgent = 'URGENT'
+}
+
+export type CreateBoardInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
+};
+
+export type CreateCardInput = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  columnId: Scalars['ID']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  dueDate?: InputMaybe<Scalars['Time']['input']>;
+  labelIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  priority?: InputMaybe<CardPriority>;
+  title: Scalars['String']['input'];
+};
+
+export type CreateColumnInput = {
+  boardId: Scalars['ID']['input'];
+  isBacklog?: InputMaybe<Scalars['Boolean']['input']>;
+  name: Scalars['String']['input'];
+};
+
+export type CreateLabelInput = {
+  color: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
+};
+
 export type CreateOrganizationInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
@@ -35,23 +116,89 @@ export type CreateProjectInput = {
   organizationId: Scalars['ID']['input'];
 };
 
+export type Label = {
+  __typename?: 'Label';
+  color: Scalars['String']['output'];
+  createdAt: Scalars['Time']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  project: Project;
+};
+
 export type LoginInput = {
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
 };
 
+export type MoveCardInput = {
+  afterCardId?: InputMaybe<Scalars['ID']['input']>;
+  cardId: Scalars['ID']['input'];
+  targetColumnId: Scalars['ID']['input'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
+  /** Create a new board */
+  createBoard: Board;
+  /** Create a new card */
+  createCard: Card;
+  /** Create a new column */
+  createColumn: BoardColumn;
+  /** Create a new label */
+  createLabel: Label;
   /** Create a new organization */
   createOrganization: Organization;
   /** Create a new project */
   createProject: Project;
+  /** Delete a board */
+  deleteBoard: Scalars['Boolean']['output'];
+  /** Delete a card */
+  deleteCard: Scalars['Boolean']['output'];
+  /** Delete a column */
+  deleteColumn: Scalars['Boolean']['output'];
+  /** Delete a label */
+  deleteLabel: Scalars['Boolean']['output'];
   /** Login with username and password */
   login: AuthPayload;
   /** Logout current user */
   logout: Scalars['Boolean']['output'];
+  /** Move a card to a different column */
+  moveCard: Card;
   /** Register a new user */
   register: AuthPayload;
+  /** Reorder columns */
+  reorderColumns: Array<BoardColumn>;
+  /** Toggle column visibility */
+  toggleColumnVisibility: BoardColumn;
+  /** Update a board */
+  updateBoard: Board;
+  /** Update a card */
+  updateCard: Card;
+  /** Update a column */
+  updateColumn: BoardColumn;
+  /** Update a label */
+  updateLabel: Label;
+};
+
+
+export type MutationCreateBoardArgs = {
+  input: CreateBoardInput;
+};
+
+
+export type MutationCreateCardArgs = {
+  input: CreateCardInput;
+};
+
+
+export type MutationCreateColumnArgs = {
+  input: CreateColumnInput;
+};
+
+
+export type MutationCreateLabelArgs = {
+  input: CreateLabelInput;
 };
 
 
@@ -65,13 +212,68 @@ export type MutationCreateProjectArgs = {
 };
 
 
+export type MutationDeleteBoardArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteCardArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteColumnArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteLabelArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationLoginArgs = {
   input: LoginInput;
 };
 
 
+export type MutationMoveCardArgs = {
+  input: MoveCardInput;
+};
+
+
 export type MutationRegisterArgs = {
   input: RegisterInput;
+};
+
+
+export type MutationReorderColumnsArgs = {
+  input: ReorderColumnsInput;
+};
+
+
+export type MutationToggleColumnVisibilityArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationUpdateBoardArgs = {
+  input: UpdateBoardInput;
+};
+
+
+export type MutationUpdateCardArgs = {
+  input: UpdateCardInput;
+};
+
+
+export type MutationUpdateColumnArgs = {
+  input: UpdateColumnInput;
+};
+
+
+export type MutationUpdateLabelArgs = {
+  input: UpdateLabelInput;
 };
 
 export type Organization = {
@@ -97,10 +299,13 @@ export type OrganizationMember = {
 
 export type Project = {
   __typename?: 'Project';
+  boards: Array<Board>;
   createdAt: Scalars['Time']['output'];
+  defaultBoard?: Maybe<Board>;
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   key: Scalars['String']['output'];
+  labels: Array<Label>;
   name: Scalars['String']['output'];
   organization: Organization;
   updatedAt: Scalars['Time']['output'];
@@ -109,16 +314,46 @@ export type Project = {
 export type Query = {
   __typename?: 'Query';
   _service: _Service;
+  /** Get a board by ID */
+  board?: Maybe<Board>;
+  /** Get all boards for a project */
+  boards: Array<Board>;
+  /** Get a card by ID */
+  card?: Maybe<Card>;
   /** Hello World query */
   helloWorld: Scalars['String']['output'];
+  /** Get all labels for a project */
+  labels: Array<Label>;
   /** Get current authenticated user */
   me?: Maybe<User>;
+  /** Get all cards assigned to the current user */
+  myCards: Array<Card>;
   /** Get a specific organization by ID */
   organization?: Maybe<Organization>;
   /** Get all organizations for the current user */
   organizations: Array<Organization>;
   /** Get a specific project by ID */
   project?: Maybe<Project>;
+};
+
+
+export type QueryBoardArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryBoardsArgs = {
+  projectId: Scalars['ID']['input'];
+};
+
+
+export type QueryCardArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryLabelsArgs = {
+  projectId: Scalars['ID']['input'];
 };
 
 
@@ -134,6 +369,41 @@ export type QueryProjectArgs = {
 export type RegisterInput = {
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
+};
+
+export type ReorderColumnsInput = {
+  boardId: Scalars['ID']['input'];
+  columnIds: Array<Scalars['ID']['input']>;
+};
+
+export type UpdateBoardInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateCardInput = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  dueDate?: InputMaybe<Scalars['Time']['input']>;
+  id: Scalars['ID']['input'];
+  labelIds?: InputMaybe<Array<Scalars['ID']['input']>>;
+  priority?: InputMaybe<CardPriority>;
+  title?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateColumnInput = {
+  color?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  wipLimit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type UpdateLabelInput = {
+  color?: InputMaybe<Scalars['String']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type User = {
@@ -171,6 +441,144 @@ export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type MeQuery = { __typename?: 'Query', me?: { __typename?: 'User', id: string, username: string, createdAt: string } | null };
+
+export type BoardQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type BoardQuery = { __typename?: 'Query', board?: { __typename?: 'Board', id: string, name: string, description?: string | null, isDefault: boolean, createdAt: string, updatedAt: string, project: { __typename?: 'Project', id: string, name: string, key: string, organization: { __typename?: 'Organization', id: string, name: string, slug: string } }, columns: Array<{ __typename?: 'BoardColumn', id: string, name: string, position: number, isBacklog: boolean, isHidden: boolean, color?: string | null, wipLimit?: number | null, cards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, labels: Array<{ __typename?: 'Label', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null }> }> } | null };
+
+export type BoardsQueryVariables = Exact<{
+  projectId: Scalars['ID']['input'];
+}>;
+
+
+export type BoardsQuery = { __typename?: 'Query', boards: Array<{ __typename?: 'Board', id: string, name: string, description?: string | null, isDefault: boolean, createdAt: string }> };
+
+export type ProjectDefaultBoardQueryVariables = Exact<{
+  projectId: Scalars['ID']['input'];
+}>;
+
+
+export type ProjectDefaultBoardQuery = { __typename?: 'Query', boards: Array<{ __typename?: 'Board', id: string, name: string, isDefault: boolean }> };
+
+export type LabelsQueryVariables = Exact<{
+  projectId: Scalars['ID']['input'];
+}>;
+
+
+export type LabelsQuery = { __typename?: 'Query', labels: Array<{ __typename?: 'Label', id: string, name: string, color: string, description?: string | null, createdAt: string }> };
+
+export type MyCardsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type MyCardsQuery = { __typename?: 'Query', myCards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, board: { __typename?: 'Board', id: string, name: string, project: { __typename?: 'Project', id: string, name: string, key: string } }, column: { __typename?: 'BoardColumn', id: string, name: string }, labels: Array<{ __typename?: 'Label', id: string, name: string, color: string }> }> };
+
+export type CreateBoardMutationVariables = Exact<{
+  input: CreateBoardInput;
+}>;
+
+
+export type CreateBoardMutation = { __typename?: 'Mutation', createBoard: { __typename?: 'Board', id: string, name: string, description?: string | null, isDefault: boolean, createdAt: string } };
+
+export type UpdateBoardMutationVariables = Exact<{
+  input: UpdateBoardInput;
+}>;
+
+
+export type UpdateBoardMutation = { __typename?: 'Mutation', updateBoard: { __typename?: 'Board', id: string, name: string, description?: string | null, updatedAt: string } };
+
+export type DeleteBoardMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteBoardMutation = { __typename?: 'Mutation', deleteBoard: boolean };
+
+export type CreateColumnMutationVariables = Exact<{
+  input: CreateColumnInput;
+}>;
+
+
+export type CreateColumnMutation = { __typename?: 'Mutation', createColumn: { __typename?: 'BoardColumn', id: string, name: string, position: number, isBacklog: boolean, isHidden: boolean, color?: string | null, wipLimit?: number | null, createdAt: string } };
+
+export type UpdateColumnMutationVariables = Exact<{
+  input: UpdateColumnInput;
+}>;
+
+
+export type UpdateColumnMutation = { __typename?: 'Mutation', updateColumn: { __typename?: 'BoardColumn', id: string, name: string, color?: string | null, wipLimit?: number | null, updatedAt: string } };
+
+export type ReorderColumnsMutationVariables = Exact<{
+  input: ReorderColumnsInput;
+}>;
+
+
+export type ReorderColumnsMutation = { __typename?: 'Mutation', reorderColumns: Array<{ __typename?: 'BoardColumn', id: string, position: number }> };
+
+export type ToggleColumnVisibilityMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type ToggleColumnVisibilityMutation = { __typename?: 'Mutation', toggleColumnVisibility: { __typename?: 'BoardColumn', id: string, isHidden: boolean } };
+
+export type DeleteColumnMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteColumnMutation = { __typename?: 'Mutation', deleteColumn: boolean };
+
+export type CreateCardMutationVariables = Exact<{
+  input: CreateCardInput;
+}>;
+
+
+export type CreateCardMutation = { __typename?: 'Mutation', createCard: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, labels: Array<{ __typename?: 'Label', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null } };
+
+export type UpdateCardMutationVariables = Exact<{
+  input: UpdateCardInput;
+}>;
+
+
+export type UpdateCardMutation = { __typename?: 'Mutation', updateCard: { __typename?: 'Card', id: string, title: string, description?: string | null, priority: CardPriority, dueDate?: string | null, updatedAt: string, labels: Array<{ __typename?: 'Label', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null } };
+
+export type MoveCardMutationVariables = Exact<{
+  input: MoveCardInput;
+}>;
+
+
+export type MoveCardMutation = { __typename?: 'Mutation', moveCard: { __typename?: 'Card', id: string, position: number, column: { __typename?: 'BoardColumn', id: string } } };
+
+export type DeleteCardMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteCardMutation = { __typename?: 'Mutation', deleteCard: boolean };
+
+export type CreateLabelMutationVariables = Exact<{
+  input: CreateLabelInput;
+}>;
+
+
+export type CreateLabelMutation = { __typename?: 'Mutation', createLabel: { __typename?: 'Label', id: string, name: string, color: string, description?: string | null, createdAt: string } };
+
+export type UpdateLabelMutationVariables = Exact<{
+  input: UpdateLabelInput;
+}>;
+
+
+export type UpdateLabelMutation = { __typename?: 'Mutation', updateLabel: { __typename?: 'Label', id: string, name: string, color: string, description?: string | null } };
+
+export type DeleteLabelMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteLabelMutation = { __typename?: 'Mutation', deleteLabel: boolean };
 
 export type CreateOrganizationMutationVariables = Exact<{
   input: CreateOrganizationInput;

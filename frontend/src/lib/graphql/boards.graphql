@@ -1,0 +1,250 @@
+# Board queries and mutations
+
+query Board($id: ID!) {
+  board(id: $id) {
+    id
+    name
+    description
+    isDefault
+    createdAt
+    updatedAt
+    project {
+      id
+      name
+      key
+      organization {
+        id
+        name
+        slug
+      }
+    }
+    columns {
+      id
+      name
+      position
+      isBacklog
+      isHidden
+      color
+      wipLimit
+      cards {
+        id
+        title
+        description
+        position
+        priority
+        dueDate
+        createdAt
+        updatedAt
+        labels {
+          id
+          name
+          color
+        }
+        assignee {
+          id
+          username
+        }
+      }
+    }
+  }
+}
+
+query Boards($projectId: ID!) {
+  boards(projectId: $projectId) {
+    id
+    name
+    description
+    isDefault
+    createdAt
+  }
+}
+
+query ProjectDefaultBoard($projectId: ID!) {
+  boards(projectId: $projectId) {
+    id
+    name
+    isDefault
+  }
+}
+
+query Labels($projectId: ID!) {
+  labels(projectId: $projectId) {
+    id
+    name
+    color
+    description
+    createdAt
+  }
+}
+
+query MyCards {
+  myCards {
+    id
+    title
+    description
+    position
+    priority
+    dueDate
+    createdAt
+    board {
+      id
+      name
+      project {
+        id
+        name
+        key
+      }
+    }
+    column {
+      id
+      name
+    }
+    labels {
+      id
+      name
+      color
+    }
+  }
+}
+
+mutation CreateBoard($input: CreateBoardInput!) {
+  createBoard(input: $input) {
+    id
+    name
+    description
+    isDefault
+    createdAt
+  }
+}
+
+mutation UpdateBoard($input: UpdateBoardInput!) {
+  updateBoard(input: $input) {
+    id
+    name
+    description
+    updatedAt
+  }
+}
+
+mutation DeleteBoard($id: ID!) {
+  deleteBoard(id: $id)
+}
+
+mutation CreateColumn($input: CreateColumnInput!) {
+  createColumn(input: $input) {
+    id
+    name
+    position
+    isBacklog
+    isHidden
+    color
+    wipLimit
+    createdAt
+  }
+}
+
+mutation UpdateColumn($input: UpdateColumnInput!) {
+  updateColumn(input: $input) {
+    id
+    name
+    color
+    wipLimit
+    updatedAt
+  }
+}
+
+mutation ReorderColumns($input: ReorderColumnsInput!) {
+  reorderColumns(input: $input) {
+    id
+    position
+  }
+}
+
+mutation ToggleColumnVisibility($id: ID!) {
+  toggleColumnVisibility(id: $id) {
+    id
+    isHidden
+  }
+}
+
+mutation DeleteColumn($id: ID!) {
+  deleteColumn(id: $id)
+}
+
+mutation CreateCard($input: CreateCardInput!) {
+  createCard(input: $input) {
+    id
+    title
+    description
+    position
+    priority
+    dueDate
+    createdAt
+    labels {
+      id
+      name
+      color
+    }
+    assignee {
+      id
+      username
+    }
+  }
+}
+
+mutation UpdateCard($input: UpdateCardInput!) {
+  updateCard(input: $input) {
+    id
+    title
+    description
+    priority
+    dueDate
+    updatedAt
+    labels {
+      id
+      name
+      color
+    }
+    assignee {
+      id
+      username
+    }
+  }
+}
+
+mutation MoveCard($input: MoveCardInput!) {
+  moveCard(input: $input) {
+    id
+    position
+    column {
+      id
+    }
+  }
+}
+
+mutation DeleteCard($id: ID!) {
+  deleteCard(id: $id)
+}
+
+mutation CreateLabel($input: CreateLabelInput!) {
+  createLabel(input: $input) {
+    id
+    name
+    color
+    description
+    createdAt
+  }
+}
+
+mutation UpdateLabel($input: UpdateLabelInput!) {
+  updateLabel(input: $input) {
+    id
+    name
+    color
+    description
+  }
+}
+
+mutation DeleteLabel($id: ID!) {
+  deleteLabel(id: $id)
+}

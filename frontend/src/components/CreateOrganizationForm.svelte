@@ -1,5 +1,6 @@
 <script lang="ts">
   import { createOrganization } from '../lib/api/organizations';
+  import { Input, Textarea, Button } from './ui';
 
   let name = $state('');
   let description = $state('');
@@ -35,34 +36,21 @@
       </div>
     {/if}
 
-    <div>
-      <label for="name" class="block text-sm font-medium text-gray-700">
-        Organization Name
-      </label>
-      <input
-        id="name"
-        name="name"
-        type="text"
-        required
-        bind:value={name}
-        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        placeholder="My Organization"
-      />
-    </div>
+    <Input
+      id="name"
+      label="Organization Name"
+      bind:value={name}
+      placeholder="My Organization"
+      required
+    />
 
-    <div>
-      <label for="description" class="block text-sm font-medium text-gray-700">
-        Description <span class="text-gray-400">(optional)</span>
-      </label>
-      <textarea
-        id="description"
-        name="description"
-        rows="3"
-        bind:value={description}
-        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        placeholder="A brief description of your organization"
-      ></textarea>
-    </div>
+    <Textarea
+      id="description"
+      label="Description"
+      bind:value={description}
+      placeholder="A brief description of your organization"
+      rows={3}
+    />
 
     <div class="flex gap-4">
       <a
@@ -71,13 +59,9 @@
       >
         Cancel
       </a>
-      <button
-        type="submit"
-        disabled={loading}
-        class="flex-1 py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+      <Button type="submit" {loading} class="flex-1">
         {loading ? 'Creating...' : 'Create Organization'}
-      </button>
+      </Button>
     </div>
   </form>
 </div>

@@ -10,12 +10,20 @@ import (
 	"github.com/thatcatdev/pulse-backend/graph/generated"
 	"github.com/thatcatdev/pulse-backend/http/middleware"
 	"github.com/thatcatdev/pulse-backend/internal/db"
+	boardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board"
+	boardColumnRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board_column"
+	cardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
+	cardLabelRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_label"
+	labelRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/label"
 	orgRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
 	orgMemberRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
 	projectRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/project"
 	userRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
 	"github.com/thatcatdev/pulse-backend/internal/directives"
 	"github.com/thatcatdev/pulse-backend/internal/services/auth"
+	"github.com/thatcatdev/pulse-backend/internal/services/board"
+	"github.com/thatcatdev/pulse-backend/internal/services/card"
+	"github.com/thatcatdev/pulse-backend/internal/services/label"
 	"github.com/thatcatdev/pulse-backend/internal/services/organization"
 	"github.com/thatcatdev/pulse-backend/internal/services/project"
 )
@@ -25,6 +33,9 @@ type Dependencies struct {
 	AuthService         auth.Service
 	OrganizationService organization.Service
 	ProjectService      project.Service
+	BoardService        board.Service
+	CardService         card.Service
+	LabelService        label.Service
 }
 
 // InitializeDependencies creates all application dependencies
@@ -37,6 +48,11 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 	orgRepository := orgRepo.NewRepository(database.DB)
 	orgMemberRepository := orgMemberRepo.NewRepository(database.DB)
 	projectRepository := projectRepo.NewRepository(database.DB)
+	boardRepository := boardRepo.NewRepository(database.DB)
+	boardColumnRepository := boardColumnRepo.NewRepository(database.DB)
+	cardRepository := cardRepo.NewRepository(database.DB)
+	labelRepository := labelRepo.NewRepository(database.DB)
+	cardLabelRepository := cardLabelRepo.NewRepository(database.DB)
 
 	// Initialize services
 	authService := auth.NewService(
@@ -56,10 +72,32 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		orgRepository,
 	)
 
+	boardService := board.NewService(
+		boardRepository,
+		boardColumnRepository,
+		projectRepository,
+	)
+
+	cardService := card.NewService(
+		cardRepository,
+		boardColumnRepository,
+		boardRepository,
+		labelRepository,
+		cardLabelRepository,
+	)
+
+	labelService := label.NewService(
+		labelRepository,
+		projectRepository,
+	)
+
 	return &Dependencies{
 		AuthService:         authService,
 		OrganizationService: organizationService,
 		ProjectService:      projectService,
+		BoardService:        boardService,
+		CardService:         cardService,
+		LabelService:        labelService,
 	}
 }
 
@@ -84,6 +122,9 @@ func BuildRootHandlerWithContext(ctx context.Context, conf config.Config, deps *
 		AuthService:         deps.AuthService,
 		OrganizationService: deps.OrganizationService,
 		ProjectService:      deps.ProjectService,
+		BoardService:        deps.BoardService,
+		CardService:         deps.CardService,
+		LabelService:        deps.LabelService,
 	}
 
 	cfg := generated.Config{Resolvers: resolvers, Directives: directives.GetDirectives()}

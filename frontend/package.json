@@ -20,6 +20,7 @@
     "astro": "^5.16.4",
     "sswr": "^2.2.0",
     "svelte": "^5.45.8",
+    "svelte-dnd-action": "^0.9.68",
     "tailwindcss": "^4.1.17",
     "typescript": "^5.9.3"
   },

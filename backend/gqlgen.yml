@@ -63,3 +63,39 @@ models:
   Long:
     model:
       - github.com/99designs/gqlgen/graphql.Int64
+  Board:
+    fields:
+      project:
+        resolver: true
+      columns:
+        resolver: true
+  BoardColumn:
+    fields:
+      board:
+        resolver: true
+      cards:
+        resolver: true
+  Card:
+    fields:
+      column:
+        resolver: true
+      board:
+        resolver: true
+      labels:
+        resolver: true
+      assignee:
+        resolver: true
+      createdBy:
+        resolver: true
+  Label:
+    fields:
+      project:
+        resolver: true
+  Project:
+    fields:
+      boards:
+        resolver: true
+      defaultBoard:
+        resolver: true
+      labels:
+        resolver: true

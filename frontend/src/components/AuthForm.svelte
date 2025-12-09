@@ -1,5 +1,6 @@
 <script lang="ts">
   import { login, register } from '../lib/stores/auth.svelte';
+  import { Input, Button } from './ui';
 
   interface Props {
     mode: 'login' | 'register';
@@ -72,66 +73,42 @@
       {/if}
 
       <div class="space-y-4">
-        <div>
-          <label for="username" class="block text-sm font-medium text-gray-700">
-            Username
-          </label>
-          <input
-            id="username"
-            name="username"
-            type="text"
-            autocomplete="username"
-            required
-            bind:value={username}
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="Enter your username"
-          />
-        </div>
+        <Input
+          id="username"
+          label="Username"
+          type="text"
+          autocomplete="username"
+          bind:value={username}
+          placeholder="Enter your username"
+          required
+        />
 
-        <div>
-          <label for="password" class="block text-sm font-medium text-gray-700">
-            Password
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            autocomplete={isLogin ? 'current-password' : 'new-password'}
-            required
-            bind:value={password}
-            class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            placeholder="Enter your password"
-          />
-        </div>
+        <Input
+          id="password"
+          label="Password"
+          type="password"
+          autocomplete={isLogin ? 'current-password' : 'new-password'}
+          bind:value={password}
+          placeholder="Enter your password"
+          required
+        />
 
         {#if !isLogin}
-          <div>
-            <label for="confirmPassword" class="block text-sm font-medium text-gray-700">
-              Confirm Password
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              autocomplete="new-password"
-              required
-              bind:value={confirmPassword}
-              class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="Confirm your password"
-            />
-          </div>
+          <Input
+            id="confirmPassword"
+            label="Confirm Password"
+            type="password"
+            autocomplete="new-password"
+            bind:value={confirmPassword}
+            placeholder="Confirm your password"
+            required
+          />
         {/if}
       </div>
 
-      <div>
-        <button
-          type="submit"
-          disabled={loading}
-          class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? 'Please wait...' : submitText}
-        </button>
-      </div>
+      <Button type="submit" {loading} class="w-full">
+        {loading ? 'Please wait...' : submitText}
+      </Button>
     </form>
   </div>
 </div>

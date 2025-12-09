@@ -43,8 +43,69 @@ type Project {
     name: String!
     key: String!
     description: String
+    boards: [Board!]!
+    defaultBoard: Board
+    labels: [Label!]!
     createdAt: Time!
     updatedAt: Time!
+}
+
+type Board {
+    id: ID!
+    project: Project!
+    name: String!
+    description: String
+    isDefault: Boolean!
+    columns: [BoardColumn!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type BoardColumn {
+    id: ID!
+    board: Board!
+    name: String!
+    position: Int!
+    isBacklog: Boolean!
+    isHidden: Boolean!
+    color: String
+    wipLimit: Int
+    cards: [Card!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type Card {
+    id: ID!
+    column: BoardColumn!
+    board: Board!
+    title: String!
+    description: String
+    position: Float!
+    priority: CardPriority!
+    assignee: User
+    labels: [Label!]!
+    dueDate: Time
+    createdAt: Time!
+    updatedAt: Time!
+    createdBy: User
+}
+
+type Label {
+    id: ID!
+    project: Project!
+    name: String!
+    color: String!
+    description: String
+    createdAt: Time!
+}
+
+enum CardPriority {
+    NONE
+    LOW
+    MEDIUM
+    HIGH
+    URGENT
 }
 
 input CreateOrganizationInput {
@@ -56,5 +117,75 @@ input CreateProjectInput {
     organizationId: ID!
     name: String!
     key: String!
+    description: String
+}
+
+input CreateBoardInput {
+    projectId: ID!
+    name: String!
+    description: String
+}
+
+input UpdateBoardInput {
+    id: ID!
+    name: String
+    description: String
+}
+
+input CreateColumnInput {
+    boardId: ID!
+    name: String!
+    isBacklog: Boolean
+}
+
+input UpdateColumnInput {
+    id: ID!
+    name: String
+    color: String
+    wipLimit: Int
+}
+
+input ReorderColumnsInput {
+    boardId: ID!
+    columnIds: [ID!]!
+}
+
+input CreateCardInput {
+    columnId: ID!
+    title: String!
+    description: String
+    priority: CardPriority
+    assigneeId: ID
+    labelIds: [ID!]
+    dueDate: Time
+}
+
+input UpdateCardInput {
+    id: ID!
+    title: String
+    description: String
+    priority: CardPriority
+    assigneeId: ID
+    labelIds: [ID!]
+    dueDate: Time
+}
+
+input MoveCardInput {
+    cardId: ID!
+    targetColumnId: ID!
+    afterCardId: ID
+}
+
+input CreateLabelInput {
+    projectId: ID!
+    name: String!
+    color: String!
+    description: String
+}
+
+input UpdateLabelInput {
+    id: ID!
+    name: String
+    color: String
     description: String
 }

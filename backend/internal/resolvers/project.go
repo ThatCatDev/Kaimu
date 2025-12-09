@@ -7,12 +7,13 @@ import (
 	"github.com/thatcatdev/pulse-backend/graph/model"
 	"github.com/thatcatdev/pulse-backend/http/middleware"
 	"github.com/thatcatdev/pulse-backend/internal/db/repositories/project"
+	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
 	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
 	projectService "github.com/thatcatdev/pulse-backend/internal/services/project"
 )
 
 // CreateProject creates a new project
-func CreateProject(ctx context.Context, orgSvc orgService.Service, projSvc projectService.Service, input model.CreateProjectInput) (*model.Project, error) {
+func CreateProject(ctx context.Context, orgSvc orgService.Service, projSvc projectService.Service, boardSvc boardService.Service, input model.CreateProjectInput) (*model.Project, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -40,6 +41,13 @@ func CreateProject(ctx context.Context, orgSvc orgService.Service, projSvc proje
 	proj, err := projSvc.CreateProject(ctx, orgID, input.Name, input.Key, description)
 	if err != nil {
 		return nil, err
+	}
+
+	// Create default board for the project
+	_, err = boardSvc.CreateDefaultBoard(ctx, proj.ID, userID)
+	if err != nil {
+		// Log error but don't fail project creation
+		// The board can be created later
 	}
 
 	// Fetch the organization for the project
