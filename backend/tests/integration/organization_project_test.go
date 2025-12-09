@@ -16,14 +16,22 @@ import (
 	"github.com/thatcatdev/pulse-backend/graph"
 	"github.com/thatcatdev/pulse-backend/graph/generated"
 	"github.com/thatcatdev/pulse-backend/http/middleware"
+	boardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board"
+	columnRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board_column"
+	cardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
+	cardTagRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_tag"
 	orgRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
 	memberRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
 	projectRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/project"
+	tagRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
 	"github.com/thatcatdev/pulse-backend/internal/directives"
 	"github.com/thatcatdev/pulse-backend/internal/services/auth"
+	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
+	cardService "github.com/thatcatdev/pulse-backend/internal/services/card"
 	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
 	projectService "github.com/thatcatdev/pulse-backend/internal/services/project"
+	tagService "github.com/thatcatdev/pulse-backend/internal/services/tag"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -100,12 +108,65 @@ func setupOrgProjectTestServer(t *testing.T) *OrgProjectTestServer {
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 			UNIQUE(organization_id, key)
 		);
+		CREATE TABLE IF NOT EXISTS boards (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+			name VARCHAR(255) NOT NULL,
+			description TEXT,
+			is_default BOOLEAN NOT NULL DEFAULT FALSE,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		);
+		CREATE TABLE IF NOT EXISTS board_columns (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			board_id UUID NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
+			name VARCHAR(255) NOT NULL,
+			position INTEGER NOT NULL DEFAULT 0,
+			color VARCHAR(7),
+			wip_limit INTEGER,
+			is_backlog BOOLEAN NOT NULL DEFAULT FALSE,
+			is_hidden BOOLEAN NOT NULL DEFAULT FALSE,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		);
+		CREATE TABLE IF NOT EXISTS tags (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+			name VARCHAR(255) NOT NULL,
+			color VARCHAR(7) NOT NULL DEFAULT '#6366f1',
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			UNIQUE(project_id, name)
+		);
+		CREATE TABLE IF NOT EXISTS cards (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			column_id UUID NOT NULL REFERENCES board_columns(id) ON DELETE CASCADE,
+			title VARCHAR(255) NOT NULL,
+			description TEXT,
+			position FLOAT NOT NULL DEFAULT 0,
+			priority VARCHAR(20) NOT NULL DEFAULT 'NONE',
+			due_date TIMESTAMP WITH TIME ZONE,
+			assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
+			created_by_id UUID REFERENCES users(id) ON DELETE SET NULL,
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		);
+		CREATE TABLE IF NOT EXISTS card_tags (
+			card_id UUID NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+			tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+			PRIMARY KEY (card_id, tag_id)
+		);
 	`).Error
 	if err != nil {
 		t.Fatalf("Failed to run migrations: %v", err)
 	}
 
 	// Clean up tables before test
+	testDB.Exec("DELETE FROM card_tags")
+	testDB.Exec("DELETE FROM cards")
+	testDB.Exec("DELETE FROM tags")
+	testDB.Exec("DELETE FROM board_columns")
+	testDB.Exec("DELETE FROM boards")
 	testDB.Exec("DELETE FROM projects")
 	testDB.Exec("DELETE FROM organization_members")
 	testDB.Exec("DELETE FROM organizations")
@@ -116,11 +177,19 @@ func setupOrgProjectTestServer(t *testing.T) *OrgProjectTestServer {
 	orgRepository := orgRepo.NewRepository(testDB)
 	memberRepository := memberRepo.NewRepository(testDB)
 	projectRepository := projectRepo.NewRepository(testDB)
+	boardRepository := boardRepo.NewRepository(testDB)
+	columnRepository := columnRepo.NewRepository(testDB)
+	cardRepository := cardRepo.NewRepository(testDB)
+	cardTagRepository := cardTagRepo.NewRepository(testDB)
+	tagRepository := tagRepo.NewRepository(testDB)
 
 	// Create services
 	authSvc := auth.NewService(userRepository, "test-jwt-secret", 24)
 	orgSvc := orgService.NewService(orgRepository, memberRepository, userRepository)
 	projSvc := projectService.NewService(projectRepository, orgRepository)
+	boardSvc := boardService.NewService(boardRepository, columnRepository, projectRepository)
+	cardSvc := cardService.NewService(cardRepository, columnRepository, boardRepository, tagRepository, cardTagRepository)
+	tagSvc := tagService.NewService(tagRepository, projectRepository)
 
 	// Create resolver
 	cfg := config.Config{
@@ -133,6 +202,9 @@ func setupOrgProjectTestServer(t *testing.T) *OrgProjectTestServer {
 		AuthService:         authSvc,
 		OrganizationService: orgSvc,
 		ProjectService:      projSvc,
+		BoardService:        boardSvc,
+		CardService:         cardSvc,
+		TagService:          tagSvc,
 	}
 
 	// Create GraphQL handler
@@ -152,6 +224,11 @@ func setupOrgProjectTestServer(t *testing.T) *OrgProjectTestServer {
 }
 
 func (ts *OrgProjectTestServer) cleanup(t *testing.T) {
+	ts.db.Exec("DELETE FROM card_tags")
+	ts.db.Exec("DELETE FROM cards")
+	ts.db.Exec("DELETE FROM tags")
+	ts.db.Exec("DELETE FROM board_columns")
+	ts.db.Exec("DELETE FROM boards")
 	ts.db.Exec("DELETE FROM projects")
 	ts.db.Exec("DELETE FROM organization_members")
 	ts.db.Exec("DELETE FROM organizations")
@@ -295,6 +372,83 @@ func TestIntegration_GetOrganizations_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Len(t, data.Organizations, 3)
+}
+
+func TestIntegration_GetOrganizations_WithProjects(t *testing.T) {
+	ts := setupOrgProjectTestServer(t)
+	defer ts.cleanup(t)
+
+	cookies := ts.registerUser(t, "orglistowner", "password123")
+
+	// Create organization
+	createOrgQuery := `mutation {
+		createOrganization(input: {name: "Org With Projects"}) {
+			id
+		}
+	}`
+	resp, _ := ts.executeGraphQL(t, createOrgQuery, cookies)
+	require.Empty(t, resp.Errors)
+
+	var orgData struct {
+		CreateOrganization struct {
+			ID string `json:"id"`
+		} `json:"createOrganization"`
+	}
+	json.Unmarshal(resp.Data, &orgData)
+	orgID := orgData.CreateOrganization.ID
+
+	// Create projects in the organization
+	createProject := func(name, key string) {
+		query := fmt.Sprintf(`mutation {
+			createProject(input: {organizationId: "%s", name: "%s", key: "%s"}) {
+				id
+			}
+		}`, orgID, name, key)
+		resp, _ := ts.executeGraphQL(t, query, cookies)
+		require.Empty(t, resp.Errors, "Failed to create project: %v", resp.Errors)
+	}
+
+	createProject("Project One", "PROJA")
+	createProject("Project Two", "PROJB")
+
+	// Get all organizations - should include projects
+	query := `query {
+		organizations {
+			id
+			name
+			projects {
+				id
+				name
+				key
+			}
+		}
+	}`
+
+	resp, _ = ts.executeGraphQL(t, query, cookies)
+	assert.Empty(t, resp.Errors, "Expected no errors, got: %v", resp.Errors)
+
+	var data struct {
+		Organizations []struct {
+			ID       string `json:"id"`
+			Name     string `json:"name"`
+			Projects []struct {
+				ID   string `json:"id"`
+				Name string `json:"name"`
+				Key  string `json:"key"`
+			} `json:"projects"`
+		} `json:"organizations"`
+	}
+	err := json.Unmarshal(resp.Data, &data)
+	require.NoError(t, err)
+
+	require.Len(t, data.Organizations, 1)
+	assert.Equal(t, "Org With Projects", data.Organizations[0].Name)
+	assert.Len(t, data.Organizations[0].Projects, 2)
+
+	// Verify project details
+	projectNames := []string{data.Organizations[0].Projects[0].Name, data.Organizations[0].Projects[1].Name}
+	assert.Contains(t, projectNames, "Project One")
+	assert.Contains(t, projectNames, "Project Two")
 }
 
 func TestIntegration_GetOrganization_WithProjects(t *testing.T) {

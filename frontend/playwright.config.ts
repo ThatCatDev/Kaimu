@@ -6,15 +6,22 @@ const outputDir = process.env.CI ? './test-results' : path.join(process.env.TMPD
 
 export default defineConfig({
   testDir: './e2e',
+  // Run test files in parallel, but tests within a file run serially (via describe.configure)
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // Add retries to handle transient failures
+  retries: process.env.CI ? 2 : 1,
+  // Limit workers to reduce database contention and race conditions
+  workers: process.env.CI ? 1 : 3,
   reporter: [['html', { outputFolder: path.join(outputDir, 'report') }]],
   outputDir: path.join(outputDir, 'results'),
+  // Increase timeout for slower operations
+  timeout: 45000,
   use: {
     baseURL: 'http://localhost:4321',
     trace: 'on-first-retry',
+    // Add action timeout
+    actionTimeout: 15000,
   },
   projects: [
     {

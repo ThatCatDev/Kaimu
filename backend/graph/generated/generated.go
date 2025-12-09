@@ -120,6 +120,8 @@ type ComplexityRoot struct {
 		UpdateBoard            func(childComplexity int, input model.UpdateBoardInput) int
 		UpdateCard             func(childComplexity int, input model.UpdateCardInput) int
 		UpdateColumn           func(childComplexity int, input model.UpdateColumnInput) int
+		UpdateOrganization     func(childComplexity int, input model.UpdateOrganizationInput) int
+		UpdateProject          func(childComplexity int, input model.UpdateProjectInput) int
 		UpdateTag              func(childComplexity int, input model.UpdateTagInput) int
 	}
 
@@ -213,8 +215,10 @@ type MutationResolver interface {
 	Login(ctx context.Context, input model.LoginInput) (*model.AuthPayload, error)
 	Logout(ctx context.Context) (bool, error)
 	CreateOrganization(ctx context.Context, input model.CreateOrganizationInput) (*model.Organization, error)
+	UpdateOrganization(ctx context.Context, input model.UpdateOrganizationInput) (*model.Organization, error)
 	DeleteOrganization(ctx context.Context, id string) (bool, error)
 	CreateProject(ctx context.Context, input model.CreateProjectInput) (*model.Project, error)
+	UpdateProject(ctx context.Context, input model.UpdateProjectInput) (*model.Project, error)
 	DeleteProject(ctx context.Context, id string) (bool, error)
 	CreateBoard(ctx context.Context, input model.CreateBoardInput) (*model.Board, error)
 	UpdateBoard(ctx context.Context, input model.UpdateBoardInput) (*model.Board, error)
@@ -746,6 +750,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateColumn(childComplexity, args["input"].(model.UpdateColumnInput)), true
 
+	case "Mutation.updateOrganization":
+		if e.complexity.Mutation.UpdateOrganization == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateOrganization_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateOrganization(childComplexity, args["input"].(model.UpdateOrganizationInput)), true
+
+	case "Mutation.updateProject":
+		if e.complexity.Mutation.UpdateProject == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateProject_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateProject(childComplexity, args["input"].(model.UpdateProjectInput)), true
+
 	case "Mutation.updateTag":
 		if e.complexity.Mutation.UpdateTag == nil {
 			break
@@ -1117,6 +1145,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateBoardInput,
 		ec.unmarshalInputUpdateCardInput,
 		ec.unmarshalInputUpdateColumnInput,
+		ec.unmarshalInputUpdateOrganizationInput,
+		ec.unmarshalInputUpdateProjectInput,
 		ec.unmarshalInputUpdateTagInput,
 	)
 	first := true
@@ -1282,10 +1312,14 @@ type Mutation {
     logout: Boolean!
     "Create a new organization"
     createOrganization(input: CreateOrganizationInput!): Organization!
+    "Update an organization"
+    updateOrganization(input: UpdateOrganizationInput!): Organization!
     "Delete an organization"
     deleteOrganization(id: ID!): Boolean!
     "Create a new project"
     createProject(input: CreateProjectInput!): Project!
+    "Update a project"
+    updateProject(input: UpdateProjectInput!): Project!
     "Delete a project"
     deleteProject(id: ID!): Boolean!
 
@@ -1439,10 +1473,23 @@ input CreateOrganizationInput {
     description: String
 }
 
+input UpdateOrganizationInput {
+    id: ID!
+    name: String
+    description: String
+}
+
 input CreateProjectInput {
     organizationId: ID!
     name: String!
     key: String!
+    description: String
+}
+
+input UpdateProjectInput {
+    id: ID!
+    name: String
+    key: String
     description: String
 }
 
@@ -1890,6 +1937,36 @@ func (ec *executionContext) field_Mutation_updateColumn_args(ctx context.Context
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNUpdateColumnInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateColumnInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpdateOrganizationInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateOrganizationInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateOrganizationInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.UpdateProjectInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNUpdateProjectInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateProjectInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3896,6 +3973,81 @@ func (ec *executionContext) fieldContext_Mutation_createOrganization(ctx context
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateOrganization(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateOrganization(rctx, fc.Args["input"].(model.UpdateOrganizationInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Organization)
+	fc.Result = res
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateOrganization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organization_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organization_name(ctx, field)
+			case "slug":
+				return ec.fieldContext_Organization_slug(ctx, field)
+			case "description":
+				return ec.fieldContext_Organization_description(ctx, field)
+			case "owner":
+				return ec.fieldContext_Organization_owner(ctx, field)
+			case "members":
+				return ec.fieldContext_Organization_members(ctx, field)
+			case "projects":
+				return ec.fieldContext_Organization_projects(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Organization_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Organization_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organization", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateOrganization_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_deleteOrganization(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_deleteOrganization(ctx, field)
 	if err != nil {
@@ -4022,6 +4174,83 @@ func (ec *executionContext) fieldContext_Mutation_createProject(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createProject_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateProject(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateProject(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateProject(rctx, fc.Args["input"].(model.UpdateProjectInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Project)
+	fc.Result = res
+	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateProject(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Project_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_Project_organization(ctx, field)
+			case "name":
+				return ec.fieldContext_Project_name(ctx, field)
+			case "key":
+				return ec.fieldContext_Project_key(ctx, field)
+			case "description":
+				return ec.fieldContext_Project_description(ctx, field)
+			case "boards":
+				return ec.fieldContext_Project_boards(ctx, field)
+			case "defaultBoard":
+				return ec.fieldContext_Project_defaultBoard(ctx, field)
+			case "tags":
+				return ec.fieldContext_Project_tags(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Project_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Project_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateProject_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -10020,6 +10249,109 @@ func (ec *executionContext) unmarshalInputUpdateColumnInput(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateOrganizationInput(ctx context.Context, obj interface{}) (model.UpdateOrganizationInput, error) {
+	var it model.UpdateOrganizationInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "name", "description"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputUpdateProjectInput(ctx context.Context, obj interface{}) (model.UpdateProjectInput, error) {
+	var it model.UpdateProjectInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"id", "name", "key", "description"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ID = data
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "key":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Key = data
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateTagInput(ctx context.Context, obj interface{}) (model.UpdateTagInput, error) {
 	var it model.UpdateTagInput
 	asMap := map[string]interface{}{}
@@ -10690,6 +11022,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "updateOrganization":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateOrganization(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "deleteOrganization":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteOrganization(ctx, field)
@@ -10700,6 +11039,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "createProject":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createProject(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateProject":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateProject(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -12530,6 +12876,16 @@ func (ec *executionContext) unmarshalNUpdateCardInput2githubᚗcomᚋthatcatdev�
 
 func (ec *executionContext) unmarshalNUpdateColumnInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateColumnInput(ctx context.Context, v interface{}) (model.UpdateColumnInput, error) {
 	res, err := ec.unmarshalInputUpdateColumnInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateOrganizationInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateOrganizationInput(ctx context.Context, v interface{}) (model.UpdateOrganizationInput, error) {
+	res, err := ec.unmarshalInputUpdateOrganizationInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateProjectInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateProjectInput(ctx context.Context, v interface{}) (model.UpdateProjectInput, error) {
+	res, err := ec.unmarshalInputUpdateProjectInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

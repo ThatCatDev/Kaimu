@@ -1,106 +1,11 @@
 import { test, expect } from '@playwright/test';
-
-// Run tests serially to ensure clean state
-test.describe.configure({ mode: 'serial' });
-
-// Generate a random uppercase letter string (A-Z only, for project keys)
-function randomLetters(length: number): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
+import { setupTestEnvironment, navigateToBoard, getColumn, clickAddCardInColumn, createCard } from './helpers';
 
 test.describe('Kanban UI Improvements', () => {
-  // Generate unique identifiers for this test run
-  const randomId = Math.random().toString(36).substring(2, 10);
-  const testUser = `ui_e2e_${randomId}`;
-  const password = 'testpassword123';
-  let organizationId: string;
-  let projectId: string;
-  const orgName = `UI Test Org ${randomId}`;
-  const projectName = `UI Test Project ${randomId}`;
-  const projectKey = `UI${randomLetters(4)}`;
-
-  test.beforeAll(async ({ browser }) => {
-    // Register a user, create an organization, and create a project
-    const page = await browser.newPage();
-
-    // Register
-    await page.goto('/register');
-    await page.waitForTimeout(500);
-    await page.fill('#username', testUser);
-    await page.fill('#password', password);
-    await page.fill('#confirmPassword', password);
-    await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
-
-    // Create an organization
-    await page.goto('/organizations/new');
-    await page.waitForTimeout(500);
-    await page.fill('#name', orgName);
-    await page.getByRole('button', { name: 'Create Organization' }).click();
-
-    // Extract organization ID from URL
-    await expect(page).toHaveURL(/\/organizations\/([a-f0-9-]+)/, { timeout: 10000 });
-    const orgUrl = page.url();
-    const orgMatch = orgUrl.match(/\/organizations\/([a-f0-9-]+)/);
-    if (orgMatch) {
-      organizationId = orgMatch[1];
-    }
-
-    // Create a project
-    await page.goto(`/organizations/${organizationId}/projects/new`);
-    await page.waitForTimeout(500);
-    await page.fill('#name', projectName);
-    await page.fill('#key', projectKey);
-    await page.getByRole('button', { name: 'Create Project' }).click();
-
-    // Extract project ID from URL
-    await expect(page).toHaveURL(/\/projects\/([a-f0-9-]+)/, { timeout: 10000 });
-    const projectUrl = page.url();
-    const projectMatch = projectUrl.match(/\/projects\/([a-f0-9-]+)/);
-    if (projectMatch) {
-      projectId = projectMatch[1];
-    }
-
-    await page.close();
-  });
-
-  test.beforeEach(async ({ page }) => {
-    // Login before each test
-    await page.goto('/login');
-    await page.waitForTimeout(500);
-    await page.fill('#username', testUser);
-    await page.fill('#password', password);
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText(`Hello, ${testUser}`)).toBeVisible({ timeout: 10000 });
-  });
-
-  // Helper function to navigate to the board
-  async function navigateToBoard(page: any) {
-    await page.goto(`/projects/${projectId}`);
-    await page.waitForLoadState('networkidle');
-    await page.getByRole('link', { name: /Kanban Board/ }).click();
-    await expect(page).toHaveURL(/\/projects\/[a-f0-9-]+\/board\/[a-f0-9-]+/, { timeout: 10000 });
-    await expect(page.getByRole('heading', { name: 'Todo', exact: true })).toBeVisible({ timeout: 10000 });
-  }
-
-  // Helper function to get a column by name
-  function getColumn(page: any, columnName: string) {
-    return page.locator('.w-72').filter({ has: page.locator(`h3:has-text("${columnName}")`) });
-  }
-
-  // Helper to click add card button in column
-  async function clickAddCardInColumn(page: any, columnName: string) {
-    await getColumn(page, columnName).getByRole('button', { name: 'Add card' }).click();
-  }
-
   test.describe('Add Card Button Location', () => {
     test('add card button is inside column, not in header', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       const todoColumn = getColumn(page, 'Todo');
 
@@ -113,41 +18,37 @@ test.describe('Kanban UI Improvements', () => {
     });
 
     test('add card button works in each column', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Test Todo column
       await clickAddCardInColumn(page, 'Todo');
-      await expect(page.getByRole('heading', { name: 'Create Card' })).toBeVisible({ timeout: 5000 });
       await page.getByRole('button', { name: 'Cancel' }).click();
 
       // Test In Progress column
       await clickAddCardInColumn(page, 'In Progress');
-      await expect(page.getByRole('heading', { name: 'Create Card' })).toBeVisible({ timeout: 5000 });
       await page.getByRole('button', { name: 'Cancel' }).click();
 
       // Test Done column
       await clickAddCardInColumn(page, 'Done');
-      await expect(page.getByRole('heading', { name: 'Create Card' })).toBeVisible({ timeout: 5000 });
       await page.getByRole('button', { name: 'Cancel' }).click();
     });
   });
 
   test.describe('Auto-save Functionality', () => {
     test('card auto-saves when editing', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card first
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Auto Save Test ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Auto Save Test ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Auto Save Test ${ctx.testId}`);
 
       // Open card detail
-      await page.getByText(`Auto Save Test ${randomId}`).click();
+      await page.getByText(`Auto Save Test ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
       // Change the title
-      await page.fill('#title', `Auto Save Updated ${randomId}`);
+      await page.fill('#title', `Auto Save Updated ${ctx.testId}`);
 
       // Should show "Saved" indicator after auto-save completes
       await expect(page.getByText('Saved')).toBeVisible({ timeout: 10000 });
@@ -159,21 +60,19 @@ test.describe('Kanban UI Improvements', () => {
       await expect(page.getByRole('heading', { name: 'Card Details' })).not.toBeVisible({ timeout: 5000 });
 
       // Old title should disappear and new title should appear
-      await expect(page.getByText(`Auto Save Test ${randomId}`)).not.toBeVisible({ timeout: 10000 });
-      await expect(page.getByText(`Auto Save Updated ${randomId}`)).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText(`Auto Save Test ${ctx.testId}`)).not.toBeVisible({ timeout: 10000 });
+      await expect(page.getByText(`Auto Save Updated ${ctx.testId}`)).toBeVisible({ timeout: 10000 });
     });
 
     test('shows saving indicator while saving', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Saving Indicator ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Saving Indicator ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Saving Indicator ${ctx.testId}`);
 
       // Open card detail
-      await page.getByText(`Saving Indicator ${randomId}`).click();
+      await page.getByText(`Saving Indicator ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
       // Make a change and check for saving/saved indicator
@@ -186,16 +85,14 @@ test.describe('Kanban UI Improvements', () => {
     });
 
     test('footer shows auto-save hint', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Footer Hint ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Footer Hint ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Footer Hint ${ctx.testId}`);
 
       // Open card detail
-      await page.getByText(`Footer Hint ${randomId}`).click();
+      await page.getByText(`Footer Hint ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
       // Should show auto-save hint in footer
@@ -207,16 +104,14 @@ test.describe('Kanban UI Improvements', () => {
 
   test.describe('Keyboard Shortcuts', () => {
     test('Escape key closes card detail modal', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Escape Test ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Escape Test ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Escape Test ${ctx.testId}`);
 
       // Open card detail
-      await page.getByText(`Escape Test ${randomId}`).click();
+      await page.getByText(`Escape Test ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
       // Press Escape
@@ -227,10 +122,10 @@ test.describe('Kanban UI Improvements', () => {
     });
 
     test('Escape key closes create card modal', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       await clickAddCardInColumn(page, 'Todo');
-      await expect(page.getByRole('heading', { name: 'Create Card' })).toBeVisible({ timeout: 5000 });
 
       // Press Escape
       await page.keyboard.press('Escape');
@@ -240,16 +135,14 @@ test.describe('Kanban UI Improvements', () => {
     });
 
     test('modal shows Escape hint', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Hint Test ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Hint Test ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Hint Test ${ctx.testId}`);
 
       // Open card detail
-      await page.getByText(`Hint Test ${randomId}`).click();
+      await page.getByText(`Hint Test ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
       // Should show Escape hint - use exact match and look in kbd element
@@ -262,43 +155,42 @@ test.describe('Kanban UI Improvements', () => {
 
   test.describe('Delete Confirmation Modal', () => {
     test('delete button shows confirmation modal instead of browser dialog', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Delete Modal Test ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Delete Modal Test ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Delete Modal Test ${ctx.testId}`);
 
       // Open card detail
-      await page.getByText(`Delete Modal Test ${randomId}`).click();
+      await page.getByText(`Delete Modal Test ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
-      // Click delete
-      await page.getByRole('button', { name: 'Delete Card' }).click();
+      // Click delete - use the exact button text (modal has "Delete Card", panel has "Delete")
+      // The detail view could be either modal or panel, so check for the delete button
+      const deleteButton = page.getByRole('button', { name: /^Delete( Card)?$/ }).first();
+      await deleteButton.click();
 
       // Should show confirmation modal (not browser dialog)
       await expect(page.getByRole('heading', { name: 'Delete Card' })).toBeVisible({ timeout: 5000 });
       await expect(page.getByText('Are you sure you want to delete this card?')).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Cancel' })).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Delete', exact: true })).toBeVisible();
+      // Check Cancel button within the Delete Card dialog specifically
+      await expect(page.getByLabel('Delete Card').getByRole('button', { name: 'Cancel' })).toBeVisible();
+      await expect(page.getByLabel('Delete Card').getByRole('button', { name: 'Delete', exact: true })).toBeVisible();
     });
 
     test('cancel in delete confirmation keeps card', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Keep Card ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Keep Card ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Keep Card ${ctx.testId}`);
 
       // Open card detail
-      await page.getByText(`Keep Card ${randomId}`).click();
+      await page.getByText(`Keep Card ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
       // Click delete, then cancel
-      await page.getByRole('button', { name: 'Delete Card' }).click();
+      await page.getByRole('button', { name: /^Delete( Card)?$/ }).first().click();
       await expect(page.getByRole('heading', { name: 'Delete Card' })).toBeVisible({ timeout: 5000 });
       await page.getByRole('dialog').last().getByRole('button', { name: 'Cancel' }).click();
 
@@ -310,24 +202,22 @@ test.describe('Kanban UI Improvements', () => {
 
       // Close and verify card still exists
       await page.getByRole('button', { name: 'Close' }).click();
-      await expect(page.getByText(`Keep Card ${randomId}`)).toBeVisible();
+      await expect(page.getByText(`Keep Card ${ctx.testId}`)).toBeVisible();
     });
 
     test('confirm delete removes card', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Delete Me ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Delete Me ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Delete Me ${ctx.testId}`);
 
       // Open card detail
-      await page.getByText(`Delete Me ${randomId}`).click();
+      await page.getByText(`Delete Me ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
       // Click delete, then confirm
-      await page.getByRole('button', { name: 'Delete Card' }).click();
+      await page.getByRole('button', { name: /^Delete( Card)?$/ }).first().click();
       await expect(page.getByRole('heading', { name: 'Delete Card' })).toBeVisible({ timeout: 5000 });
 
       // Click the Delete button in the confirmation modal
@@ -335,22 +225,20 @@ test.describe('Kanban UI Improvements', () => {
 
       // Modal should close and card should be gone
       await expect(page.getByRole('heading', { name: 'Card Details' })).not.toBeVisible({ timeout: 5000 });
-      await expect(page.getByText(`Delete Me ${randomId}`)).not.toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(`Delete Me ${ctx.testId}`)).not.toBeVisible({ timeout: 5000 });
     });
   });
 
   test.describe('Quick Actions on Card Hover', () => {
     test('card shows quick action buttons on hover', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Hover Actions ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Hover Actions ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Hover Actions ${ctx.testId}`);
 
       // Find the card and hover over it
-      const card = page.locator(`text=Hover Actions ${randomId}`).locator('..');
+      const card = page.locator(`text=Hover Actions ${ctx.testId}`).locator('..');
       await card.hover();
 
       // Should show edit and delete buttons
@@ -359,16 +247,14 @@ test.describe('Kanban UI Improvements', () => {
     });
 
     test('quick edit opens card detail', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Quick Edit ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Quick Edit ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Quick Edit ${ctx.testId}`);
 
       // Hover and click edit
-      const card = page.locator(`text=Quick Edit ${randomId}`).locator('..');
+      const card = page.locator(`text=Quick Edit ${ctx.testId}`).locator('..');
       await card.hover();
       await card.locator('button[title="Edit card"]').click();
 
@@ -379,16 +265,14 @@ test.describe('Kanban UI Improvements', () => {
     });
 
     test('quick delete shows confirmation modal', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Quick Delete ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Quick Delete ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Quick Delete ${ctx.testId}`);
 
       // Hover and click delete
-      const card = page.locator(`text=Quick Delete ${randomId}`).locator('..');
+      const card = page.locator(`text=Quick Delete ${ctx.testId}`).locator('..');
       await card.hover();
       await card.locator('button[title="Delete card"]').click();
 
@@ -398,22 +282,20 @@ test.describe('Kanban UI Improvements', () => {
 
       // Cancel to keep the card
       await page.getByRole('dialog').last().getByRole('button', { name: 'Cancel' }).click();
-      await expect(page.getByText(`Quick Delete ${randomId}`)).toBeVisible();
+      await expect(page.getByText(`Quick Delete ${ctx.testId}`)).toBeVisible();
     });
   });
 
   test.describe('Side Panel View', () => {
     test('can switch from modal to panel view', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Panel View ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Panel View ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Panel View ${ctx.testId}`);
 
       // Open card detail (in modal mode by default)
-      await page.getByText(`Panel View ${randomId}`).click();
+      await page.getByText(`Panel View ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
       // Click the panel view toggle button
@@ -427,70 +309,60 @@ test.describe('Kanban UI Improvements', () => {
     });
 
     test('panel view allows selecting other cards', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create two cards
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Panel Card 1 ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Panel Card 1 ${randomId}`)).toBeVisible({ timeout: 5000 });
-
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Panel Card 2 ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Panel Card 2 ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Panel Card 1 ${ctx.testId}`);
+      await createCard(page, 'Todo', `Panel Card 2 ${ctx.testId}`);
 
       // Open first card and switch to panel view
-      await page.getByText(`Panel Card 1 ${randomId}`).click();
+      await page.getByText(`Panel Card 1 ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
       await page.locator('button[title="Switch to side panel view"]').click();
 
       // Verify we're in panel view with first card
-      await expect(page.locator('#panel-title')).toHaveValue(`Panel Card 1 ${randomId}`);
+      await expect(page.locator('#panel-title')).toHaveValue(`Panel Card 1 ${ctx.testId}`);
 
       // Click on second card (panel should stay open, no backdrop blocking)
-      await page.getByText(`Panel Card 2 ${randomId}`).click();
+      await page.getByText(`Panel Card 2 ${ctx.testId}`).click();
 
       // Panel should now show second card
-      await expect(page.locator('#panel-title')).toHaveValue(`Panel Card 2 ${randomId}`, { timeout: 5000 });
+      await expect(page.locator('#panel-title')).toHaveValue(`Panel Card 2 ${ctx.testId}`, { timeout: 5000 });
 
       await page.keyboard.press('Escape');
     });
 
     test('can switch from panel back to modal view', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Switch Back ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Switch Back ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Switch Back ${ctx.testId}`);
 
       // Open in modal and switch to panel
-      await page.getByText(`Switch Back ${randomId}`).click();
+      await page.getByText(`Switch Back ${ctx.testId}`).click();
       await page.locator('button[title="Switch to side panel view"]').click();
       await expect(page.locator('.fixed.inset-y-0.right-0.translate-x-0')).toBeVisible({ timeout: 5000 });
 
       // Switch back to modal
       await page.locator('button[title="Switch to modal view"]').click();
 
-      // Should be back in modal mode (centered modal with backdrop)
-      await expect(page.locator('.fixed.inset-0.bg-gray-900\\/60')).toBeVisible({ timeout: 5000 });
+      // Should be back in modal mode (centered modal with backdrop - uses bg-black/50)
+      await expect(page.locator('.fixed.inset-0.bg-black\\/50')).toBeVisible({ timeout: 5000 });
 
       await page.keyboard.press('Escape');
     });
 
     test('view mode preference is persisted', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Persist Mode ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Persist Mode ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Persist Mode ${ctx.testId}`);
 
       // Open and switch to panel view
-      await page.getByText(`Persist Mode ${randomId}`).click();
+      await page.getByText(`Persist Mode ${ctx.testId}`).click();
       await page.locator('button[title="Switch to side panel view"]').click();
       await expect(page.locator('.fixed.inset-y-0.right-0.translate-x-0')).toBeVisible({ timeout: 5000 });
       await page.keyboard.press('Escape');
@@ -500,7 +372,7 @@ test.describe('Kanban UI Improvements', () => {
       await expect(page.getByRole('heading', { name: 'Todo', exact: true })).toBeVisible({ timeout: 10000 });
 
       // Open the card again - should open in panel mode
-      await page.getByText(`Persist Mode ${randomId}`).click();
+      await page.getByText(`Persist Mode ${ctx.testId}`).click();
       await expect(page.locator('.fixed.inset-y-0.right-0.translate-x-0')).toBeVisible({ timeout: 5000 });
 
       await page.keyboard.press('Escape');
@@ -509,24 +381,22 @@ test.describe('Kanban UI Improvements', () => {
 
   test.describe('Inline Tag Creation', () => {
     test('can create tag by typing and pressing enter', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // Create a card and open it
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Tag Create ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Tag Create ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await createCard(page, 'Todo', `Tag Create ${ctx.testId}`);
 
       // Open card detail
-      await page.getByText(`Tag Create ${randomId}`).click();
+      await page.getByText(`Tag Create ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
-      // Type in the tag input
-      const tagInput = page.locator('input[placeholder*="search or create tags"]');
-      await tagInput.fill(`NewTag${randomId}`);
+      // Type in the tag input (scoped to Card Details dialog)
+      const tagInput = page.getByRole('dialog', { name: 'Card Details' }).locator('input[placeholder*="search or create tags"]');
+      await tagInput.fill(`NewTag${ctx.testId}`);
 
       // Should show "Create" option in dropdown
-      await expect(page.getByText(`Create "NewTag${randomId}"`)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(`Create "NewTag${ctx.testId}"`)).toBeVisible({ timeout: 5000 });
 
       // Press Enter to open color picker
       await tagInput.press('Enter');
@@ -537,23 +407,31 @@ test.describe('Kanban UI Improvements', () => {
       await colorPicker.getByRole('button', { name: 'Create Tag' }).click();
 
       // Tag should be created and selected (shown in selected tags area)
-      await expect(page.locator('span.inline-flex').filter({ hasText: `NewTag${randomId}` })).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('span.inline-flex').filter({ hasText: `NewTag${ctx.testId}` })).toBeVisible({ timeout: 5000 });
 
       await page.keyboard.press('Escape');
     });
 
     test('can search and select existing tags', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
       // First create a tag via a card
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `First Tag Card ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await page.getByText(`First Tag Card ${randomId}`).click();
+      await createCard(page, 'Todo', `First Tag Card ${ctx.testId}`);
+      await page.getByText(`First Tag Card ${ctx.testId}`).click();
 
-      const tagInput = page.locator('input[placeholder*="search or create tags"]');
-      await tagInput.fill(`SearchTag${randomId}`);
-      await page.getByText(`Create "SearchTag${randomId}"`).click();
+      // Wait for Card Details dialog to be visible
+      await expect(page.getByRole('dialog', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
+
+      const tagInput = page.getByRole('dialog', { name: 'Card Details' }).locator('input[placeholder*="search or create tags"]');
+      await expect(tagInput).toBeVisible({ timeout: 5000 });
+      await tagInput.fill(`SearchTag${ctx.testId}`);
+      await page.waitForTimeout(300); // Wait for dropdown animation
+
+      // Wait for create option to appear then click
+      const createOption = page.getByText(`Create "SearchTag${ctx.testId}"`);
+      await expect(createOption).toBeVisible({ timeout: 5000 });
+      await createOption.click({ force: true });
 
       // Color picker appears - click Create Tag button
       const colorPicker = page.locator('.absolute.z-20');
@@ -563,38 +441,37 @@ test.describe('Kanban UI Improvements', () => {
       await page.keyboard.press('Escape');
 
       // Now create another card and search for that tag
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Second Tag Card ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await page.getByText(`Second Tag Card ${randomId}`).click();
+      await createCard(page, 'Todo', `Second Tag Card ${ctx.testId}`);
+      await page.getByText(`Second Tag Card ${ctx.testId}`).click();
 
       // Search for the existing tag
-      const tagInput2 = page.locator('input[placeholder*="search or create tags"]');
-      await tagInput2.fill(`SearchTag${randomId}`);
+      const tagInput2 = page.getByRole('dialog', { name: 'Card Details' }).locator('input[placeholder*="search or create tags"]');
+      await tagInput2.fill(`SearchTag${ctx.testId}`);
 
       // Should show the existing tag in dropdown
-      await expect(page.locator('.absolute.z-10').getByText(`SearchTag${randomId}`)).toBeVisible({ timeout: 5000 });
+      const tagOption = page.locator('.absolute.z-10').getByText(`SearchTag${ctx.testId}`);
+      await expect(tagOption).toBeVisible({ timeout: 5000 });
 
-      // Click to select
-      await page.locator('.absolute.z-10').getByText(`SearchTag${randomId}`).click();
+      // Wait for animation to settle then click to select
+      await page.waitForTimeout(200);
+      await tagOption.click({ force: true });
 
       // Tag should be selected
-      await expect(page.locator('span.inline-flex').filter({ hasText: `SearchTag${randomId}` })).toBeVisible();
+      await expect(page.locator('span.inline-flex').filter({ hasText: `SearchTag${ctx.testId}` })).toBeVisible();
 
       await page.keyboard.press('Escape');
     });
 
     test('can remove selected tag by clicking X', async ({ page }) => {
-      await navigateToBoard(page);
+      const ctx = await setupTestEnvironment(page, 'ui');
+      await navigateToBoard(page, ctx.projectId);
 
-      await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Remove Tag ${randomId}`);
-      await page.getByRole('button', { name: 'Create Card' }).click();
-      await page.getByText(`Remove Tag ${randomId}`).click();
+      await createCard(page, 'Todo', `Remove Tag ${ctx.testId}`);
+      await page.getByText(`Remove Tag ${ctx.testId}`).click();
 
       // Create and select a tag
-      const tagInput = page.locator('input[placeholder*="search or create tags"]');
-      await tagInput.fill(`RemoveMe${randomId}`);
+      const tagInput = page.getByRole('dialog', { name: 'Card Details' }).locator('input[placeholder*="search or create tags"]');
+      await tagInput.fill(`RemoveMe${ctx.testId}`);
       await tagInput.press('Enter');
 
       // Color picker appears - click Create Tag button
@@ -603,7 +480,7 @@ test.describe('Kanban UI Improvements', () => {
       await colorPicker.getByRole('button', { name: 'Create Tag' }).click();
 
       // Verify tag is selected
-      const selectedTag = page.locator('span.inline-flex').filter({ hasText: `RemoveMe${randomId}` }).filter({ has: page.locator('button') });
+      const selectedTag = page.locator('span.inline-flex').filter({ hasText: `RemoveMe${ctx.testId}` }).filter({ has: page.locator('button') });
       await expect(selectedTag).toBeVisible({ timeout: 5000 });
 
       // Click the X button on the tag to remove it

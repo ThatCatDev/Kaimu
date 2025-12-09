@@ -30,6 +30,7 @@ type Service interface {
 	GetOrganization(ctx context.Context, id uuid.UUID) (*organization.Organization, error)
 	GetOrganizationBySlug(ctx context.Context, slug string) (*organization.Organization, error)
 	GetUserOrganizations(ctx context.Context, userID uuid.UUID) ([]*organization.Organization, error)
+	UpdateOrganization(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
 	DeleteOrganization(ctx context.Context, id uuid.UUID) error
 	AddMember(ctx context.Context, orgID, userID uuid.UUID, role string) (*organization_member.OrganizationMember, error)
 	RemoveMember(ctx context.Context, orgID, userID uuid.UUID) error
@@ -170,6 +171,47 @@ func (s *service) GetUserOrganizations(ctx context.Context, userID uuid.UUID) ([
 	defer span.End()
 
 	return s.orgRepo.GetByUserID(ctx, userID)
+}
+
+func (s *service) UpdateOrganization(ctx context.Context, org *organization.Organization) (*organization.Organization, error) {
+	ctx, span := s.startServiceSpan(ctx, "UpdateOrganization")
+	span.SetAttributes(attribute.String("org.id", org.ID.String()))
+	defer span.End()
+
+	// Verify organization exists
+	existing, err := s.orgRepo.GetByID(ctx, org.ID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrOrgNotFound
+		}
+		return nil, err
+	}
+
+	// Update name and regenerate slug if name changed
+	if org.Name != "" && org.Name != existing.Name {
+		existing.Name = org.Name
+		newSlug := generateSlug(org.Name)
+		if newSlug == "" {
+			newSlug = uuid.New().String()[:8]
+		}
+		// Check if new slug is taken (and not by this org)
+		slugOrg, err := s.orgRepo.GetBySlug(ctx, newSlug)
+		if err == nil && slugOrg != nil && slugOrg.ID != org.ID {
+			newSlug = newSlug + "-" + uuid.New().String()[:4]
+		}
+		existing.Slug = newSlug
+	}
+
+	// Update description
+	if org.Description != existing.Description {
+		existing.Description = org.Description
+	}
+
+	if err := s.orgRepo.Update(ctx, existing); err != nil {
+		return nil, err
+	}
+
+	return existing, nil
 }
 
 func (s *service) DeleteOrganization(ctx context.Context, id uuid.UUID) error {

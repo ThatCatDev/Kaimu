@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { getOrganization, deleteOrganization } from '../lib/api/organizations';
+  import { getOrganization, deleteOrganization, updateOrganization } from '../lib/api/organizations';
   import { getMe } from '../lib/api/auth';
   import ProjectCard from './ProjectCard.svelte';
+  import EditableTitle from './EditableTitle.svelte';
   import { ConfirmModal } from './ui';
   import type { OrganizationQuery, User } from '../lib/graphql/generated';
 
@@ -57,6 +58,12 @@
       deleting = false;
     }
   }
+
+  async function handleRename(newName: string) {
+    if (!organization) return;
+    const updated = await updateOrganization(organizationId, { name: newName });
+    organization = { ...organization, name: updated.name, slug: updated.slug };
+  }
 </script>
 
 {#if loading}
@@ -71,12 +78,9 @@
   <div class="space-y-8">
     <div class="flex items-center justify-between">
       <div>
-        <nav class="text-sm text-gray-500 mb-2">
-          <a href="/dashboard" class="hover:text-gray-700">Dashboard</a>
-          <span class="mx-2">/</span>
-          <span class="text-gray-900">{organization.name}</span>
-        </nav>
-        <h1 class="text-2xl font-bold text-gray-900">{organization.name}</h1>
+        <h1 class="text-2xl font-bold text-gray-900">
+          <EditableTitle value={organization.name} onSave={handleRename} />
+        </h1>
         <p class="text-sm text-gray-500">/{organization.slug}</p>
         {#if organization.description}
           <p class="mt-2 text-gray-600">{organization.description}</p>
@@ -93,15 +97,17 @@
           </svg>
           Delete
         </button>
-        <a
-          href={`/organizations/${organizationId}/projects/new`}
-          class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-        >
-          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          New Project
-        </a>
+        {#if organization.projects.length > 0}
+          <a
+            href={`/organizations/${organizationId}/projects/new`}
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            New Project
+          </a>
+        {/if}
       </div>
     </div>
 

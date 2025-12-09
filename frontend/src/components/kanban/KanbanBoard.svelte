@@ -9,7 +9,8 @@
   import CardDetailPanel from './CardDetailPanel.svelte';
   import { ConfirmModal } from '../ui';
   import type { BoardWithColumns, BoardColumn, BoardCard, Tag } from '../../lib/api/boards';
-  import { getBoard, moveCard, getTags, deleteCard, reorderColumns, toggleColumnVisibility, deleteColumn } from '../../lib/api/boards';
+  import { getBoard, moveCard, getTags, deleteCard, reorderColumns, toggleColumnVisibility, deleteColumn, updateBoard } from '../../lib/api/boards';
+  import EditableTitle from '../EditableTitle.svelte';
 
   interface Props {
     boardId: string;
@@ -106,6 +107,12 @@
     } finally {
       loading = false;
     }
+  }
+
+  async function handleRenameBoard(newName: string) {
+    if (!board) return;
+    const updated = await updateBoard(boardId, newName);
+    board = { ...board, name: updated.name };
   }
 
   async function refreshBoard() {
@@ -289,7 +296,9 @@
     <!-- Board header -->
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h1 class="text-2xl font-bold text-gray-900">{board.name}</h1>
+        <h1 class="text-2xl font-bold text-gray-900">
+          <EditableTitle value={board.name} onSave={handleRenameBoard} />
+        </h1>
         {#if board.description}
           <p class="text-sm text-gray-500">{board.description}</p>
         {/if}
@@ -421,6 +430,7 @@
       {tags}
       onClose={closeCardDetailModal}
       onUpdated={handleCardUpdated}
+      onAutoSaved={refreshBoard}
       onTagsChanged={reloadTags}
       viewMode={cardViewMode}
       onViewModeChange={setCardViewMode}
@@ -436,6 +446,7 @@
       isOpen={showCardDetailModal}
       onClose={closeCardDetailModal}
       onUpdated={handleCardUpdated}
+      onAutoSaved={refreshBoard}
       onTagsChanged={reloadTags}
       viewMode={cardViewMode}
       onViewModeChange={setCardViewMode}

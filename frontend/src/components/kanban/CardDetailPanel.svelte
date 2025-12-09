@@ -11,12 +11,13 @@
     isOpen: boolean;
     onClose: () => void;
     onUpdated: () => void;
+    onAutoSaved?: () => void;
     onTagsChanged?: () => void;
     viewMode: 'modal' | 'panel';
     onViewModeChange: (mode: 'modal' | 'panel') => void;
   }
 
-  let { card, projectId, tags, isOpen, onClose, onUpdated, onTagsChanged, viewMode, onViewModeChange }: Props = $props();
+  let { card, projectId, tags, isOpen, onClose, onUpdated, onAutoSaved, onTagsChanged, viewMode, onViewModeChange }: Props = $props();
 
   let title = $state('');
   let description = $state('');
@@ -84,6 +85,7 @@
         dueDateRfc3339
       );
       lastSavedData = getCurrentDataHash();
+      onAutoSaved?.();
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to save';
     } finally {

@@ -1,14 +1,7 @@
 import { test, expect } from '@playwright/test';
-
-// Run auth tests serially since they depend on each other
-test.describe.configure({ mode: 'serial' });
+import { randomId } from './helpers';
 
 test.describe('Authentication', () => {
-  // Generate a random username for each test run
-  const randomId = Math.random().toString(36).substring(2, 10);
-  const uniqueUser = `e2e_${randomId}`;
-  const password = 'testpassword123';
-
   test('homepage shows login and register links when not authenticated', async ({ page }) => {
     // Clear cookies to ensure logged out state
     await page.context().clearCookies();
@@ -73,6 +66,9 @@ test.describe('Authentication', () => {
   });
 
   test('can register a new user', async ({ page }) => {
+    const uniqueUser = `e2e_${randomId()}`;
+    const password = 'testpassword123';
+
     await page.goto('/register');
     // Wait for hydration
     await page.waitForTimeout(500);
@@ -88,10 +84,21 @@ test.describe('Authentication', () => {
   });
 
   test('shows error when registering with existing username', async ({ page }) => {
-    await page.goto('/register');
-    // Wait for hydration
-    await page.waitForTimeout(500);
+    const uniqueUser = `e2e_${randomId()}`;
+    const password = 'testpassword123';
 
+    // First, register the user
+    await page.goto('/register');
+    await page.waitForTimeout(500);
+    await page.fill('#username', uniqueUser);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
+
+    // Now try to register again with the same username
+    await page.goto('/register');
+    await page.waitForTimeout(500);
     await page.fill('#username', uniqueUser);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
@@ -101,10 +108,25 @@ test.describe('Authentication', () => {
   });
 
   test('can login with registered user', async ({ page }) => {
-    await page.goto('/login');
-    // Wait for hydration
-    await page.waitForTimeout(500);
+    const uniqueUser = `e2e_${randomId()}`;
+    const password = 'testpassword123';
 
+    // First, register the user
+    await page.goto('/register');
+    await page.waitForTimeout(500);
+    await page.fill('#username', uniqueUser);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
+
+    // Logout
+    await page.getByRole('button', { name: 'Logout' }).click();
+    await expect(page.getByRole('link', { name: 'Login' })).toBeVisible({ timeout: 10000 });
+
+    // Now login with the registered user
+    await page.goto('/login');
+    await page.waitForTimeout(500);
     await page.fill('#username', uniqueUser);
     await page.fill('#password', password);
     await page.getByRole('button', { name: 'Sign in' }).click();
@@ -115,10 +137,25 @@ test.describe('Authentication', () => {
   });
 
   test('shows error when login with wrong password', async ({ page }) => {
-    await page.goto('/login');
-    // Wait for hydration
-    await page.waitForTimeout(500);
+    const uniqueUser = `e2e_${randomId()}`;
+    const password = 'testpassword123';
 
+    // First, register the user
+    await page.goto('/register');
+    await page.waitForTimeout(500);
+    await page.fill('#username', uniqueUser);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
+
+    // Logout
+    await page.getByRole('button', { name: 'Logout' }).click();
+    await expect(page.getByRole('link', { name: 'Login' })).toBeVisible({ timeout: 10000 });
+
+    // Now try to login with wrong password
+    await page.goto('/login');
+    await page.waitForTimeout(500);
     await page.fill('#username', uniqueUser);
     await page.fill('#password', 'wrongpassword');
     await page.getByRole('button', { name: 'Sign in' }).click();
@@ -127,14 +164,17 @@ test.describe('Authentication', () => {
   });
 
   test('can logout after login', async ({ page }) => {
-    await page.goto('/login');
-    // Wait for hydration
-    await page.waitForTimeout(500);
+    const uniqueUser = `e2e_${randomId()}`;
+    const password = 'testpassword123';
 
+    // Register and login
+    await page.goto('/register');
+    await page.waitForTimeout(500);
     await page.fill('#username', uniqueUser);
     await page.fill('#password', password);
-    await page.getByRole('button', { name: 'Sign in' }).click();
-
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
     await expect(page.getByText(`Hello, ${uniqueUser}`)).toBeVisible({ timeout: 10000 });
 
     // Then logout

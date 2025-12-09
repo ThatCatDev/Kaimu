@@ -25,6 +25,16 @@ query Project($id: ID!) {
   }
 }
 
+mutation UpdateProject($input: UpdateProjectInput!) {
+  updateProject(input: $input) {
+    id
+    name
+    key
+    description
+    updatedAt
+  }
+}
+
 mutation DeleteProject($id: ID!) {
   deleteProject(id: $id)
 }

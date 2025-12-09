@@ -171,6 +171,10 @@ export type Mutation = {
   updateCard: Card;
   /** Update a column */
   updateColumn: BoardColumn;
+  /** Update an organization */
+  updateOrganization: Organization;
+  /** Update a project */
+  updateProject: Project;
   /** Update a tag */
   updateTag: Tag;
 };
@@ -273,6 +277,16 @@ export type MutationUpdateCardArgs = {
 
 export type MutationUpdateColumnArgs = {
   input: UpdateColumnInput;
+};
+
+
+export type MutationUpdateOrganizationArgs = {
+  input: UpdateOrganizationInput;
+};
+
+
+export type MutationUpdateProjectArgs = {
+  input: UpdateProjectInput;
 };
 
 
@@ -411,6 +425,19 @@ export type UpdateColumnInput = {
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   wipLimit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type UpdateOrganizationInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateProjectInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  key?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateTagInput = {
@@ -604,7 +631,7 @@ export type CreateOrganizationMutation = { __typename?: 'Mutation', createOrgani
 export type OrganizationsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type OrganizationsQuery = { __typename?: 'Query', organizations: Array<{ __typename?: 'Organization', id: string, name: string, slug: string, description?: string | null, createdAt: string, updatedAt: string }> };
+export type OrganizationsQuery = { __typename?: 'Query', organizations: Array<{ __typename?: 'Organization', id: string, name: string, slug: string, description?: string | null, createdAt: string, updatedAt: string, projects: Array<{ __typename?: 'Project', id: string, name: string, key: string, boards: Array<{ __typename?: 'Board', id: string, name: string, isDefault: boolean }> }> }> };
 
 export type OrganizationQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -612,6 +639,13 @@ export type OrganizationQueryVariables = Exact<{
 
 
 export type OrganizationQuery = { __typename?: 'Query', organization?: { __typename?: 'Organization', id: string, name: string, slug: string, description?: string | null, createdAt: string, updatedAt: string, projects: Array<{ __typename?: 'Project', id: string, name: string, key: string, description?: string | null, createdAt: string, updatedAt: string }> } | null };
+
+export type UpdateOrganizationMutationVariables = Exact<{
+  input: UpdateOrganizationInput;
+}>;
+
+
+export type UpdateOrganizationMutation = { __typename?: 'Mutation', updateOrganization: { __typename?: 'Organization', id: string, name: string, slug: string, description?: string | null, updatedAt: string } };
 
 export type DeleteOrganizationMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -633,6 +667,13 @@ export type ProjectQueryVariables = Exact<{
 
 
 export type ProjectQuery = { __typename?: 'Query', project?: { __typename?: 'Project', id: string, name: string, key: string, description?: string | null, createdAt: string, updatedAt: string, organization: { __typename?: 'Organization', id: string, name: string, slug: string } } | null };
+
+export type UpdateProjectMutationVariables = Exact<{
+  input: UpdateProjectInput;
+}>;
+
+
+export type UpdateProjectMutation = { __typename?: 'Mutation', updateProject: { __typename?: 'Project', id: string, name: string, key: string, description?: string | null, updatedAt: string } };
 
 export type DeleteProjectMutationVariables = Exact<{
   id: Scalars['ID']['input'];

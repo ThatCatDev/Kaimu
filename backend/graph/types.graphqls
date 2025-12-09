@@ -113,10 +113,23 @@ input CreateOrganizationInput {
     description: String
 }
 
+input UpdateOrganizationInput {
+    id: ID!
+    name: String
+    description: String
+}
+
 input CreateProjectInput {
     organizationId: ID!
     name: String!
     key: String!
+    description: String
+}
+
+input UpdateProjectInput {
+    id: ID!
+    name: String
+    key: String
     description: String
 }
 

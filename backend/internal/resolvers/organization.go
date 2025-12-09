@@ -9,6 +9,7 @@ import (
 	"github.com/thatcatdev/pulse-backend/http/middleware"
 	"github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
 	"github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
+	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
 	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
 	projectService "github.com/thatcatdev/pulse-backend/internal/services/project"
 )
@@ -42,7 +43,7 @@ func CreateOrganization(ctx context.Context, svc orgService.Service, input model
 }
 
 // Organizations returns all organizations for the current user
-func Organizations(ctx context.Context, svc orgService.Service) ([]*model.Organization, error) {
+func Organizations(ctx context.Context, svc orgService.Service, projectSvc projectService.Service, boardSvc boardService.Service) ([]*model.Organization, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -55,7 +56,29 @@ func Organizations(ctx context.Context, svc orgService.Service) ([]*model.Organi
 
 	result := make([]*model.Organization, len(orgs))
 	for i, org := range orgs {
-		result[i] = organizationToModel(org)
+		// Fetch owner
+		owner, err := svc.GetOwner(ctx, org.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		// Fetch projects for each organization
+		projects, err := projectSvc.GetOrgProjects(ctx, org.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		projectModels := make([]*model.Project, len(projects))
+		for j, proj := range projects {
+			// Fetch boards for each project
+			boards, err := boardSvc.GetBoardsByProjectID(ctx, proj.ID)
+			if err != nil {
+				return nil, err
+			}
+			projectModels[j] = projectToModelWithBoards(proj, boards)
+		}
+
+		result[i] = organizationToModelWithRelations(org, userToModel(owner), nil, projectModels)
 	}
 	return result, nil
 }
@@ -157,6 +180,55 @@ func OrganizationProjects(ctx context.Context, projectSvc projectService.Service
 		result[i] = projectToModel(proj)
 	}
 	return result, nil
+}
+
+// UpdateOrganization updates an organization
+func UpdateOrganization(ctx context.Context, svc orgService.Service, input model.UpdateOrganizationInput) (*model.Organization, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return nil, ErrUnauthorized
+	}
+
+	orgID, err := uuid.Parse(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if user is a member
+	isMember, err := svc.IsMember(ctx, orgID, *userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, ErrUnauthorized
+	}
+
+	// Get current org
+	org, err := svc.GetOrganization(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Apply updates
+	if input.Name != nil {
+		org.Name = *input.Name
+	}
+	if input.Description != nil {
+		org.Description = *input.Description
+	}
+
+	updated, err := svc.UpdateOrganization(ctx, org)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get owner for the response
+	owner, err := svc.GetOwner(ctx, updated.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return organizationToModelWithRelations(updated, userToModel(owner), nil, nil), nil
 }
 
 // DeleteOrganization deletes an organization by ID

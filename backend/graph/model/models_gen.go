@@ -180,6 +180,19 @@ type UpdateColumnInput struct {
 	WipLimit *int    `json:"wipLimit,omitempty"`
 }
 
+type UpdateOrganizationInput struct {
+	ID          string  `json:"id"`
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+type UpdateProjectInput struct {
+	ID          string  `json:"id"`
+	Name        *string `json:"name,omitempty"`
+	Key         *string `json:"key,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
 type UpdateTagInput struct {
 	ID          string  `json:"id"`
 	Name        *string `json:"name,omitempty"`

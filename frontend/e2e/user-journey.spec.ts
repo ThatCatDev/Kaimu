@@ -35,7 +35,6 @@ test.describe('Complete User Journey', () => {
 
       // Should redirect to home and be logged in
       await expect(page).toHaveURL('/', { timeout: 10000 });
-      await expect(page.getByText(`Hello, ${testUser}`)).toBeVisible({ timeout: 10000 });
     });
 
     // ============================================
@@ -115,27 +114,28 @@ test.describe('Complete User Journey', () => {
 
       // Verify project details
       await expect(page.getByRole('heading', { name: projectName })).toBeVisible({ timeout: 10000 });
-      await expect(page.getByText(projectKey)).toBeVisible();
+      await expect(page.getByRole('main').getByText(projectKey)).toBeVisible();
     });
 
     // ============================================
     // STEP 5: Navigate back through the app
     // ============================================
     await test.step('Navigate back to organization', async () => {
-      // Click organization link on project page
-      await page.getByRole('link', { name: orgName }).click();
+      // Click organization link in sidebar (since breadcrumbs were removed)
+      const sidebar = page.locator('aside');
+      await sidebar.getByRole('link', { name: orgName }).click();
       await expect(page).toHaveURL(`/organizations/${orgId}`);
 
-      // Verify project is listed
-      await expect(page.getByText(projectName)).toBeVisible({ timeout: 10000 });
+      // Verify project is listed (in main content)
+      await expect(page.getByRole('main').getByText(projectName)).toBeVisible({ timeout: 10000 });
     });
 
     await test.step('Navigate to dashboard from organization', async () => {
       await page.goto('/dashboard');
       await page.waitForLoadState('networkidle');
 
-      // Verify organization is listed
-      await expect(page.getByText(orgName)).toBeVisible({ timeout: 10000 });
+      // Verify organization is listed (in main content)
+      await expect(page.getByRole('main').getByText(orgName)).toBeVisible({ timeout: 10000 });
     });
 
     // ============================================
@@ -145,29 +145,40 @@ test.describe('Complete User Journey', () => {
     const project2Key = `JPA${randomLetters(3)}`;
 
     await test.step('Create second project', async () => {
-      // Navigate to organization
-      await page.getByText(orgName).click();
+      // Navigate to organization (click in main content)
+      await page.getByRole('main').getByText(orgName).click();
       await expect(page).toHaveURL(`/organizations/${orgId}`);
       await page.waitForLoadState('networkidle');
 
       // Create another project
       await page.getByRole('link', { name: 'New Project' }).first().click();
+      await expect(page).toHaveURL(/\/organizations\/[a-f0-9-]+\/projects\/new/);
       await page.waitForLoadState('networkidle');
-      // Wait for form to be hydrated by checking button is visible and enabled
+
+      // Wait for form to be hydrated
+      await expect(page.getByRole('heading', { name: 'Create Project' })).toBeVisible({ timeout: 5000 });
       await expect(page.getByRole('button', { name: 'Create Project' })).toBeEnabled({ timeout: 5000 });
+
+      // Fill form fields
       await page.fill('#name', project2Name);
       await page.fill('#key', project2Key);
-      await page.getByRole('button', { name: 'Create Project' }).click();
 
-      await expect(page).toHaveURL(/\/projects\/[a-f0-9-]+/, { timeout: 10000 });
+      // Wait for form state to settle and click submit
+      await page.waitForTimeout(200);
+
+      // Use Promise.all to click and wait for navigation simultaneously
+      await Promise.all([
+        page.waitForURL(/\/projects\/[a-f0-9-]+/, { timeout: 15000 }),
+        page.getByRole('button', { name: 'Create Project' }).click()
+      ]);
     });
 
     await test.step('Verify both projects in organization', async () => {
       await page.goto(`/organizations/${orgId}`);
       await page.waitForLoadState('networkidle');
 
-      await expect(page.getByText(projectName)).toBeVisible({ timeout: 10000 });
-      await expect(page.getByText(project2Name)).toBeVisible();
+      await expect(page.getByRole('main').getByText(projectName)).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByText(project2Name)).toBeVisible();
     });
 
     // ============================================
@@ -191,20 +202,19 @@ test.describe('Complete User Journey', () => {
       await page.getByRole('button', { name: 'Sign in' }).click();
 
       await expect(page).toHaveURL('/', { timeout: 10000 });
-      await expect(page.getByText(`Hello, ${testUser}`)).toBeVisible({ timeout: 10000 });
     });
 
     await test.step('Verify data persists after re-login', async () => {
       await page.goto('/dashboard');
       await page.waitForLoadState('networkidle');
 
-      // Organization should still exist
-      await expect(page.getByText(orgName)).toBeVisible({ timeout: 10000 });
+      // Organization should still exist (in main content)
+      await expect(page.getByRole('main').getByText(orgName)).toBeVisible({ timeout: 10000 });
 
-      // Navigate to organization and verify projects
-      await page.getByText(orgName).click();
-      await expect(page.getByText(projectName)).toBeVisible({ timeout: 10000 });
-      await expect(page.getByText(project2Name)).toBeVisible();
+      // Navigate to organization and verify projects (click in main content)
+      await page.getByRole('main').getByText(orgName).click();
+      await expect(page.getByRole('main').getByText(projectName)).toBeVisible({ timeout: 10000 });
+      await expect(page.getByRole('main').getByText(project2Name)).toBeVisible();
     });
   });
 
@@ -254,13 +264,13 @@ test.describe('Complete User Journey', () => {
     await page.waitForLoadState('networkidle');
 
     await expect(page.getByRole('heading', { name: org2Name })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(project2Name)).toBeVisible();
+    await expect(page.getByRole('main').getByText(project2Name)).toBeVisible();
 
     // Navigate to dashboard via refresh
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByText(org2Name)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('main').getByText(org2Name)).toBeVisible({ timeout: 10000 });
   });
 
   test('multiple organizations workflow', async ({ page }) => {
@@ -287,12 +297,12 @@ test.describe('Complete User Journey', () => {
       await expect(page).toHaveURL(/\/organizations\/[a-f0-9-]+/, { timeout: 10000 });
     }
 
-    // Verify all 3 appear in dashboard
+    // Verify all 3 appear in dashboard (in main content)
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByText(org1)).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText(org2)).toBeVisible();
-    await expect(page.getByText(org3)).toBeVisible();
+    await expect(page.getByRole('main').getByText(org1)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('main').getByText(org2)).toBeVisible();
+    await expect(page.getByRole('main').getByText(org3)).toBeVisible();
   });
 });

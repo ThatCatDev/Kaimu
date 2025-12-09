@@ -1,40 +1,22 @@
 import { test, expect } from '@playwright/test';
-
-// Run tests serially to ensure clean state
-test.describe.configure({ mode: 'serial' });
+import { setupTestEnvironment, randomId, login } from './helpers';
 
 test.describe('Organization Management', () => {
-  // Generate unique identifiers for this test run
-  const randomId = Math.random().toString(36).substring(2, 10);
-  const testUser = `org_e2e_${randomId}`;
-  const password = 'testpassword123';
 
-  test.beforeAll(async ({ browser }) => {
-    // Register a user for the organization tests
-    const page = await browser.newPage();
+  test('dashboard shows empty state when no organizations', async ({ page }) => {
+    // Register a fresh user without creating an organization
+    const testId = randomId();
+    const username = `org_empty_${testId}`;
+    const password = 'testpassword123';
+
     await page.goto('/register');
-    await page.waitForTimeout(500);
-
-    await page.fill('#username', testUser);
+    await page.waitForTimeout(300);
+    await page.fill('#username', username);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
-
     await expect(page).toHaveURL('/', { timeout: 10000 });
-    await page.close();
-  });
 
-  test.beforeEach(async ({ page }) => {
-    // Login before each test
-    await page.goto('/login');
-    await page.waitForTimeout(500);
-    await page.fill('#username', testUser);
-    await page.fill('#password', password);
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText(`Hello, ${testUser}`)).toBeVisible({ timeout: 10000 });
-  });
-
-  test('dashboard shows empty state when no organizations', async ({ page }) => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
@@ -44,6 +26,19 @@ test.describe('Organization Management', () => {
   });
 
   test('can navigate to create organization page from dashboard', async ({ page }) => {
+    // Register a fresh user
+    const testId = randomId();
+    const username = `org_nav_${testId}`;
+    const password = 'testpassword123';
+
+    await page.goto('/register');
+    await page.waitForTimeout(300);
+    await page.fill('#username', username);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
+
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
@@ -55,8 +50,21 @@ test.describe('Organization Management', () => {
   });
 
   test('create organization form shows validation error for empty name', async ({ page }) => {
+    // Register a fresh user
+    const testId = randomId();
+    const username = `org_valid_${testId}`;
+    const password = 'testpassword123';
+
+    await page.goto('/register');
+    await page.waitForTimeout(300);
+    await page.fill('#username', username);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
+
     await page.goto('/organizations/new');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
 
     // Try to submit without name
     await page.getByRole('button', { name: 'Create Organization' }).click();
@@ -66,10 +74,22 @@ test.describe('Organization Management', () => {
   });
 
   test('can create a new organization', async ({ page }) => {
-    const orgName = `Test Org ${randomId}`;
+    // Register a fresh user
+    const testId = randomId();
+    const username = `org_create_${testId}`;
+    const password = 'testpassword123';
+    const orgName = `Test Org ${testId}`;
+
+    await page.goto('/register');
+    await page.waitForTimeout(300);
+    await page.fill('#username', username);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
 
     await page.goto('/organizations/new');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
 
     await page.fill('#name', orgName);
     await page.fill('#description', 'A test organization for E2E testing');
@@ -84,11 +104,23 @@ test.describe('Organization Management', () => {
   });
 
   test('organization appears in dashboard after creation', async ({ page }) => {
-    const orgName = `Dashboard Org ${randomId}`;
+    // Register a fresh user
+    const testId = randomId();
+    const username = `org_dash_${testId}`;
+    const password = 'testpassword123';
+    const orgName = `Dashboard Org ${testId}`;
+
+    await page.goto('/register');
+    await page.waitForTimeout(300);
+    await page.fill('#username', username);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
 
     // Create an organization
     await page.goto('/organizations/new');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
     await page.fill('#name', orgName);
     await page.getByRole('button', { name: 'Create Organization' }).click();
 
@@ -99,16 +131,28 @@ test.describe('Organization Management', () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // Organization should be listed
-    await expect(page.getByText(orgName)).toBeVisible({ timeout: 10000 });
+    // Organization should be listed (in main content)
+    await expect(page.getByRole('main').getByText(orgName)).toBeVisible({ timeout: 10000 });
   });
 
   test('can view organization detail page', async ({ page }) => {
-    const orgName = `Detail Org ${randomId}`;
+    // Register a fresh user
+    const testId = randomId();
+    const username = `org_detail_${testId}`;
+    const password = 'testpassword123';
+    const orgName = `Detail Org ${testId}`;
+
+    await page.goto('/register');
+    await page.waitForTimeout(300);
+    await page.fill('#username', username);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
 
     // Create an organization
     await page.goto('/organizations/new');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
     await page.fill('#name', orgName);
     await page.fill('#description', 'Organization for detail page testing');
     await page.getByRole('button', { name: 'Create Organization' }).click();
@@ -122,27 +166,51 @@ test.describe('Organization Management', () => {
   });
 
   test('organization detail page shows empty projects state', async ({ page }) => {
-    const orgName = `Empty Projects Org ${randomId}`;
+    // Register a fresh user
+    const testId = randomId();
+    const username = `org_empty_proj_${testId}`;
+    const password = 'testpassword123';
+    const orgName = `Empty Projects Org ${testId}`;
+
+    await page.goto('/register');
+    await page.waitForTimeout(300);
+    await page.fill('#username', username);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
 
     // Create an organization
     await page.goto('/organizations/new');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
     await page.fill('#name', orgName);
     await page.getByRole('button', { name: 'Create Organization' }).click();
 
     await expect(page).toHaveURL(/\/organizations\/[a-f0-9-]+/, { timeout: 10000 });
 
-    // Should show "No projects" message
-    await expect(page.getByText('No projects')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole('link', { name: 'New Project' }).first()).toBeVisible();
+    // Should show "No projects" message (in main content, not sidebar)
+    await expect(page.getByRole('main').getByRole('heading', { name: 'No projects' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('main').getByRole('link', { name: 'New Project' })).toBeVisible();
   });
 
   test('can navigate to organization from dashboard', async ({ page }) => {
-    const orgName = `Navigate Org ${randomId}`;
+    // Register a fresh user
+    const testId = randomId();
+    const username = `org_nav_dash_${testId}`;
+    const password = 'testpassword123';
+    const orgName = `Navigate Org ${testId}`;
+
+    await page.goto('/register');
+    await page.waitForTimeout(300);
+    await page.fill('#username', username);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
 
     // Create an organization first
     await page.goto('/organizations/new');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
     await page.fill('#name', orgName);
     await page.getByRole('button', { name: 'Create Organization' }).click();
     await expect(page).toHaveURL(/\/organizations\/[a-f0-9-]+/, { timeout: 10000 });
@@ -151,8 +219,8 @@ test.describe('Organization Management', () => {
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
 
-    // Click on the organization card
-    await page.getByText(orgName).click();
+    // Click on the organization card (in main content)
+    await page.getByRole('main').getByText(orgName).click();
 
     // Should be on organization detail page
     await expect(page).toHaveURL(/\/organizations\/[a-f0-9-]+/);
@@ -160,8 +228,21 @@ test.describe('Organization Management', () => {
   });
 
   test('cancel button on create organization returns to dashboard', async ({ page }) => {
+    // Register a fresh user
+    const testId = randomId();
+    const username = `org_cancel_${testId}`;
+    const password = 'testpassword123';
+
+    await page.goto('/register');
+    await page.waitForTimeout(300);
+    await page.fill('#username', username);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
+
     await page.goto('/organizations/new');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(300);
 
     await page.getByRole('link', { name: 'Cancel' }).click();
 

@@ -1,8 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { getProject, deleteProject } from '../lib/api/projects';
+  import { getProject, deleteProject, updateProject } from '../lib/api/projects';
   import { getMe } from '../lib/api/auth';
   import { getBoards, createBoard, deleteBoard } from '../lib/api/boards';
+  import EditableTitle from './EditableTitle.svelte';
   import { ConfirmModal, Button, Input, Textarea } from './ui';
   import type { ProjectQuery, User, BoardsQuery } from '../lib/graphql/generated';
 
@@ -112,6 +113,12 @@
     boardToDelete = board;
     showDeleteBoardModal = true;
   }
+
+  async function handleRename(newName: string) {
+    if (!project) return;
+    const updated = await updateProject(projectId, { name: newName });
+    project = { ...project, name: updated.name };
+  }
 </script>
 
 {#if loading}
@@ -125,16 +132,18 @@
 {:else if project}
   <div class="space-y-8">
     <div>
-      <nav class="text-sm text-gray-500 mb-2">
-        <a href="/dashboard" class="hover:text-gray-700">Dashboard</a>
-        <span class="mx-2">/</span>
-        <a href={`/organizations/${project.organization.id}`} class="hover:text-gray-700">{project.organization.name}</a>
+      <div class="text-sm text-gray-500 mb-2">
+        <a href={`/organizations/${project.organization.id}`} class="hover:text-indigo-600 hover:underline">
+          {project.organization.name}
+        </a>
         <span class="mx-2">/</span>
         <span class="text-gray-900">{project.name}</span>
-      </nav>
+      </div>
       <div class="flex items-start justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900">{project.name}</h1>
+          <h1 class="text-2xl font-bold text-gray-900">
+            <EditableTitle value={project.name} onSave={handleRename} />
+          </h1>
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 mt-2">
             {project.key}
           </span>

@@ -34,6 +34,11 @@ func (r *mutationResolver) CreateOrganization(ctx context.Context, input model.C
 	return resolvers.CreateOrganization(ctx, r.OrganizationService, input)
 }
 
+// UpdateOrganization is the resolver for the updateOrganization field.
+func (r *mutationResolver) UpdateOrganization(ctx context.Context, input model.UpdateOrganizationInput) (*model.Organization, error) {
+	return resolvers.UpdateOrganization(ctx, r.OrganizationService, input)
+}
+
 // DeleteOrganization is the resolver for the deleteOrganization field.
 func (r *mutationResolver) DeleteOrganization(ctx context.Context, id string) (bool, error) {
 	return resolvers.DeleteOrganization(ctx, r.OrganizationService, id)
@@ -42,6 +47,11 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, id string) (b
 // CreateProject is the resolver for the createProject field.
 func (r *mutationResolver) CreateProject(ctx context.Context, input model.CreateProjectInput) (*model.Project, error) {
 	return resolvers.CreateProject(ctx, r.OrganizationService, r.ProjectService, r.BoardService, input)
+}
+
+// UpdateProject is the resolver for the updateProject field.
+func (r *mutationResolver) UpdateProject(ctx context.Context, input model.UpdateProjectInput) (*model.Project, error) {
+	return resolvers.UpdateProject(ctx, r.OrganizationService, r.ProjectService, input)
 }
 
 // DeleteProject is the resolver for the deleteProject field.
@@ -136,7 +146,7 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 
 // Organizations is the resolver for the organizations field.
 func (r *queryResolver) Organizations(ctx context.Context) ([]*model.Organization, error) {
-	return resolvers.Organizations(ctx, r.OrganizationService)
+	return resolvers.Organizations(ctx, r.OrganizationService, r.ProjectService, r.BoardService)
 }
 
 // Organization is the resolver for the organization field.

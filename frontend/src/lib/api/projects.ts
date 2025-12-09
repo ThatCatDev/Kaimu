@@ -2,6 +2,8 @@ import { graphql } from './client';
 import type {
   CreateProjectMutation,
   CreateProjectMutationVariables,
+  UpdateProjectMutation,
+  UpdateProjectMutationVariables,
   DeleteProjectMutation,
   DeleteProjectMutationVariables,
   ProjectQuery,
@@ -9,6 +11,7 @@ import type {
 } from '../graphql/generated';
 
 type CreatedProject = CreateProjectMutation['createProject'];
+type UpdatedProject = UpdateProjectMutation['updateProject'];
 type ProjectWithOrg = NonNullable<ProjectQuery['project']>;
 
 const CREATE_PROJECT_MUTATION = `
@@ -59,6 +62,28 @@ export async function getProject(id: string): Promise<ProjectWithOrg | null> {
     id,
   } as ProjectQueryVariables);
   return data.project ?? null;
+}
+
+const UPDATE_PROJECT_MUTATION = `
+  mutation UpdateProject($input: UpdateProjectInput!) {
+    updateProject(input: $input) {
+      id
+      name
+      key
+      description
+      updatedAt
+    }
+  }
+`;
+
+export async function updateProject(
+  id: string,
+  updates: { name?: string; key?: string; description?: string }
+): Promise<UpdatedProject> {
+  const data = await graphql<UpdateProjectMutation>(UPDATE_PROJECT_MUTATION, {
+    input: { id, ...updates },
+  } as UpdateProjectMutationVariables);
+  return data.updateProject;
 }
 
 const DELETE_PROJECT_MUTATION = `

@@ -2,6 +2,8 @@ import { graphql } from './client';
 import type {
   CreateOrganizationMutation,
   CreateOrganizationMutationVariables,
+  UpdateOrganizationMutation,
+  UpdateOrganizationMutationVariables,
   DeleteOrganizationMutation,
   DeleteOrganizationMutationVariables,
   OrganizationsQuery,
@@ -10,6 +12,7 @@ import type {
 } from '../graphql/generated';
 
 type CreatedOrganization = CreateOrganizationMutation['createOrganization'];
+type UpdatedOrganization = UpdateOrganizationMutation['updateOrganization'];
 type OrganizationListItem = OrganizationsQuery['organizations'][number];
 type OrganizationWithProjects = NonNullable<OrganizationQuery['organization']>;
 
@@ -35,6 +38,16 @@ const ORGANIZATIONS_QUERY = `
       description
       createdAt
       updatedAt
+      projects {
+        id
+        name
+        key
+        boards {
+          id
+          name
+          isDefault
+        }
+      }
     }
   }
 `;
@@ -83,6 +96,31 @@ export async function getOrganization(id: string): Promise<OrganizationWithProje
     id,
   } as OrganizationQueryVariables);
   return data.organization ?? null;
+}
+
+const UPDATE_ORGANIZATION_MUTATION = `
+  mutation UpdateOrganization($input: UpdateOrganizationInput!) {
+    updateOrganization(input: $input) {
+      id
+      name
+      slug
+      description
+      updatedAt
+    }
+  }
+`;
+
+export async function updateOrganization(
+  id: string,
+  updates: { name?: string; description?: string }
+): Promise<UpdatedOrganization> {
+  const data = await graphql<UpdateOrganizationMutation>(
+    UPDATE_ORGANIZATION_MUTATION,
+    {
+      input: { id, ...updates },
+    } as UpdateOrganizationMutationVariables
+  );
+  return data.updateOrganization;
 }
 
 const DELETE_ORGANIZATION_MUTATION = `

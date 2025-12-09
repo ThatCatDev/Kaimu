@@ -17,6 +17,16 @@ query Organizations {
     description
     createdAt
     updatedAt
+    projects {
+      id
+      name
+      key
+      boards {
+        id
+        name
+        isDefault
+      }
+    }
   }
 }
 
@@ -36,6 +46,16 @@ query Organization($id: ID!) {
       createdAt
       updatedAt
     }
+  }
+}
+
+mutation UpdateOrganization($input: UpdateOrganizationInput!) {
+  updateOrganization(input: $input) {
+    id
+    name
+    slug
+    description
+    updatedAt
   }
 }
 

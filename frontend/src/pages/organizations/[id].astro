@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import Nav from '../../components/Nav.svelte';
+import AppShell from '../../components/AppShell.svelte';
 import OrganizationDetail from '../../components/OrganizationDetail.svelte';
 
 export const prerender = false;
@@ -9,9 +9,9 @@ const { id } = Astro.params;
 ---
 
 <Layout title="Organization - Pulse">
-  <Nav client:load />
-
-  <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <OrganizationDetail client:load organizationId={id!} />
-  </main>
+  <AppShell client:load currentPath={`/organizations/${id}`}>
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <OrganizationDetail client:load organizationId={id!} />
+    </div>
+  </AppShell>
 </Layout>

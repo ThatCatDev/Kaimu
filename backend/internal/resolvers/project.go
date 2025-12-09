@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/thatcatdev/pulse-backend/graph/model"
 	"github.com/thatcatdev/pulse-backend/http/middleware"
+	"github.com/thatcatdev/pulse-backend/internal/db/repositories/board"
 	"github.com/thatcatdev/pulse-backend/internal/db/repositories/project"
 	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
 	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
@@ -109,6 +110,58 @@ func ProjectOrganization(ctx context.Context, projSvc projectService.Service, pr
 	return organizationToModel(org), nil
 }
 
+// UpdateProject updates a project
+func UpdateProject(ctx context.Context, orgSvc orgService.Service, projSvc projectService.Service, input model.UpdateProjectInput) (*model.Project, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return nil, ErrUnauthorized
+	}
+
+	projID, err := uuid.Parse(input.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get current project
+	proj, err := projSvc.GetProject(ctx, projID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if user is a member of the organization
+	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isMember {
+		return nil, ErrUnauthorized
+	}
+
+	// Apply updates
+	if input.Name != nil {
+		proj.Name = *input.Name
+	}
+	if input.Key != nil {
+		proj.Key = *input.Key
+	}
+	if input.Description != nil {
+		proj.Description = *input.Description
+	}
+
+	updated, err := projSvc.UpdateProject(ctx, proj)
+	if err != nil {
+		return nil, err
+	}
+
+	// Fetch the organization for the project
+	org, err := projSvc.GetOrganization(ctx, updated.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return projectToModelWithOrg(updated, organizationToModel(org)), nil
+}
+
 // DeleteProject deletes a project by ID
 func DeleteProject(ctx context.Context, orgSvc orgService.Service, projSvc projectService.Service, id string) (bool, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
@@ -173,5 +226,38 @@ func projectToModelWithOrg(proj *project.Project, org *model.Organization) *mode
 		Description:  description,
 		CreatedAt:    proj.CreatedAt,
 		UpdatedAt:    proj.UpdatedAt,
+	}
+}
+
+func projectToModelWithBoards(proj *project.Project, boards []*board.Board) *model.Project {
+	var description *string
+	if proj.Description != "" {
+		description = &proj.Description
+	}
+
+	boardModels := make([]*model.Board, len(boards))
+	for i, b := range boards {
+		var boardDesc *string
+		if b.Description != "" {
+			boardDesc = &b.Description
+		}
+		boardModels[i] = &model.Board{
+			ID:          b.ID.String(),
+			Name:        b.Name,
+			Description: boardDesc,
+			IsDefault:   b.IsDefault,
+			CreatedAt:   b.CreatedAt,
+			UpdatedAt:   b.UpdatedAt,
+		}
+	}
+
+	return &model.Project{
+		ID:          proj.ID.String(),
+		Name:        proj.Name,
+		Key:         proj.Key,
+		Description: description,
+		Boards:      boardModels,
+		CreatedAt:   proj.CreatedAt,
+		UpdatedAt:   proj.UpdatedAt,
 	}
 }

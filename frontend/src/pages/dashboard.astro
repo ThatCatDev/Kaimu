@@ -1,13 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Nav from '../components/Nav.svelte';
+import AppShell from '../components/AppShell.svelte';
 import Dashboard from '../components/Dashboard.svelte';
 ---
 
 <Layout title="Dashboard - Pulse">
-  <Nav client:load />
-
-  <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-    <Dashboard client:load />
-  </main>
+  <AppShell client:load currentPath="/dashboard">
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <Dashboard client:load />
+    </div>
+  </AppShell>
 </Layout>

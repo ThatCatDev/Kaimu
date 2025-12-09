@@ -1,108 +1,7 @@
 import { test, expect } from '@playwright/test';
-
-// Run tests serially to ensure clean state
-test.describe.configure({ mode: 'serial' });
-
-// Generate a random uppercase letter string (A-Z only, for project keys)
-function randomLetters(length: number): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  let result = '';
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-}
+import { setupTestEnvironment, navigateToBoard, getColumn, createCard, clickAddCardInColumn } from './helpers';
 
 test.describe('Kanban Drag and Drop', () => {
-  // Generate unique identifiers for this test run
-  const randomId = Math.random().toString(36).substring(2, 10);
-  const testUser = `dnd_e2e_${randomId}`;
-  const password = 'testpassword123';
-  let organizationId: string;
-  let projectId: string;
-  const orgName = `DnD Test Org ${randomId}`;
-  const projectName = `DnD Test Project ${randomId}`;
-  const projectKey = `DN${randomLetters(4)}`;
-
-  test.beforeAll(async ({ browser }) => {
-    // Register a user, create an organization, and create a project
-    const page = await browser.newPage();
-
-    // Register
-    await page.goto('/register');
-    await page.waitForTimeout(500);
-    await page.fill('#username', testUser);
-    await page.fill('#password', password);
-    await page.fill('#confirmPassword', password);
-    await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
-
-    // Create an organization
-    await page.goto('/organizations/new');
-    await page.waitForTimeout(500);
-    await page.fill('#name', orgName);
-    await page.getByRole('button', { name: 'Create Organization' }).click();
-
-    // Extract organization ID from URL
-    await expect(page).toHaveURL(/\/organizations\/([a-f0-9-]+)/, { timeout: 10000 });
-    const orgUrl = page.url();
-    const orgMatch = orgUrl.match(/\/organizations\/([a-f0-9-]+)/);
-    if (orgMatch) {
-      organizationId = orgMatch[1];
-    }
-
-    // Create a project
-    await page.goto(`/organizations/${organizationId}/projects/new`);
-    await page.waitForTimeout(500);
-    await page.fill('#name', projectName);
-    await page.fill('#key', projectKey);
-    await page.getByRole('button', { name: 'Create Project' }).click();
-
-    // Extract project ID from URL
-    await expect(page).toHaveURL(/\/projects\/([a-f0-9-]+)/, { timeout: 10000 });
-    const projectUrl = page.url();
-    const projectMatch = projectUrl.match(/\/projects\/([a-f0-9-]+)/);
-    if (projectMatch) {
-      projectId = projectMatch[1];
-    }
-
-    await page.close();
-  });
-
-  test.beforeEach(async ({ page }) => {
-    // Login before each test
-    await page.goto('/login');
-    await page.waitForTimeout(500);
-    await page.fill('#username', testUser);
-    await page.fill('#password', password);
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByText(`Hello, ${testUser}`)).toBeVisible({ timeout: 10000 });
-  });
-
-  // Helper function to navigate to the board
-  async function navigateToBoard(page: any) {
-    await page.goto(`/projects/${projectId}`);
-    await page.waitForLoadState('networkidle');
-    await page.getByRole('link', { name: /Kanban Board/ }).click();
-    await expect(page).toHaveURL(/\/projects\/[a-f0-9-]+\/board\/[a-f0-9-]+/, { timeout: 10000 });
-    await expect(page.getByRole('heading', { name: 'Todo', exact: true })).toBeVisible({ timeout: 10000 });
-  }
-
-  // Helper function to get a column by name
-  function getColumn(page: any, columnName: string) {
-    return page.locator('.w-72').filter({ has: page.locator(`h3:has-text("${columnName}")`) });
-  }
-
-  // Helper function to create a card in a specific column
-  async function createCard(page: any, columnName: string, cardTitle: string) {
-    await getColumn(page, columnName).getByRole('button', { name: 'Add card' }).click();
-    await expect(page.getByRole('heading', { name: 'Create Card' })).toBeVisible({ timeout: 5000 });
-    await page.fill('#title', cardTitle);
-    await page.getByRole('button', { name: 'Create Card' }).click();
-    await expect(page.getByRole('heading', { name: 'Create Card' })).not.toBeVisible({ timeout: 5000 });
-    await expect(page.getByText(cardTitle)).toBeVisible({ timeout: 5000 });
-  }
-
   // Helper to perform drag and drop using Playwright's built-in method
   async function dragCardToColumn(page: any, cardTitle: string, targetColumnName: string) {
     const card = page.getByText(cardTitle);
@@ -116,30 +15,32 @@ test.describe('Kanban Drag and Drop', () => {
   }
 
   test('can create cards in different columns for drag test setup', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create cards in each column
-    await createCard(page, 'Todo', `Todo DnD Card ${randomId}`);
-    await createCard(page, 'In Progress', `InProgress DnD Card ${randomId}`);
-    await createCard(page, 'Done', `Done DnD Card ${randomId}`);
+    await createCard(page, 'Todo', `Todo DnD Card ${ctx.testId}`);
+    await createCard(page, 'In Progress', `InProgress DnD Card ${ctx.testId}`);
+    await createCard(page, 'Done', `Done DnD Card ${ctx.testId}`);
 
     // Verify all cards are in their respective columns
     const todoColumn = getColumn(page, 'Todo');
     const inProgressColumn = getColumn(page, 'In Progress');
     const doneColumn = getColumn(page, 'Done');
 
-    await expect(todoColumn.getByText(`Todo DnD Card ${randomId}`)).toBeVisible();
-    await expect(inProgressColumn.getByText(`InProgress DnD Card ${randomId}`)).toBeVisible();
-    await expect(doneColumn.getByText(`Done DnD Card ${randomId}`)).toBeVisible();
+    await expect(todoColumn.getByText(`Todo DnD Card ${ctx.testId}`)).toBeVisible();
+    await expect(inProgressColumn.getByText(`InProgress DnD Card ${ctx.testId}`)).toBeVisible();
+    await expect(doneColumn.getByText(`Done DnD Card ${ctx.testId}`)).toBeVisible();
   });
 
   // Skip drag tests - Playwright's dragTo doesn't fully trigger svelte-dnd-action events
   // These would need custom mouse event simulation to work properly
   test.skip('drag card from Todo to In Progress', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create a card in Todo
-    const cardTitle = `Drag Test ${randomId} 1`;
+    const cardTitle = `Drag Test ${ctx.testId} 1`;
     await createCard(page, 'Todo', cardTitle);
 
     // Verify card is in Todo
@@ -158,10 +59,11 @@ test.describe('Kanban Drag and Drop', () => {
   });
 
   test.skip('drag card from In Progress to Done', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create a card in In Progress
-    const cardTitle = `Drag Test ${randomId} 2`;
+    const cardTitle = `Drag Test ${ctx.testId} 2`;
     await createCard(page, 'In Progress', cardTitle);
 
     // Drag to Done
@@ -176,10 +78,11 @@ test.describe('Kanban Drag and Drop', () => {
   });
 
   test.skip('drag card from Done back to Todo', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create a card in Done
-    const cardTitle = `Drag Test ${randomId} 3`;
+    const cardTitle = `Drag Test ${ctx.testId} 3`;
     await createCard(page, 'Done', cardTitle);
 
     // Drag back to Todo
@@ -194,61 +97,66 @@ test.describe('Kanban Drag and Drop', () => {
   });
 
   test.skip('drag card preserves card data after move', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create a card with description and priority
     await getColumn(page, 'Todo').getByRole('button', { name: 'Add card' }).click();
-    await page.fill('#title', `Preserve Data Card ${randomId}`);
+    await page.fill('#title', `Preserve Data Card ${ctx.testId}`);
     await page.fill('#description', 'This description should persist');
-    await page.selectOption('#priority', 'HIGH');
+    // Select priority using Bits UI Select component
+    await page.locator('#priority').click();
+    await page.getByRole('option', { name: 'High' }).click();
     await page.getByRole('button', { name: 'Create Card' }).click();
-    await expect(page.getByText(`Preserve Data Card ${randomId}`)).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(`Preserve Data Card ${ctx.testId}`)).toBeVisible({ timeout: 5000 });
 
     // Drag to In Progress
-    await dragCardToColumn(page, `Preserve Data Card ${randomId}`, 'In Progress');
+    await dragCardToColumn(page, `Preserve Data Card ${ctx.testId}`, 'In Progress');
     await page.waitForTimeout(1000);
 
     // Open card detail and verify data is preserved
     const inProgressColumn = getColumn(page, 'In Progress');
-    await inProgressColumn.getByText(`Preserve Data Card ${randomId}`).click();
+    await inProgressColumn.getByText(`Preserve Data Card ${ctx.testId}`).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
-    // Verify description and priority
-    await expect(page.locator('#description')).toHaveValue('This description should persist');
-    await expect(page.locator('#priority')).toHaveValue('HIGH');
+    // Verify description and priority - check textarea value and priority trigger text
+    await expect(page.locator('#panel-description')).toHaveValue('This description should persist');
+    await expect(page.locator('#panel-priority')).toContainText('High');
 
     await page.getByRole('button', { name: 'Close' }).click();
   });
 
   test('multiple cards can be reordered within same column', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create multiple cards in Todo
-    await createCard(page, 'Todo', `Reorder A ${randomId}`);
-    await createCard(page, 'Todo', `Reorder B ${randomId}`);
-    await createCard(page, 'Todo', `Reorder C ${randomId}`);
+    await createCard(page, 'Todo', `Reorder A ${ctx.testId}`);
+    await createCard(page, 'Todo', `Reorder B ${ctx.testId}`);
+    await createCard(page, 'Todo', `Reorder C ${ctx.testId}`);
 
     // All cards should be visible in Todo
     const todoColumn = getColumn(page, 'Todo');
-    await expect(todoColumn.getByText(`Reorder A ${randomId}`)).toBeVisible();
-    await expect(todoColumn.getByText(`Reorder B ${randomId}`)).toBeVisible();
-    await expect(todoColumn.getByText(`Reorder C ${randomId}`)).toBeVisible();
+    await expect(todoColumn.getByText(`Reorder A ${ctx.testId}`)).toBeVisible();
+    await expect(todoColumn.getByText(`Reorder B ${ctx.testId}`)).toBeVisible();
+    await expect(todoColumn.getByText(`Reorder C ${ctx.testId}`)).toBeVisible();
 
     // The cards exist in the column - reorder within column is more complex to test
     // as it requires precise positioning. We'll verify the cards can be dragged.
-    const cardA = page.getByText(`Reorder A ${randomId}`);
+    const cardA = page.getByText(`Reorder A ${ctx.testId}`);
     await expect(cardA).toBeVisible();
 
     // Verify card element is present (cards are draggable divs with role="button")
-    const cardElement = todoColumn.locator('div[role="button"]').filter({ hasText: `Reorder A ${randomId}` });
+    const cardElement = todoColumn.locator('div[role="button"]').filter({ hasText: `Reorder A ${ctx.testId}` });
     await expect(cardElement).toBeVisible();
   });
 
   test.skip('card shows in correct column after page refresh', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create a card in Todo
-    const cardTitle = `Persist After Refresh ${randomId}`;
+    const cardTitle = `Persist After Refresh ${ctx.testId}`;
     await createCard(page, 'Todo', cardTitle);
 
     // Drag to Done
@@ -265,10 +173,11 @@ test.describe('Kanban Drag and Drop', () => {
   });
 
   test.skip('column card count updates after drag', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create a card in Todo
-    const cardTitle = `Count Update ${randomId}`;
+    const cardTitle = `Count Update ${ctx.testId}`;
     await createCard(page, 'Todo', cardTitle);
 
     // Get column headers for count verification
@@ -287,10 +196,11 @@ test.describe('Kanban Drag and Drop', () => {
   });
 
   test.skip('drag interaction with card detail modal', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create a card
-    const cardTitle = `Modal Interaction ${randomId}`;
+    const cardTitle = `Modal Interaction ${ctx.testId}`;
     await createCard(page, 'Todo', cardTitle);
 
     // Click to open detail modal
@@ -310,11 +220,12 @@ test.describe('Kanban Drag and Drop', () => {
   });
 
   test.skip('drag multiple cards from same column to different columns', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create cards in Todo
-    const card1 = `Multi Drag 1 ${randomId}`;
-    const card2 = `Multi Drag 2 ${randomId}`;
+    const card1 = `Multi Drag 1 ${ctx.testId}`;
+    const card2 = `Multi Drag 2 ${ctx.testId}`;
     await createCard(page, 'Todo', card1);
     await createCard(page, 'Todo', card2);
 
@@ -335,10 +246,11 @@ test.describe('Kanban Drag and Drop', () => {
   });
 
   test.skip('drag card through multiple columns sequentially', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create a card in Todo
-    const cardTitle = `Sequential Drag ${randomId}`;
+    const cardTitle = `Sequential Drag ${ctx.testId}`;
     await createCard(page, 'Todo', cardTitle);
 
     // Drag through each column: Todo -> In Progress -> Done -> Todo
@@ -362,10 +274,11 @@ test.describe('Kanban Drag and Drop', () => {
   });
 
   test('keyboard navigation on cards', async ({ page }) => {
-    await navigateToBoard(page);
+    const ctx = await setupTestEnvironment(page, 'dnd');
+    await navigateToBoard(page, ctx.projectId);
 
     // Create a card
-    const cardTitle = `Keyboard Nav ${randomId}`;
+    const cardTitle = `Keyboard Nav ${ctx.testId}`;
     await createCard(page, 'Todo', cardTitle);
 
     // Focus on the card element (div with role="button" contains h4 with card title)
