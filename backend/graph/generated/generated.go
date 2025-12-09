@@ -41,10 +41,10 @@ type ResolverRoot interface {
 	Board() BoardResolver
 	BoardColumn() BoardColumnResolver
 	Card() CardResolver
-	Label() LabelResolver
 	Mutation() MutationResolver
 	Project() ProjectResolver
 	Query() QueryResolver
+	Tag() TagResolver
 }
 
 type DirectiveRoot struct {
@@ -91,35 +91,26 @@ type ComplexityRoot struct {
 		Description func(childComplexity int) int
 		DueDate     func(childComplexity int) int
 		ID          func(childComplexity int) int
-		Labels      func(childComplexity int) int
 		Position    func(childComplexity int) int
 		Priority    func(childComplexity int) int
+		Tags        func(childComplexity int) int
 		Title       func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
-	}
-
-	Label struct {
-		Color       func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		Description func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Project     func(childComplexity int) int
 	}
 
 	Mutation struct {
 		CreateBoard            func(childComplexity int, input model.CreateBoardInput) int
 		CreateCard             func(childComplexity int, input model.CreateCardInput) int
 		CreateColumn           func(childComplexity int, input model.CreateColumnInput) int
-		CreateLabel            func(childComplexity int, input model.CreateLabelInput) int
 		CreateOrganization     func(childComplexity int, input model.CreateOrganizationInput) int
 		CreateProject          func(childComplexity int, input model.CreateProjectInput) int
+		CreateTag              func(childComplexity int, input model.CreateTagInput) int
 		DeleteBoard            func(childComplexity int, id string) int
 		DeleteCard             func(childComplexity int, id string) int
 		DeleteColumn           func(childComplexity int, id string) int
-		DeleteLabel            func(childComplexity int, id string) int
 		DeleteOrganization     func(childComplexity int, id string) int
 		DeleteProject          func(childComplexity int, id string) int
+		DeleteTag              func(childComplexity int, id string) int
 		Login                  func(childComplexity int, input model.LoginInput) int
 		Logout                 func(childComplexity int) int
 		MoveCard               func(childComplexity int, input model.MoveCardInput) int
@@ -129,7 +120,7 @@ type ComplexityRoot struct {
 		UpdateBoard            func(childComplexity int, input model.UpdateBoardInput) int
 		UpdateCard             func(childComplexity int, input model.UpdateCardInput) int
 		UpdateColumn           func(childComplexity int, input model.UpdateColumnInput) int
-		UpdateLabel            func(childComplexity int, input model.UpdateLabelInput) int
+		UpdateTag              func(childComplexity int, input model.UpdateTagInput) int
 	}
 
 	Organization struct {
@@ -158,9 +149,9 @@ type ComplexityRoot struct {
 		Description  func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Key          func(childComplexity int) int
-		Labels       func(childComplexity int) int
 		Name         func(childComplexity int) int
 		Organization func(childComplexity int) int
+		Tags         func(childComplexity int) int
 		UpdatedAt    func(childComplexity int) int
 	}
 
@@ -169,13 +160,22 @@ type ComplexityRoot struct {
 		Boards             func(childComplexity int, projectID string) int
 		Card               func(childComplexity int, id string) int
 		HelloWorld         func(childComplexity int) int
-		Labels             func(childComplexity int, projectID string) int
 		Me                 func(childComplexity int) int
 		MyCards            func(childComplexity int) int
 		Organization       func(childComplexity int, id string) int
 		Organizations      func(childComplexity int) int
 		Project            func(childComplexity int, id string) int
+		Tags               func(childComplexity int, projectID string) int
 		__resolve__service func(childComplexity int) int
+	}
+
+	Tag struct {
+		Color       func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		Description func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Name        func(childComplexity int) int
+		Project     func(childComplexity int) int
 	}
 
 	User struct {
@@ -204,12 +204,9 @@ type CardResolver interface {
 	Board(ctx context.Context, obj *model.Card) (*model.Board, error)
 
 	Assignee(ctx context.Context, obj *model.Card) (*model.User, error)
-	Labels(ctx context.Context, obj *model.Card) ([]*model.Label, error)
+	Tags(ctx context.Context, obj *model.Card) ([]*model.Tag, error)
 
 	CreatedBy(ctx context.Context, obj *model.Card) (*model.User, error)
-}
-type LabelResolver interface {
-	Project(ctx context.Context, obj *model.Label) (*model.Project, error)
 }
 type MutationResolver interface {
 	Register(ctx context.Context, input model.RegisterInput) (*model.AuthPayload, error)
@@ -231,14 +228,14 @@ type MutationResolver interface {
 	UpdateCard(ctx context.Context, input model.UpdateCardInput) (*model.Card, error)
 	MoveCard(ctx context.Context, input model.MoveCardInput) (*model.Card, error)
 	DeleteCard(ctx context.Context, id string) (bool, error)
-	CreateLabel(ctx context.Context, input model.CreateLabelInput) (*model.Label, error)
-	UpdateLabel(ctx context.Context, input model.UpdateLabelInput) (*model.Label, error)
-	DeleteLabel(ctx context.Context, id string) (bool, error)
+	CreateTag(ctx context.Context, input model.CreateTagInput) (*model.Tag, error)
+	UpdateTag(ctx context.Context, input model.UpdateTagInput) (*model.Tag, error)
+	DeleteTag(ctx context.Context, id string) (bool, error)
 }
 type ProjectResolver interface {
 	Boards(ctx context.Context, obj *model.Project) ([]*model.Board, error)
 	DefaultBoard(ctx context.Context, obj *model.Project) (*model.Board, error)
-	Labels(ctx context.Context, obj *model.Project) ([]*model.Label, error)
+	Tags(ctx context.Context, obj *model.Project) ([]*model.Tag, error)
 }
 type QueryResolver interface {
 	HelloWorld(ctx context.Context) (string, error)
@@ -250,7 +247,10 @@ type QueryResolver interface {
 	Boards(ctx context.Context, projectID string) ([]*model.Board, error)
 	Card(ctx context.Context, id string) (*model.Card, error)
 	MyCards(ctx context.Context) ([]*model.Card, error)
-	Labels(ctx context.Context, projectID string) ([]*model.Label, error)
+	Tags(ctx context.Context, projectID string) ([]*model.Tag, error)
+}
+type TagResolver interface {
+	Project(ctx context.Context, obj *model.Tag) (*model.Project, error)
 }
 
 type executableSchema struct {
@@ -464,13 +464,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Card.ID(childComplexity), true
 
-	case "Card.labels":
-		if e.complexity.Card.Labels == nil {
-			break
-		}
-
-		return e.complexity.Card.Labels(childComplexity), true
-
 	case "Card.position":
 		if e.complexity.Card.Position == nil {
 			break
@@ -485,6 +478,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Card.Priority(childComplexity), true
 
+	case "Card.tags":
+		if e.complexity.Card.Tags == nil {
+			break
+		}
+
+		return e.complexity.Card.Tags(childComplexity), true
+
 	case "Card.title":
 		if e.complexity.Card.Title == nil {
 			break
@@ -498,48 +498,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Card.UpdatedAt(childComplexity), true
-
-	case "Label.color":
-		if e.complexity.Label.Color == nil {
-			break
-		}
-
-		return e.complexity.Label.Color(childComplexity), true
-
-	case "Label.createdAt":
-		if e.complexity.Label.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.Label.CreatedAt(childComplexity), true
-
-	case "Label.description":
-		if e.complexity.Label.Description == nil {
-			break
-		}
-
-		return e.complexity.Label.Description(childComplexity), true
-
-	case "Label.id":
-		if e.complexity.Label.ID == nil {
-			break
-		}
-
-		return e.complexity.Label.ID(childComplexity), true
-
-	case "Label.name":
-		if e.complexity.Label.Name == nil {
-			break
-		}
-
-		return e.complexity.Label.Name(childComplexity), true
-
-	case "Label.project":
-		if e.complexity.Label.Project == nil {
-			break
-		}
-
-		return e.complexity.Label.Project(childComplexity), true
 
 	case "Mutation.createBoard":
 		if e.complexity.Mutation.CreateBoard == nil {
@@ -577,18 +535,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateColumn(childComplexity, args["input"].(model.CreateColumnInput)), true
 
-	case "Mutation.createLabel":
-		if e.complexity.Mutation.CreateLabel == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createLabel_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateLabel(childComplexity, args["input"].(model.CreateLabelInput)), true
-
 	case "Mutation.createOrganization":
 		if e.complexity.Mutation.CreateOrganization == nil {
 			break
@@ -612,6 +558,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateProject(childComplexity, args["input"].(model.CreateProjectInput)), true
+
+	case "Mutation.createTag":
+		if e.complexity.Mutation.CreateTag == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createTag_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateTag(childComplexity, args["input"].(model.CreateTagInput)), true
 
 	case "Mutation.deleteBoard":
 		if e.complexity.Mutation.DeleteBoard == nil {
@@ -649,18 +607,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteColumn(childComplexity, args["id"].(string)), true
 
-	case "Mutation.deleteLabel":
-		if e.complexity.Mutation.DeleteLabel == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_deleteLabel_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.DeleteLabel(childComplexity, args["id"].(string)), true
-
 	case "Mutation.deleteOrganization":
 		if e.complexity.Mutation.DeleteOrganization == nil {
 			break
@@ -684,6 +630,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteProject(childComplexity, args["id"].(string)), true
+
+	case "Mutation.deleteTag":
+		if e.complexity.Mutation.DeleteTag == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteTag_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteTag(childComplexity, args["id"].(string)), true
 
 	case "Mutation.login":
 		if e.complexity.Mutation.Login == nil {
@@ -788,17 +746,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateColumn(childComplexity, args["input"].(model.UpdateColumnInput)), true
 
-	case "Mutation.updateLabel":
-		if e.complexity.Mutation.UpdateLabel == nil {
+	case "Mutation.updateTag":
+		if e.complexity.Mutation.UpdateTag == nil {
 			break
 		}
 
-		args, err := ec.field_Mutation_updateLabel_args(context.TODO(), rawArgs)
+		args, err := ec.field_Mutation_updateTag_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateLabel(childComplexity, args["input"].(model.UpdateLabelInput)), true
+		return e.complexity.Mutation.UpdateTag(childComplexity, args["input"].(model.UpdateTagInput)), true
 
 	case "Organization.createdAt":
 		if e.complexity.Organization.CreatedAt == nil {
@@ -933,13 +891,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.Key(childComplexity), true
 
-	case "Project.labels":
-		if e.complexity.Project.Labels == nil {
-			break
-		}
-
-		return e.complexity.Project.Labels(childComplexity), true
-
 	case "Project.name":
 		if e.complexity.Project.Name == nil {
 			break
@@ -953,6 +904,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Project.Organization(childComplexity), true
+
+	case "Project.tags":
+		if e.complexity.Project.Tags == nil {
+			break
+		}
+
+		return e.complexity.Project.Tags(childComplexity), true
 
 	case "Project.updatedAt":
 		if e.complexity.Project.UpdatedAt == nil {
@@ -1004,18 +962,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.HelloWorld(childComplexity), true
 
-	case "Query.labels":
-		if e.complexity.Query.Labels == nil {
-			break
-		}
-
-		args, err := ec.field_Query_labels_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.Labels(childComplexity, args["projectId"].(string)), true
-
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
 			break
@@ -1061,12 +1007,66 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Project(childComplexity, args["id"].(string)), true
 
+	case "Query.tags":
+		if e.complexity.Query.Tags == nil {
+			break
+		}
+
+		args, err := ec.field_Query_tags_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Tags(childComplexity, args["projectId"].(string)), true
+
 	case "Query._service":
 		if e.complexity.Query.__resolve__service == nil {
 			break
 		}
 
 		return e.complexity.Query.__resolve__service(childComplexity), true
+
+	case "Tag.color":
+		if e.complexity.Tag.Color == nil {
+			break
+		}
+
+		return e.complexity.Tag.Color(childComplexity), true
+
+	case "Tag.createdAt":
+		if e.complexity.Tag.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Tag.CreatedAt(childComplexity), true
+
+	case "Tag.description":
+		if e.complexity.Tag.Description == nil {
+			break
+		}
+
+		return e.complexity.Tag.Description(childComplexity), true
+
+	case "Tag.id":
+		if e.complexity.Tag.ID == nil {
+			break
+		}
+
+		return e.complexity.Tag.ID(childComplexity), true
+
+	case "Tag.name":
+		if e.complexity.Tag.Name == nil {
+			break
+		}
+
+		return e.complexity.Tag.Name(childComplexity), true
+
+	case "Tag.project":
+		if e.complexity.Tag.Project == nil {
+			break
+		}
+
+		return e.complexity.Tag.Project(childComplexity), true
 
 	case "User.createdAt":
 		if e.complexity.User.CreatedAt == nil {
@@ -1107,9 +1107,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateBoardInput,
 		ec.unmarshalInputCreateCardInput,
 		ec.unmarshalInputCreateColumnInput,
-		ec.unmarshalInputCreateLabelInput,
 		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreateProjectInput,
+		ec.unmarshalInputCreateTagInput,
 		ec.unmarshalInputLoginInput,
 		ec.unmarshalInputMoveCardInput,
 		ec.unmarshalInputRegisterInput,
@@ -1117,7 +1117,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateBoardInput,
 		ec.unmarshalInputUpdateCardInput,
 		ec.unmarshalInputUpdateColumnInput,
-		ec.unmarshalInputUpdateLabelInput,
+		ec.unmarshalInputUpdateTagInput,
 	)
 	first := true
 
@@ -1269,8 +1269,8 @@ scalar Date
     card(id: ID!): Card
     "Get all cards assigned to the current user"
     myCards: [Card!]!
-    "Get all labels for a project"
-    labels(projectId: ID!): [Label!]!
+    "Get all tags for a project"
+    tags(projectId: ID!): [Tag!]!
 }
 
 type Mutation {
@@ -1316,12 +1316,12 @@ type Mutation {
     "Delete a card"
     deleteCard(id: ID!): Boolean!
 
-    "Create a new label"
-    createLabel(input: CreateLabelInput!): Label!
-    "Update a label"
-    updateLabel(input: UpdateLabelInput!): Label!
-    "Delete a label"
-    deleteLabel(id: ID!): Boolean!
+    "Create a new tag"
+    createTag(input: CreateTagInput!): Tag!
+    "Update a tag"
+    updateTag(input: UpdateTagInput!): Tag!
+    "Delete a tag"
+    deleteTag(id: ID!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "../types.graphqls", Input: `type User {
@@ -1371,7 +1371,7 @@ type Project {
     description: String
     boards: [Board!]!
     defaultBoard: Board
-    labels: [Label!]!
+    tags: [Tag!]!
     createdAt: Time!
     updatedAt: Time!
 }
@@ -1410,14 +1410,14 @@ type Card {
     position: Float!
     priority: CardPriority!
     assignee: User
-    labels: [Label!]!
+    tags: [Tag!]!
     dueDate: Time
     createdAt: Time!
     updatedAt: Time!
     createdBy: User
 }
 
-type Label {
+type Tag {
     id: ID!
     project: Project!
     name: String!
@@ -1482,7 +1482,7 @@ input CreateCardInput {
     description: String
     priority: CardPriority
     assigneeId: ID
-    labelIds: [ID!]
+    tagIds: [ID!]
     dueDate: Time
 }
 
@@ -1492,7 +1492,7 @@ input UpdateCardInput {
     description: String
     priority: CardPriority
     assigneeId: ID
-    labelIds: [ID!]
+    tagIds: [ID!]
     dueDate: Time
 }
 
@@ -1502,14 +1502,14 @@ input MoveCardInput {
     afterCardId: ID
 }
 
-input CreateLabelInput {
+input CreateTagInput {
     projectId: ID!
     name: String!
     color: String!
     description: String
 }
 
-input UpdateLabelInput {
+input UpdateTagInput {
     id: ID!
     name: String
     color: String
@@ -1643,21 +1643,6 @@ func (ec *executionContext) field_Mutation_createColumn_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_createLabel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.CreateLabelInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateLabelInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateLabelInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_createOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1680,6 +1665,21 @@ func (ec *executionContext) field_Mutation_createProject_args(ctx context.Contex
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNCreateProjectInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateProjectInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createTag_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CreateTagInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateTagInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateTagInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1733,21 +1733,6 @@ func (ec *executionContext) field_Mutation_deleteColumn_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_deleteLabel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["id"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["id"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Mutation_deleteOrganization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1764,6 +1749,21 @@ func (ec *executionContext) field_Mutation_deleteOrganization_args(ctx context.C
 }
 
 func (ec *executionContext) field_Mutation_deleteProject_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteTag_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -1898,13 +1898,13 @@ func (ec *executionContext) field_Mutation_updateColumn_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Mutation_updateLabel_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Mutation_updateTag_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.UpdateLabelInput
+	var arg0 model.UpdateTagInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateLabelInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateLabelInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateTagInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateTagInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1973,21 +1973,6 @@ func (ec *executionContext) field_Query_card_args(ctx context.Context, rawArgs m
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_labels_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["projectId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["projectId"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_organization_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2015,6 +2000,21 @@ func (ec *executionContext) field_Query_project_args(ctx context.Context, rawArg
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_tags_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["projectId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["projectId"] = arg0
 	return args, nil
 }
 
@@ -2205,8 +2205,8 @@ func (ec *executionContext) fieldContext_Board_project(ctx context.Context, fiel
 				return ec.fieldContext_Project_boards(ctx, field)
 			case "defaultBoard":
 				return ec.fieldContext_Project_defaultBoard(ctx, field)
-			case "labels":
-				return ec.fieldContext_Project_labels(ctx, field)
+			case "tags":
+				return ec.fieldContext_Project_tags(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
@@ -2922,8 +2922,8 @@ func (ec *executionContext) fieldContext_BoardColumn_cards(ctx context.Context, 
 				return ec.fieldContext_Card_priority(ctx, field)
 			case "assignee":
 				return ec.fieldContext_Card_assignee(ctx, field)
-			case "labels":
-				return ec.fieldContext_Card_labels(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
 			case "dueDate":
 				return ec.fieldContext_Card_dueDate(ctx, field)
 			case "createdAt":
@@ -3423,8 +3423,8 @@ func (ec *executionContext) fieldContext_Card_assignee(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Card_labels(ctx context.Context, field graphql.CollectedField, obj *model.Card) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Card_labels(ctx, field)
+func (ec *executionContext) _Card_tags(ctx context.Context, field graphql.CollectedField, obj *model.Card) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Card_tags(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3437,7 +3437,7 @@ func (ec *executionContext) _Card_labels(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Card().Labels(rctx, obj)
+		return ec.resolvers.Card().Tags(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3449,12 +3449,12 @@ func (ec *executionContext) _Card_labels(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Label)
+	res := resTmp.([]*model.Tag)
 	fc.Result = res
-	return ec.marshalNLabel2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLabelᚄ(ctx, field.Selections, res)
+	return ec.marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTagᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Card_labels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Card_tags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Card",
 		Field:      field,
@@ -3463,19 +3463,19 @@ func (ec *executionContext) fieldContext_Card_labels(ctx context.Context, field 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Label_id(ctx, field)
+				return ec.fieldContext_Tag_id(ctx, field)
 			case "project":
-				return ec.fieldContext_Label_project(ctx, field)
+				return ec.fieldContext_Tag_project(ctx, field)
 			case "name":
-				return ec.fieldContext_Label_name(ctx, field)
+				return ec.fieldContext_Tag_name(ctx, field)
 			case "color":
-				return ec.fieldContext_Label_color(ctx, field)
+				return ec.fieldContext_Tag_color(ctx, field)
 			case "description":
-				return ec.fieldContext_Label_description(ctx, field)
+				return ec.fieldContext_Tag_description(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Label_createdAt(ctx, field)
+				return ec.fieldContext_Tag_createdAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Label", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
 		},
 	}
 	return fc, nil
@@ -3654,289 +3654,6 @@ func (ec *executionContext) fieldContext_Card_createdBy(ctx context.Context, fie
 				return ec.fieldContext_User_createdAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Label_id(ctx context.Context, field graphql.CollectedField, obj *model.Label) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Label_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Label_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Label",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Label_project(ctx context.Context, field graphql.CollectedField, obj *model.Label) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Label_project(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Label().Project(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Project)
-	fc.Result = res
-	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Label_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Label",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Project_id(ctx, field)
-			case "organization":
-				return ec.fieldContext_Project_organization(ctx, field)
-			case "name":
-				return ec.fieldContext_Project_name(ctx, field)
-			case "key":
-				return ec.fieldContext_Project_key(ctx, field)
-			case "description":
-				return ec.fieldContext_Project_description(ctx, field)
-			case "boards":
-				return ec.fieldContext_Project_boards(ctx, field)
-			case "defaultBoard":
-				return ec.fieldContext_Project_defaultBoard(ctx, field)
-			case "labels":
-				return ec.fieldContext_Project_labels(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Project_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Project_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Label_name(ctx context.Context, field graphql.CollectedField, obj *model.Label) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Label_name(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Label_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Label",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Label_color(ctx context.Context, field graphql.CollectedField, obj *model.Label) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Label_color(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Color, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Label_color(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Label",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Label_description(ctx context.Context, field graphql.CollectedField, obj *model.Label) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Label_description(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Label_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Label",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Label_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Label) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Label_createdAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(time.Time)
-	fc.Result = res
-	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Label_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Label",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4287,8 +4004,8 @@ func (ec *executionContext) fieldContext_Mutation_createProject(ctx context.Cont
 				return ec.fieldContext_Project_boards(ctx, field)
 			case "defaultBoard":
 				return ec.fieldContext_Project_defaultBoard(ctx, field)
-			case "labels":
-				return ec.fieldContext_Project_labels(ctx, field)
+			case "tags":
+				return ec.fieldContext_Project_tags(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
@@ -4993,8 +4710,8 @@ func (ec *executionContext) fieldContext_Mutation_createCard(ctx context.Context
 				return ec.fieldContext_Card_priority(ctx, field)
 			case "assignee":
 				return ec.fieldContext_Card_assignee(ctx, field)
-			case "labels":
-				return ec.fieldContext_Card_labels(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
 			case "dueDate":
 				return ec.fieldContext_Card_dueDate(ctx, field)
 			case "createdAt":
@@ -5076,8 +4793,8 @@ func (ec *executionContext) fieldContext_Mutation_updateCard(ctx context.Context
 				return ec.fieldContext_Card_priority(ctx, field)
 			case "assignee":
 				return ec.fieldContext_Card_assignee(ctx, field)
-			case "labels":
-				return ec.fieldContext_Card_labels(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
 			case "dueDate":
 				return ec.fieldContext_Card_dueDate(ctx, field)
 			case "createdAt":
@@ -5159,8 +4876,8 @@ func (ec *executionContext) fieldContext_Mutation_moveCard(ctx context.Context, 
 				return ec.fieldContext_Card_priority(ctx, field)
 			case "assignee":
 				return ec.fieldContext_Card_assignee(ctx, field)
-			case "labels":
-				return ec.fieldContext_Card_labels(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
 			case "dueDate":
 				return ec.fieldContext_Card_dueDate(ctx, field)
 			case "createdAt":
@@ -5242,8 +4959,8 @@ func (ec *executionContext) fieldContext_Mutation_deleteCard(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_createLabel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createLabel(ctx, field)
+func (ec *executionContext) _Mutation_createTag(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createTag(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5256,7 +4973,7 @@ func (ec *executionContext) _Mutation_createLabel(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateLabel(rctx, fc.Args["input"].(model.CreateLabelInput))
+		return ec.resolvers.Mutation().CreateTag(rctx, fc.Args["input"].(model.CreateTagInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5268,12 +4985,12 @@ func (ec *executionContext) _Mutation_createLabel(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Label)
+	res := resTmp.(*model.Tag)
 	fc.Result = res
-	return ec.marshalNLabel2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLabel(ctx, field.Selections, res)
+	return ec.marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTag(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_createLabel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_createTag(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -5282,19 +4999,19 @@ func (ec *executionContext) fieldContext_Mutation_createLabel(ctx context.Contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Label_id(ctx, field)
+				return ec.fieldContext_Tag_id(ctx, field)
 			case "project":
-				return ec.fieldContext_Label_project(ctx, field)
+				return ec.fieldContext_Tag_project(ctx, field)
 			case "name":
-				return ec.fieldContext_Label_name(ctx, field)
+				return ec.fieldContext_Tag_name(ctx, field)
 			case "color":
-				return ec.fieldContext_Label_color(ctx, field)
+				return ec.fieldContext_Tag_color(ctx, field)
 			case "description":
-				return ec.fieldContext_Label_description(ctx, field)
+				return ec.fieldContext_Tag_description(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Label_createdAt(ctx, field)
+				return ec.fieldContext_Tag_createdAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Label", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
 		},
 	}
 	defer func() {
@@ -5304,15 +5021,15 @@ func (ec *executionContext) fieldContext_Mutation_createLabel(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createLabel_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_createTag_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_updateLabel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_updateLabel(ctx, field)
+func (ec *executionContext) _Mutation_updateTag(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateTag(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5325,7 +5042,7 @@ func (ec *executionContext) _Mutation_updateLabel(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateLabel(rctx, fc.Args["input"].(model.UpdateLabelInput))
+		return ec.resolvers.Mutation().UpdateTag(rctx, fc.Args["input"].(model.UpdateTagInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5337,12 +5054,12 @@ func (ec *executionContext) _Mutation_updateLabel(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Label)
+	res := resTmp.(*model.Tag)
 	fc.Result = res
-	return ec.marshalNLabel2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLabel(ctx, field.Selections, res)
+	return ec.marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTag(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_updateLabel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_updateTag(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -5351,19 +5068,19 @@ func (ec *executionContext) fieldContext_Mutation_updateLabel(ctx context.Contex
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Label_id(ctx, field)
+				return ec.fieldContext_Tag_id(ctx, field)
 			case "project":
-				return ec.fieldContext_Label_project(ctx, field)
+				return ec.fieldContext_Tag_project(ctx, field)
 			case "name":
-				return ec.fieldContext_Label_name(ctx, field)
+				return ec.fieldContext_Tag_name(ctx, field)
 			case "color":
-				return ec.fieldContext_Label_color(ctx, field)
+				return ec.fieldContext_Tag_color(ctx, field)
 			case "description":
-				return ec.fieldContext_Label_description(ctx, field)
+				return ec.fieldContext_Tag_description(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Label_createdAt(ctx, field)
+				return ec.fieldContext_Tag_createdAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Label", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
 		},
 	}
 	defer func() {
@@ -5373,15 +5090,15 @@ func (ec *executionContext) fieldContext_Mutation_updateLabel(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_updateLabel_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_updateTag_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Mutation_deleteLabel(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_deleteLabel(ctx, field)
+func (ec *executionContext) _Mutation_deleteTag(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteTag(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5394,7 +5111,7 @@ func (ec *executionContext) _Mutation_deleteLabel(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeleteLabel(rctx, fc.Args["id"].(string))
+		return ec.resolvers.Mutation().DeleteTag(rctx, fc.Args["id"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5411,7 +5128,7 @@ func (ec *executionContext) _Mutation_deleteLabel(ctx context.Context, field gra
 	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Mutation_deleteLabel(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Mutation_deleteTag(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Mutation",
 		Field:      field,
@@ -5428,7 +5145,7 @@ func (ec *executionContext) fieldContext_Mutation_deleteLabel(ctx context.Contex
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_deleteLabel_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Mutation_deleteTag_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -5767,8 +5484,8 @@ func (ec *executionContext) fieldContext_Organization_projects(ctx context.Conte
 				return ec.fieldContext_Project_boards(ctx, field)
 			case "defaultBoard":
 				return ec.fieldContext_Project_defaultBoard(ctx, field)
-			case "labels":
-				return ec.fieldContext_Project_labels(ctx, field)
+			case "tags":
+				return ec.fieldContext_Project_tags(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
@@ -6410,8 +6127,8 @@ func (ec *executionContext) fieldContext_Project_defaultBoard(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Project_labels(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Project_labels(ctx, field)
+func (ec *executionContext) _Project_tags(ctx context.Context, field graphql.CollectedField, obj *model.Project) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Project_tags(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6424,7 +6141,7 @@ func (ec *executionContext) _Project_labels(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Project().Labels(rctx, obj)
+		return ec.resolvers.Project().Tags(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6436,12 +6153,12 @@ func (ec *executionContext) _Project_labels(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Label)
+	res := resTmp.([]*model.Tag)
 	fc.Result = res
-	return ec.marshalNLabel2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLabelᚄ(ctx, field.Selections, res)
+	return ec.marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTagᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Project_labels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Project_tags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Project",
 		Field:      field,
@@ -6450,19 +6167,19 @@ func (ec *executionContext) fieldContext_Project_labels(ctx context.Context, fie
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Label_id(ctx, field)
+				return ec.fieldContext_Tag_id(ctx, field)
 			case "project":
-				return ec.fieldContext_Label_project(ctx, field)
+				return ec.fieldContext_Tag_project(ctx, field)
 			case "name":
-				return ec.fieldContext_Label_name(ctx, field)
+				return ec.fieldContext_Tag_name(ctx, field)
 			case "color":
-				return ec.fieldContext_Label_color(ctx, field)
+				return ec.fieldContext_Tag_color(ctx, field)
 			case "description":
-				return ec.fieldContext_Label_description(ctx, field)
+				return ec.fieldContext_Tag_description(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Label_createdAt(ctx, field)
+				return ec.fieldContext_Tag_createdAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Label", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
 		},
 	}
 	return fc, nil
@@ -6835,8 +6552,8 @@ func (ec *executionContext) fieldContext_Query_project(ctx context.Context, fiel
 				return ec.fieldContext_Project_boards(ctx, field)
 			case "defaultBoard":
 				return ec.fieldContext_Project_defaultBoard(ctx, field)
-			case "labels":
-				return ec.fieldContext_Project_labels(ctx, field)
+			case "tags":
+				return ec.fieldContext_Project_tags(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Project_createdAt(ctx, field)
 			case "updatedAt":
@@ -7054,8 +6771,8 @@ func (ec *executionContext) fieldContext_Query_card(ctx context.Context, field g
 				return ec.fieldContext_Card_priority(ctx, field)
 			case "assignee":
 				return ec.fieldContext_Card_assignee(ctx, field)
-			case "labels":
-				return ec.fieldContext_Card_labels(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
 			case "dueDate":
 				return ec.fieldContext_Card_dueDate(ctx, field)
 			case "createdAt":
@@ -7137,8 +6854,8 @@ func (ec *executionContext) fieldContext_Query_myCards(ctx context.Context, fiel
 				return ec.fieldContext_Card_priority(ctx, field)
 			case "assignee":
 				return ec.fieldContext_Card_assignee(ctx, field)
-			case "labels":
-				return ec.fieldContext_Card_labels(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
 			case "dueDate":
 				return ec.fieldContext_Card_dueDate(ctx, field)
 			case "createdAt":
@@ -7154,8 +6871,8 @@ func (ec *executionContext) fieldContext_Query_myCards(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_labels(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_labels(ctx, field)
+func (ec *executionContext) _Query_tags(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_tags(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7168,7 +6885,7 @@ func (ec *executionContext) _Query_labels(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Labels(rctx, fc.Args["projectId"].(string))
+		return ec.resolvers.Query().Tags(rctx, fc.Args["projectId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7180,12 +6897,12 @@ func (ec *executionContext) _Query_labels(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Label)
+	res := resTmp.([]*model.Tag)
 	fc.Result = res
-	return ec.marshalNLabel2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLabelᚄ(ctx, field.Selections, res)
+	return ec.marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTagᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_labels(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_tags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -7194,19 +6911,19 @@ func (ec *executionContext) fieldContext_Query_labels(ctx context.Context, field
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Label_id(ctx, field)
+				return ec.fieldContext_Tag_id(ctx, field)
 			case "project":
-				return ec.fieldContext_Label_project(ctx, field)
+				return ec.fieldContext_Tag_project(ctx, field)
 			case "name":
-				return ec.fieldContext_Label_name(ctx, field)
+				return ec.fieldContext_Tag_name(ctx, field)
 			case "color":
-				return ec.fieldContext_Label_color(ctx, field)
+				return ec.fieldContext_Tag_color(ctx, field)
 			case "description":
-				return ec.fieldContext_Label_description(ctx, field)
+				return ec.fieldContext_Tag_description(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Label_createdAt(ctx, field)
+				return ec.fieldContext_Tag_createdAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Label", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Tag", field.Name)
 		},
 	}
 	defer func() {
@@ -7216,7 +6933,7 @@ func (ec *executionContext) fieldContext_Query_labels(ctx context.Context, field
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_labels_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_tags_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7395,6 +7112,289 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Tag_id(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tag_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tag_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Tag_project(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tag_project(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Tag().Project(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Project)
+	fc.Result = res
+	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tag_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tag",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Project_id(ctx, field)
+			case "organization":
+				return ec.fieldContext_Project_organization(ctx, field)
+			case "name":
+				return ec.fieldContext_Project_name(ctx, field)
+			case "key":
+				return ec.fieldContext_Project_key(ctx, field)
+			case "description":
+				return ec.fieldContext_Project_description(ctx, field)
+			case "boards":
+				return ec.fieldContext_Project_boards(ctx, field)
+			case "defaultBoard":
+				return ec.fieldContext_Project_defaultBoard(ctx, field)
+			case "tags":
+				return ec.fieldContext_Project_tags(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Project_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Project_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Project", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Tag_name(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tag_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tag_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Tag_color(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tag_color(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Color, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tag_color(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Tag_description(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tag_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tag_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Tag_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Tag_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Tag_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Tag",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9400,7 +9400,7 @@ func (ec *executionContext) unmarshalInputCreateCardInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"columnId", "title", "description", "priority", "assigneeId", "labelIds", "dueDate"}
+	fieldsInOrder := [...]string{"columnId", "title", "description", "priority", "assigneeId", "tagIds", "dueDate"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9452,15 +9452,15 @@ func (ec *executionContext) unmarshalInputCreateCardInput(ctx context.Context, o
 				return it, err
 			}
 			it.AssigneeID = data
-		case "labelIds":
+		case "tagIds":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labelIds"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tagIds"))
 			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.LabelIds = data
+			it.TagIds = data
 		case "dueDate":
 			var err error
 
@@ -9517,62 +9517,6 @@ func (ec *executionContext) unmarshalInputCreateColumnInput(ctx context.Context,
 				return it, err
 			}
 			it.IsBacklog = data
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputCreateLabelInput(ctx context.Context, obj interface{}) (model.CreateLabelInput, error) {
-	var it model.CreateLabelInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"projectId", "name", "color", "description"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "projectId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
-			data, err := ec.unmarshalNID2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.ProjectID = data
-		case "name":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Name = data
-		case "color":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color"))
-			data, err := ec.unmarshalNString2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Color = data
-		case "description":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.Description = data
 		}
 	}
 
@@ -9658,6 +9602,62 @@ func (ec *executionContext) unmarshalInputCreateProjectInput(ctx context.Context
 				return it, err
 			}
 			it.Key = data
+		case "description":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Description = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateTagInput(ctx context.Context, obj interface{}) (model.CreateTagInput, error) {
+	var it model.CreateTagInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"projectId", "name", "color", "description"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "projectId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("projectId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ProjectID = data
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "color":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("color"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Color = data
 		case "description":
 			var err error
 
@@ -9888,7 +9888,7 @@ func (ec *executionContext) unmarshalInputUpdateCardInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "title", "description", "priority", "assigneeId", "labelIds", "dueDate"}
+	fieldsInOrder := [...]string{"id", "title", "description", "priority", "assigneeId", "tagIds", "dueDate"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -9940,15 +9940,15 @@ func (ec *executionContext) unmarshalInputUpdateCardInput(ctx context.Context, o
 				return it, err
 			}
 			it.AssigneeID = data
-		case "labelIds":
+		case "tagIds":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("labelIds"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tagIds"))
 			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.LabelIds = data
+			it.TagIds = data
 		case "dueDate":
 			var err error
 
@@ -10020,8 +10020,8 @@ func (ec *executionContext) unmarshalInputUpdateColumnInput(ctx context.Context,
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputUpdateLabelInput(ctx context.Context, obj interface{}) (model.UpdateLabelInput, error) {
-	var it model.UpdateLabelInput
+func (ec *executionContext) unmarshalInputUpdateTagInput(ctx context.Context, obj interface{}) (model.UpdateTagInput, error) {
+	var it model.UpdateTagInput
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
@@ -10539,7 +10539,7 @@ func (ec *executionContext) _Card(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "labels":
+		case "tags":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -10548,7 +10548,7 @@ func (ec *executionContext) _Card(ctx context.Context, sel ast.SelectionSet, obj
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Card_labels(ctx, field, obj)
+				res = ec._Card_tags(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -10620,98 +10620,6 @@ func (ec *executionContext) _Card(ctx context.Context, sel ast.SelectionSet, obj
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch(ctx)
-	if out.Invalids > 0 {
-		return graphql.Null
-	}
-
-	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
-
-	for label, dfs := range deferred {
-		ec.processDeferredGroup(graphql.DeferredGroup{
-			Label:    label,
-			Path:     graphql.GetPath(ctx),
-			FieldSet: dfs,
-			Context:  ctx,
-		})
-	}
-
-	return out
-}
-
-var labelImplementors = []string{"Label"}
-
-func (ec *executionContext) _Label(ctx context.Context, sel ast.SelectionSet, obj *model.Label) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, labelImplementors)
-
-	out := graphql.NewFieldSet(fields)
-	deferred := make(map[string]*graphql.FieldSet)
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Label")
-		case "id":
-			out.Values[i] = ec._Label_id(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "project":
-			field := field
-
-			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Label_project(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&fs.Invalids, 1)
-				}
-				return res
-			}
-
-			if field.Deferrable != nil {
-				dfs, ok := deferred[field.Deferrable.Label]
-				di := 0
-				if ok {
-					dfs.AddField(field)
-					di = len(dfs.Values) - 1
-				} else {
-					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
-					deferred[field.Deferrable.Label] = dfs
-				}
-				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
-					return innerFunc(ctx, dfs)
-				})
-
-				// don't run the out.Concurrently() call below
-				out.Values[i] = graphql.Null
-				continue
-			}
-
-			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "name":
-			out.Values[i] = ec._Label_name(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "color":
-			out.Values[i] = ec._Label_color(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
-		case "description":
-			out.Values[i] = ec._Label_description(ctx, field, obj)
-		case "createdAt":
-			out.Values[i] = ec._Label_createdAt(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10887,23 +10795,23 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "createLabel":
+		case "createTag":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createLabel(ctx, field)
+				return ec._Mutation_createTag(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "updateLabel":
+		case "updateTag":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_updateLabel(ctx, field)
+				return ec._Mutation_updateTag(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "deleteLabel":
+		case "deleteTag":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deleteLabel(ctx, field)
+				return ec._Mutation_deleteTag(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -11163,7 +11071,7 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "labels":
+		case "tags":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -11172,7 +11080,7 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Project_labels(ctx, field, obj)
+				res = ec._Project_tags(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -11434,7 +11342,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "labels":
+		case "tags":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -11443,7 +11351,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_labels(ctx, field)
+				res = ec._Query_tags(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -11486,6 +11394,98 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var tagImplementors = []string{"Tag"}
+
+func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj *model.Tag) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, tagImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Tag")
+		case "id":
+			out.Values[i] = ec._Tag_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "project":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Tag_project(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "name":
+			out.Values[i] = ec._Tag_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "color":
+			out.Values[i] = ec._Tag_color(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "description":
+			out.Values[i] = ec._Tag_description(ctx, field, obj)
+		case "createdAt":
+			out.Values[i] = ec._Tag_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -12148,11 +12148,6 @@ func (ec *executionContext) unmarshalNCreateColumnInput2githubᚗcomᚋthatcatde
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateLabelInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateLabelInput(ctx context.Context, v interface{}) (model.CreateLabelInput, error) {
-	res, err := ec.unmarshalInputCreateLabelInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNCreateOrganizationInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateOrganizationInput(ctx context.Context, v interface{}) (model.CreateOrganizationInput, error) {
 	res, err := ec.unmarshalInputCreateOrganizationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -12160,6 +12155,11 @@ func (ec *executionContext) unmarshalNCreateOrganizationInput2githubᚗcomᚋtha
 
 func (ec *executionContext) unmarshalNCreateProjectInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateProjectInput(ctx context.Context, v interface{}) (model.CreateProjectInput, error) {
 	res, err := ec.unmarshalInputCreateProjectInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateTagInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateTagInput(ctx context.Context, v interface{}) (model.CreateTagInput, error) {
+	res, err := ec.unmarshalInputCreateTagInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -12238,64 +12238,6 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNLabel2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLabel(ctx context.Context, sel ast.SelectionSet, v model.Label) graphql.Marshaler {
-	return ec._Label(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNLabel2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLabelᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Label) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNLabel2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLabel(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
-func (ec *executionContext) marshalNLabel2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLabel(ctx context.Context, sel ast.SelectionSet, v *model.Label) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
-	return ec._Label(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLoginInput(ctx context.Context, v interface{}) (model.LoginInput, error) {
@@ -12503,6 +12445,64 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNTag2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v model.Tag) graphql.Marshaler {
+	return ec._Tag(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTagᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Tag) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTag(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v *model.Tag) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Tag(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
 	res, err := graphql.UnmarshalTime(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -12533,8 +12533,8 @@ func (ec *executionContext) unmarshalNUpdateColumnInput2githubᚗcomᚋthatcatde
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateLabelInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateLabelInput(ctx context.Context, v interface{}) (model.UpdateLabelInput, error) {
-	res, err := ec.unmarshalInputUpdateLabelInput(ctx, v)
+func (ec *executionContext) unmarshalNUpdateTagInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateTagInput(ctx context.Context, v interface{}) (model.UpdateTagInput, error) {
+	res, err := ec.unmarshalInputUpdateTagInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { updateCard, deleteCard, type BoardCard, type Label } from '../../lib/api/boards';
+  import { updateCard, deleteCard, type BoardCard, type Tag } from '../../lib/api/boards';
   import { CardPriority } from '../../lib/graphql/generated';
   import { Button, ConfirmModal } from '../ui';
   import CardForm from './CardForm.svelte';
@@ -7,20 +7,20 @@
   interface Props {
     card: BoardCard;
     projectId: string;
-    labels: Label[];
+    tags: Tag[];
     onClose: () => void;
     onUpdated: () => void;
-    onLabelsChanged?: () => void;
+    onTagsChanged?: () => void;
     viewMode: 'modal' | 'panel';
     onViewModeChange: (mode: 'modal' | 'panel') => void;
   }
 
-  let { card, projectId, labels, onClose, onUpdated, onLabelsChanged, viewMode, onViewModeChange }: Props = $props();
+  let { card, projectId, tags, onClose, onUpdated, onTagsChanged, viewMode, onViewModeChange }: Props = $props();
 
   let title = $state(card.title);
   let description = $state(card.description ?? '');
   let priority = $state<CardPriority>(card.priority);
-  let selectedLabelIds = $state<string[]>(card.labels?.map(l => l.id) ?? []);
+  let selectedTagIds = $state<string[]>(card.tags?.map(t => t.id) ?? []);
   let dueDate = $state(card.dueDate ? card.dueDate.split('T')[0] : '');
   let saving = $state(false);
   let deleting = $state(false);
@@ -31,12 +31,12 @@
     title: card.title,
     description: card.description ?? '',
     priority: card.priority,
-    selectedLabelIds: card.labels?.map(l => l.id) ?? [],
+    selectedTagIds: card.tags?.map(t => t.id) ?? [],
     dueDate: card.dueDate ? card.dueDate.split('T')[0] : ''
   }));
 
   function getCurrentDataHash(): string {
-    return JSON.stringify({ title, description, priority, selectedLabelIds, dueDate });
+    return JSON.stringify({ title, description, priority, selectedTagIds, dueDate });
   }
 
   // Auto-save effect
@@ -66,7 +66,7 @@
         description.trim() || undefined,
         priority,
         undefined,
-        selectedLabelIds,
+        selectedTagIds,
         dueDateRfc3339
       );
       lastSavedData = getCurrentDataHash();
@@ -182,15 +182,15 @@
           {description}
           {priority}
           {dueDate}
-          {selectedLabelIds}
+          {selectedTagIds}
           {projectId}
-          {labels}
+          {tags}
           onTitleChange={(v) => title = v}
           onDescriptionChange={(v) => description = v}
           onPriorityChange={(v) => priority = v}
           onDueDateChange={(v) => dueDate = v}
-          onLabelSelectionChange={(ids) => selectedLabelIds = ids}
-          {onLabelsChanged}
+          onTagSelectionChange={(ids) => selectedTagIds = ids}
+          {onTagsChanged}
           {error}
           disabled={saving || deleting}
           descriptionRows={4}

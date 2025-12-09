@@ -45,7 +45,7 @@ type Project {
     description: String
     boards: [Board!]!
     defaultBoard: Board
-    labels: [Label!]!
+    tags: [Tag!]!
     createdAt: Time!
     updatedAt: Time!
 }
@@ -84,14 +84,14 @@ type Card {
     position: Float!
     priority: CardPriority!
     assignee: User
-    labels: [Label!]!
+    tags: [Tag!]!
     dueDate: Time
     createdAt: Time!
     updatedAt: Time!
     createdBy: User
 }
 
-type Label {
+type Tag {
     id: ID!
     project: Project!
     name: String!
@@ -156,7 +156,7 @@ input CreateCardInput {
     description: String
     priority: CardPriority
     assigneeId: ID
-    labelIds: [ID!]
+    tagIds: [ID!]
     dueDate: Time
 }
 
@@ -166,7 +166,7 @@ input UpdateCardInput {
     description: String
     priority: CardPriority
     assigneeId: ID
-    labelIds: [ID!]
+    tagIds: [ID!]
     dueDate: Time
 }
 
@@ -176,14 +176,14 @@ input MoveCardInput {
     afterCardId: ID
 }
 
-input CreateLabelInput {
+input CreateTagInput {
     projectId: ID!
     name: String!
     color: String!
     description: String
 }
 
-input UpdateLabelInput {
+input UpdateTagInput {
     id: ID!
     name: String
     color: String

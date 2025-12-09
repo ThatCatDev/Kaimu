@@ -121,14 +121,14 @@
     <p class="text-xs text-gray-500 mb-2 line-clamp-2">{card.description}</p>
   {/if}
 
-  {#if card.labels && card.labels.length > 0}
+  {#if card.tags && card.tags.length > 0}
     <div class="flex flex-wrap gap-1 mb-2">
-      {#each card.labels as label}
+      {#each card.tags as tag}
         <span
           class="inline-block px-2 py-0.5 text-xs font-medium rounded"
-          style="background-color: {label.color}20; color: {label.color};"
+          style="background-color: {tag.color}20; color: {tag.color};"
         >
-          {label.name}
+          {tag.name}
         </span>
       {/each}
     </div>

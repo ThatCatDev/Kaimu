@@ -19,19 +19,19 @@ import (
 	boardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board"
 	columnRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board_column"
 	cardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
-	cardLabelRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_label"
-	labelRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/label"
+	cardTagRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_tag"
 	orgRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
 	memberRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
 	projectRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/project"
+	tagRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
 	"github.com/thatcatdev/pulse-backend/internal/directives"
 	"github.com/thatcatdev/pulse-backend/internal/services/auth"
 	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
 	cardService "github.com/thatcatdev/pulse-backend/internal/services/card"
-	labelService "github.com/thatcatdev/pulse-backend/internal/services/label"
 	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
 	projectService "github.com/thatcatdev/pulse-backend/internal/services/project"
+	tagService "github.com/thatcatdev/pulse-backend/internal/services/tag"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -137,7 +137,7 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 		);
 
-		CREATE TABLE IF NOT EXISTS labels (
+		CREATE TABLE IF NOT EXISTS tags (
 			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
 			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
 			name VARCHAR(100) NOT NULL,
@@ -168,11 +168,11 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 			created_by UUID REFERENCES users(id) ON DELETE SET NULL
 		);
 
-		CREATE TABLE IF NOT EXISTS card_labels (
+		CREATE TABLE IF NOT EXISTS card_tags (
 			card_id UUID NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
-			label_id UUID NOT NULL REFERENCES labels(id) ON DELETE CASCADE,
+			tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			PRIMARY KEY (card_id, label_id)
+			PRIMARY KEY (card_id, tag_id)
 		);
 	`).Error
 	if err != nil {
@@ -180,9 +180,9 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 	}
 
 	// Clean up tables before test (order matters due to foreign keys)
-	testDB.Exec("DELETE FROM card_labels")
+	testDB.Exec("DELETE FROM card_tags")
 	testDB.Exec("DELETE FROM cards")
-	testDB.Exec("DELETE FROM labels")
+	testDB.Exec("DELETE FROM tags")
 	testDB.Exec("DELETE FROM board_columns")
 	testDB.Exec("DELETE FROM boards")
 	testDB.Exec("DELETE FROM projects")
@@ -198,16 +198,16 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 	boardRepository := boardRepo.NewRepository(testDB)
 	columnRepository := columnRepo.NewRepository(testDB)
 	cardRepository := cardRepo.NewRepository(testDB)
-	labelRepository := labelRepo.NewRepository(testDB)
-	cardLabelRepository := cardLabelRepo.NewRepository(testDB)
+	tagRepository := tagRepo.NewRepository(testDB)
+	cardTagRepository := cardTagRepo.NewRepository(testDB)
 
 	// Create services
 	authSvc := auth.NewService(userRepository, "test-jwt-secret", 24)
 	orgSvc := orgService.NewService(orgRepository, memberRepository, userRepository)
 	projSvc := projectService.NewService(projectRepository, orgRepository)
 	boardSvc := boardService.NewService(boardRepository, columnRepository, projectRepository)
-	cardSvc := cardService.NewService(cardRepository, columnRepository, boardRepository, labelRepository, cardLabelRepository)
-	labelSvc := labelService.NewService(labelRepository, projectRepository)
+	cardSvc := cardService.NewService(cardRepository, columnRepository, boardRepository, tagRepository, cardTagRepository)
+	tagSvc := tagService.NewService(tagRepository, projectRepository)
 
 	// Create resolver
 	cfg := config.Config{
@@ -222,7 +222,7 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 		ProjectService:      projSvc,
 		BoardService:        boardSvc,
 		CardService:         cardSvc,
-		LabelService:        labelSvc,
+		TagService:          tagSvc,
 	}
 
 	// Create GraphQL handler
@@ -242,9 +242,9 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 }
 
 func (s *BoardTestServer) cleanup() {
-	s.db.Exec("DELETE FROM card_labels")
+	s.db.Exec("DELETE FROM card_tags")
 	s.db.Exec("DELETE FROM cards")
-	s.db.Exec("DELETE FROM labels")
+	s.db.Exec("DELETE FROM tags")
 	s.db.Exec("DELETE FROM board_columns")
 	s.db.Exec("DELETE FROM boards")
 	s.db.Exec("DELETE FROM projects")
@@ -254,7 +254,7 @@ func (s *BoardTestServer) cleanup() {
 }
 
 type graphQLResponse struct {
-	Data   json.RawMessage        `json:"data"`
+	Data   json.RawMessage          `json:"data"`
 	Errors []map[string]interface{} `json:"errors"`
 }
 
@@ -646,15 +646,15 @@ func TestMoveCard(t *testing.T) {
 	assert.Equal(t, "In Progress", moveData.MoveCard.Column.Name)
 }
 
-func TestLabelCRUD(t *testing.T) {
+func TestTagCRUD(t *testing.T) {
 	server := setupBoardTestServer(t)
 	defer server.cleanup()
 
 	// Setup
-	token, err := server.registerUser("labeluser", "password123")
+	token, err := server.registerUser("taguser", "password123")
 	require.NoError(t, err)
 
-	createOrgQuery := `mutation { createOrganization(input: { name: "Label Test Org" }) { id } }`
+	createOrgQuery := `mutation { createOrganization(input: { name: "Tag Test Org" }) { id } }`
 	orgResp := server.executeQuery(createOrgQuery, token)
 	var orgData struct {
 		CreateOrganization struct{ ID string `json:"id"` } `json:"createOrganization"`
@@ -662,7 +662,7 @@ func TestLabelCRUD(t *testing.T) {
 	json.Unmarshal(orgResp.Data, &orgData)
 
 	createProjectQuery := fmt.Sprintf(`mutation {
-		createProject(input: { organizationId: "%s", name: "Label Test", key: "LBL" }) {
+		createProject(input: { organizationId: "%s", name: "Tag Test", key: "TAG" }) {
 			id
 		}
 	}`, orgData.CreateOrganization.ID)
@@ -673,9 +673,9 @@ func TestLabelCRUD(t *testing.T) {
 	json.Unmarshal(projResp.Data, &projData)
 	projectID := projData.CreateProject.ID
 
-	// Create label
-	createLabelQuery := fmt.Sprintf(`mutation {
-		createLabel(input: {
+	// Create tag
+	createTagQuery := fmt.Sprintf(`mutation {
+		createTag(input: {
 			projectId: "%s"
 			name: "Bug"
 			color: "#EF4444"
@@ -688,48 +688,48 @@ func TestLabelCRUD(t *testing.T) {
 		}
 	}`, projectID)
 
-	labelResp := server.executeQuery(createLabelQuery, token)
-	require.Empty(t, labelResp.Errors, "Create label errors: %v", labelResp.Errors)
+	tagResp := server.executeQuery(createTagQuery, token)
+	require.Empty(t, tagResp.Errors, "Create tag errors: %v", tagResp.Errors)
 
-	var labelData struct {
-		CreateLabel struct {
+	var tagData struct {
+		CreateTag struct {
 			ID          string `json:"id"`
 			Name        string `json:"name"`
 			Color       string `json:"color"`
 			Description string `json:"description"`
-		} `json:"createLabel"`
+		} `json:"createTag"`
 	}
-	json.Unmarshal(labelResp.Data, &labelData)
+	json.Unmarshal(tagResp.Data, &tagData)
 
-	assert.Equal(t, "Bug", labelData.CreateLabel.Name)
-	assert.Equal(t, "#EF4444", labelData.CreateLabel.Color)
-	labelID := labelData.CreateLabel.ID
+	assert.Equal(t, "Bug", tagData.CreateTag.Name)
+	assert.Equal(t, "#EF4444", tagData.CreateTag.Color)
+	tagID := tagData.CreateTag.ID
 
-	// Query labels
-	queryLabelsQuery := fmt.Sprintf(`query {
-		labels(projectId: "%s") {
+	// Query tags
+	queryTagsQuery := fmt.Sprintf(`query {
+		tags(projectId: "%s") {
 			id
 			name
 			color
 		}
 	}`, projectID)
 
-	queryResp := server.executeQuery(queryLabelsQuery, token)
+	queryResp := server.executeQuery(queryTagsQuery, token)
 	require.Empty(t, queryResp.Errors)
 
 	var queryData struct {
-		Labels []struct {
+		Tags []struct {
 			ID    string `json:"id"`
 			Name  string `json:"name"`
 			Color string `json:"color"`
-		} `json:"labels"`
+		} `json:"tags"`
 	}
 	json.Unmarshal(queryResp.Data, &queryData)
-	assert.Equal(t, 1, len(queryData.Labels))
+	assert.Equal(t, 1, len(queryData.Tags))
 
-	// Update label
-	updateLabelQuery := fmt.Sprintf(`mutation {
-		updateLabel(input: {
+	// Update tag
+	updateTagQuery := fmt.Sprintf(`mutation {
+		updateTag(input: {
 			id: "%s"
 			name: "Critical Bug"
 			color: "#DC2626"
@@ -738,35 +738,35 @@ func TestLabelCRUD(t *testing.T) {
 			name
 			color
 		}
-	}`, labelID)
+	}`, tagID)
 
-	updateResp := server.executeQuery(updateLabelQuery, token)
+	updateResp := server.executeQuery(updateTagQuery, token)
 	require.Empty(t, updateResp.Errors)
 
 	var updateData struct {
-		UpdateLabel struct {
+		UpdateTag struct {
 			Name  string `json:"name"`
 			Color string `json:"color"`
-		} `json:"updateLabel"`
+		} `json:"updateTag"`
 	}
 	json.Unmarshal(updateResp.Data, &updateData)
-	assert.Equal(t, "Critical Bug", updateData.UpdateLabel.Name)
+	assert.Equal(t, "Critical Bug", updateData.UpdateTag.Name)
 
-	// Delete label
-	deleteLabelQuery := fmt.Sprintf(`mutation { deleteLabel(id: "%s") }`, labelID)
-	deleteResp := server.executeQuery(deleteLabelQuery, token)
+	// Delete tag
+	deleteTagQuery := fmt.Sprintf(`mutation { deleteTag(id: "%s") }`, tagID)
+	deleteResp := server.executeQuery(deleteTagQuery, token)
 	require.Empty(t, deleteResp.Errors)
 }
 
-func TestCardWithLabels(t *testing.T) {
+func TestCardWithTags(t *testing.T) {
 	server := setupBoardTestServer(t)
 	defer server.cleanup()
 
 	// Setup
-	token, err := server.registerUser("cardlabeluser", "password123")
+	token, err := server.registerUser("cardtaguser", "password123")
 	require.NoError(t, err)
 
-	createOrgQuery := `mutation { createOrganization(input: { name: "Card Label Org" }) { id } }`
+	createOrgQuery := `mutation { createOrganization(input: { name: "Card Tag Org" }) { id } }`
 	orgResp := server.executeQuery(createOrgQuery, token)
 	var orgData struct {
 		CreateOrganization struct{ ID string `json:"id"` } `json:"createOrganization"`
@@ -774,7 +774,7 @@ func TestCardWithLabels(t *testing.T) {
 	json.Unmarshal(orgResp.Data, &orgData)
 
 	createProjectQuery := fmt.Sprintf(`mutation {
-		createProject(input: { organizationId: "%s", name: "Card Label Test", key: "CLT" }) {
+		createProject(input: { organizationId: "%s", name: "Card Tag Test", key: "CTT" }) {
 			id
 			defaultBoard { columns { id name } }
 		}
@@ -802,82 +802,82 @@ func TestCardWithLabels(t *testing.T) {
 		}
 	}
 
-	// Create labels
-	label1Query := fmt.Sprintf(`mutation {
-		createLabel(input: { projectId: "%s", name: "Bug", color: "#EF4444" }) { id }
+	// Create tags
+	tag1Query := fmt.Sprintf(`mutation {
+		createTag(input: { projectId: "%s", name: "Bug", color: "#EF4444" }) { id }
 	}`, projectID)
-	label1Resp := server.executeQuery(label1Query, token)
-	var label1Data struct {
-		CreateLabel struct{ ID string `json:"id"` } `json:"createLabel"`
+	tag1Resp := server.executeQuery(tag1Query, token)
+	var tag1Data struct {
+		CreateTag struct{ ID string `json:"id"` } `json:"createTag"`
 	}
-	json.Unmarshal(label1Resp.Data, &label1Data)
-	label1ID := label1Data.CreateLabel.ID
+	json.Unmarshal(tag1Resp.Data, &tag1Data)
+	tag1ID := tag1Data.CreateTag.ID
 
-	label2Query := fmt.Sprintf(`mutation {
-		createLabel(input: { projectId: "%s", name: "Feature", color: "#10B981" }) { id }
+	tag2Query := fmt.Sprintf(`mutation {
+		createTag(input: { projectId: "%s", name: "Feature", color: "#10B981" }) { id }
 	}`, projectID)
-	label2Resp := server.executeQuery(label2Query, token)
-	var label2Data struct {
-		CreateLabel struct{ ID string `json:"id"` } `json:"createLabel"`
+	tag2Resp := server.executeQuery(tag2Query, token)
+	var tag2Data struct {
+		CreateTag struct{ ID string `json:"id"` } `json:"createTag"`
 	}
-	json.Unmarshal(label2Resp.Data, &label2Data)
-	label2ID := label2Data.CreateLabel.ID
+	json.Unmarshal(tag2Resp.Data, &tag2Data)
+	tag2ID := tag2Data.CreateTag.ID
 
-	// Create card with labels
+	// Create card with tags
 	createCardQuery := fmt.Sprintf(`mutation {
 		createCard(input: {
 			columnId: "%s"
-			title: "Card with Labels"
-			labelIds: ["%s", "%s"]
+			title: "Card with Tags"
+			tagIds: ["%s", "%s"]
 		}) {
 			id
 			title
-			labels { id name color }
+			tags { id name color }
 		}
-	}`, todoColID, label1ID, label2ID)
+	}`, todoColID, tag1ID, tag2ID)
 
 	cardResp := server.executeQuery(createCardQuery, token)
-	require.Empty(t, cardResp.Errors, "Create card with labels errors: %v", cardResp.Errors)
+	require.Empty(t, cardResp.Errors, "Create card with tags errors: %v", cardResp.Errors)
 
 	var cardData struct {
 		CreateCard struct {
-			ID     string `json:"id"`
-			Title  string `json:"title"`
-			Labels []struct {
+			ID   string `json:"id"`
+			Title string `json:"title"`
+			Tags []struct {
 				ID    string `json:"id"`
 				Name  string `json:"name"`
 				Color string `json:"color"`
-			} `json:"labels"`
+			} `json:"tags"`
 		} `json:"createCard"`
 	}
 	json.Unmarshal(cardResp.Data, &cardData)
 
-	assert.Equal(t, 2, len(cardData.CreateCard.Labels))
+	assert.Equal(t, 2, len(cardData.CreateCard.Tags))
 
-	// Update card to remove one label
+	// Update card to remove one tag
 	updateCardQuery := fmt.Sprintf(`mutation {
 		updateCard(input: {
 			id: "%s"
-			labelIds: ["%s"]
+			tagIds: ["%s"]
 		}) {
-			labels { id name }
+			tags { id name }
 		}
-	}`, cardData.CreateCard.ID, label1ID)
+	}`, cardData.CreateCard.ID, tag1ID)
 
 	updateResp := server.executeQuery(updateCardQuery, token)
 	require.Empty(t, updateResp.Errors)
 
 	var updateData struct {
 		UpdateCard struct {
-			Labels []struct {
+			Tags []struct {
 				ID   string `json:"id"`
 				Name string `json:"name"`
-			} `json:"labels"`
+			} `json:"tags"`
 		} `json:"updateCard"`
 	}
 	json.Unmarshal(updateResp.Data, &updateData)
-	assert.Equal(t, 1, len(updateData.UpdateCard.Labels))
-	assert.Equal(t, "Bug", updateData.UpdateCard.Labels[0].Name)
+	assert.Equal(t, 1, len(updateData.UpdateCard.Tags))
+	assert.Equal(t, "Bug", updateData.UpdateCard.Tags[0].Name)
 }
 
 func TestColumnOperations(t *testing.T) {

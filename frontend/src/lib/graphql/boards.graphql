@@ -35,7 +35,7 @@ query Board($id: ID!) {
         dueDate
         createdAt
         updatedAt
-        labels {
+        tags {
           id
           name
           color
@@ -67,8 +67,8 @@ query ProjectDefaultBoard($projectId: ID!) {
   }
 }
 
-query Labels($projectId: ID!) {
-  labels(projectId: $projectId) {
+query Tags($projectId: ID!) {
+  tags(projectId: $projectId) {
     id
     name
     color
@@ -99,7 +99,7 @@ query MyCards {
       id
       name
     }
-    labels {
+    tags {
       id
       name
       color
@@ -180,7 +180,7 @@ mutation CreateCard($input: CreateCardInput!) {
     priority
     dueDate
     createdAt
-    labels {
+    tags {
       id
       name
       color
@@ -200,7 +200,7 @@ mutation UpdateCard($input: UpdateCardInput!) {
     priority
     dueDate
     updatedAt
-    labels {
+    tags {
       id
       name
       color
@@ -226,8 +226,8 @@ mutation DeleteCard($id: ID!) {
   deleteCard(id: $id)
 }
 
-mutation CreateLabel($input: CreateLabelInput!) {
-  createLabel(input: $input) {
+mutation CreateTag($input: CreateTagInput!) {
+  createTag(input: $input) {
     id
     name
     color
@@ -236,8 +236,8 @@ mutation CreateLabel($input: CreateLabelInput!) {
   }
 }
 
-mutation UpdateLabel($input: UpdateLabelInput!) {
-  updateLabel(input: $input) {
+mutation UpdateTag($input: UpdateTagInput!) {
+  updateTag(input: $input) {
     id
     name
     color
@@ -245,6 +245,6 @@ mutation UpdateLabel($input: UpdateLabelInput!) {
   }
 }
 
-mutation DeleteLabel($id: ID!) {
-  deleteLabel(id: $id)
+mutation DeleteTag($id: ID!) {
+  deleteTag(id: $id)
 }

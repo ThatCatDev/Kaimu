@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { updateCard, deleteCard, type BoardCard, type Label } from '../../lib/api/boards';
+  import { updateCard, deleteCard, type BoardCard, type Tag } from '../../lib/api/boards';
   import { CardPriority } from '../../lib/graphql/generated';
   import { Button, ConfirmModal } from '../ui';
   import CardForm from './CardForm.svelte';
@@ -7,21 +7,21 @@
   interface Props {
     card: BoardCard | null;
     projectId: string;
-    labels: Label[];
+    tags: Tag[];
     isOpen: boolean;
     onClose: () => void;
     onUpdated: () => void;
-    onLabelsChanged?: () => void;
+    onTagsChanged?: () => void;
     viewMode: 'modal' | 'panel';
     onViewModeChange: (mode: 'modal' | 'panel') => void;
   }
 
-  let { card, projectId, labels, isOpen, onClose, onUpdated, onLabelsChanged, viewMode, onViewModeChange }: Props = $props();
+  let { card, projectId, tags, isOpen, onClose, onUpdated, onTagsChanged, viewMode, onViewModeChange }: Props = $props();
 
   let title = $state('');
   let description = $state('');
   let priority = $state<CardPriority>(CardPriority.None);
-  let selectedLabelIds = $state<string[]>([]);
+  let selectedTagIds = $state<string[]>([]);
   let dueDate = $state('');
   let saving = $state(false);
   let deleting = $state(false);
@@ -31,7 +31,7 @@
   let showDeleteConfirm = $state(false);
 
   function getCurrentDataHash(): string {
-    return JSON.stringify({ title, description, priority, selectedLabelIds, dueDate });
+    return JSON.stringify({ title, description, priority, selectedTagIds, dueDate });
   }
 
   // Update form when card changes
@@ -40,14 +40,14 @@
       title = card.title;
       description = card.description ?? '';
       priority = card.priority;
-      selectedLabelIds = card.labels?.map(l => l.id) ?? [];
+      selectedTagIds = card.tags?.map(t => t.id) ?? [];
       dueDate = card.dueDate ? card.dueDate.split('T')[0] : '';
       error = null;
       lastSavedData = JSON.stringify({
         title: card.title,
         description: card.description ?? '',
         priority: card.priority,
-        selectedLabelIds: card.labels?.map(l => l.id) ?? [],
+        selectedTagIds: card.tags?.map(t => t.id) ?? [],
         dueDate: card.dueDate ? card.dueDate.split('T')[0] : ''
       });
     }
@@ -80,7 +80,7 @@
         description.trim() || undefined,
         priority,
         undefined,
-        selectedLabelIds,
+        selectedTagIds,
         dueDateRfc3339
       );
       lastSavedData = getCurrentDataHash();
@@ -188,15 +188,15 @@
           {description}
           {priority}
           {dueDate}
-          {selectedLabelIds}
+          {selectedTagIds}
           {projectId}
-          {labels}
+          {tags}
           onTitleChange={(v) => title = v}
           onDescriptionChange={(v) => description = v}
           onPriorityChange={(v) => priority = v}
           onDueDateChange={(v) => dueDate = v}
-          onLabelSelectionChange={(ids) => selectedLabelIds = ids}
-          {onLabelsChanged}
+          onTagSelectionChange={(ids) => selectedTagIds = ids}
+          {onTagsChanged}
           {error}
           disabled={saving || deleting}
           descriptionRows={5}

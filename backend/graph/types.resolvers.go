@@ -47,19 +47,14 @@ func (r *cardResolver) Assignee(ctx context.Context, obj *model.Card) (*model.Us
 	return resolvers.CardAssignee(ctx, r.CardService, obj)
 }
 
-// Labels is the resolver for the labels field.
-func (r *cardResolver) Labels(ctx context.Context, obj *model.Card) ([]*model.Label, error) {
-	return resolvers.CardLabels(ctx, r.CardService, obj)
+// Tags is the resolver for the tags field.
+func (r *cardResolver) Tags(ctx context.Context, obj *model.Card) ([]*model.Tag, error) {
+	return resolvers.CardTags(ctx, r.CardService, obj)
 }
 
 // CreatedBy is the resolver for the createdBy field.
 func (r *cardResolver) CreatedBy(ctx context.Context, obj *model.Card) (*model.User, error) {
 	return resolvers.CardCreatedBy(ctx, r.CardService, obj)
-}
-
-// Project is the resolver for the project field.
-func (r *labelResolver) Project(ctx context.Context, obj *model.Label) (*model.Project, error) {
-	return resolvers.LabelProject(ctx, r.LabelService, r.OrganizationService, obj)
 }
 
 // Boards is the resolver for the boards field.
@@ -72,9 +67,14 @@ func (r *projectResolver) DefaultBoard(ctx context.Context, obj *model.Project) 
 	return resolvers.ProjectDefaultBoard(ctx, r.BoardService, obj)
 }
 
-// Labels is the resolver for the labels field.
-func (r *projectResolver) Labels(ctx context.Context, obj *model.Project) ([]*model.Label, error) {
-	return resolvers.ProjectLabels(ctx, r.LabelService, obj)
+// Tags is the resolver for the tags field.
+func (r *projectResolver) Tags(ctx context.Context, obj *model.Project) ([]*model.Tag, error) {
+	return resolvers.ProjectTags(ctx, r.TagService, obj)
+}
+
+// Project is the resolver for the project field.
+func (r *tagResolver) Project(ctx context.Context, obj *model.Tag) (*model.Project, error) {
+	return resolvers.TagProject(ctx, r.TagService, r.OrganizationService, obj)
 }
 
 // Board returns generated.BoardResolver implementation.
@@ -86,14 +86,14 @@ func (r *Resolver) BoardColumn() generated.BoardColumnResolver { return &boardCo
 // Card returns generated.CardResolver implementation.
 func (r *Resolver) Card() generated.CardResolver { return &cardResolver{r} }
 
-// Label returns generated.LabelResolver implementation.
-func (r *Resolver) Label() generated.LabelResolver { return &labelResolver{r} }
-
 // Project returns generated.ProjectResolver implementation.
 func (r *Resolver) Project() generated.ProjectResolver { return &projectResolver{r} }
+
+// Tag returns generated.TagResolver implementation.
+func (r *Resolver) Tag() generated.TagResolver { return &tagResolver{r} }
 
 type boardResolver struct{ *Resolver }
 type boardColumnResolver struct{ *Resolver }
 type cardResolver struct{ *Resolver }
-type labelResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
+type tagResolver struct{ *Resolver }

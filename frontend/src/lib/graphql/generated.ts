@@ -60,9 +60,9 @@ export type Card = {
   description?: Maybe<Scalars['String']['output']>;
   dueDate?: Maybe<Scalars['Time']['output']>;
   id: Scalars['ID']['output'];
-  labels: Array<Label>;
   position: Scalars['Float']['output'];
   priority: CardPriority;
+  tags: Array<Tag>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['Time']['output'];
 };
@@ -86,8 +86,8 @@ export type CreateCardInput = {
   columnId: Scalars['ID']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['Time']['input']>;
-  labelIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   priority?: InputMaybe<CardPriority>;
+  tagIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   title: Scalars['String']['input'];
 };
 
@@ -95,13 +95,6 @@ export type CreateColumnInput = {
   boardId: Scalars['ID']['input'];
   isBacklog?: InputMaybe<Scalars['Boolean']['input']>;
   name: Scalars['String']['input'];
-};
-
-export type CreateLabelInput = {
-  color: Scalars['String']['input'];
-  description?: InputMaybe<Scalars['String']['input']>;
-  name: Scalars['String']['input'];
-  projectId: Scalars['ID']['input'];
 };
 
 export type CreateOrganizationInput = {
@@ -116,14 +109,11 @@ export type CreateProjectInput = {
   organizationId: Scalars['ID']['input'];
 };
 
-export type Label = {
-  __typename?: 'Label';
-  color: Scalars['String']['output'];
-  createdAt: Scalars['Time']['output'];
-  description?: Maybe<Scalars['String']['output']>;
-  id: Scalars['ID']['output'];
-  name: Scalars['String']['output'];
-  project: Project;
+export type CreateTagInput = {
+  color: Scalars['String']['input'];
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  projectId: Scalars['ID']['input'];
 };
 
 export type LoginInput = {
@@ -145,24 +135,24 @@ export type Mutation = {
   createCard: Card;
   /** Create a new column */
   createColumn: BoardColumn;
-  /** Create a new label */
-  createLabel: Label;
   /** Create a new organization */
   createOrganization: Organization;
   /** Create a new project */
   createProject: Project;
+  /** Create a new tag */
+  createTag: Tag;
   /** Delete a board */
   deleteBoard: Scalars['Boolean']['output'];
   /** Delete a card */
   deleteCard: Scalars['Boolean']['output'];
   /** Delete a column */
   deleteColumn: Scalars['Boolean']['output'];
-  /** Delete a label */
-  deleteLabel: Scalars['Boolean']['output'];
   /** Delete an organization */
   deleteOrganization: Scalars['Boolean']['output'];
   /** Delete a project */
   deleteProject: Scalars['Boolean']['output'];
+  /** Delete a tag */
+  deleteTag: Scalars['Boolean']['output'];
   /** Login with username and password */
   login: AuthPayload;
   /** Logout current user */
@@ -181,8 +171,8 @@ export type Mutation = {
   updateCard: Card;
   /** Update a column */
   updateColumn: BoardColumn;
-  /** Update a label */
-  updateLabel: Label;
+  /** Update a tag */
+  updateTag: Tag;
 };
 
 
@@ -201,11 +191,6 @@ export type MutationCreateColumnArgs = {
 };
 
 
-export type MutationCreateLabelArgs = {
-  input: CreateLabelInput;
-};
-
-
 export type MutationCreateOrganizationArgs = {
   input: CreateOrganizationInput;
 };
@@ -213,6 +198,11 @@ export type MutationCreateOrganizationArgs = {
 
 export type MutationCreateProjectArgs = {
   input: CreateProjectInput;
+};
+
+
+export type MutationCreateTagArgs = {
+  input: CreateTagInput;
 };
 
 
@@ -231,17 +221,17 @@ export type MutationDeleteColumnArgs = {
 };
 
 
-export type MutationDeleteLabelArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
 export type MutationDeleteOrganizationArgs = {
   id: Scalars['ID']['input'];
 };
 
 
 export type MutationDeleteProjectArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeleteTagArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -286,8 +276,8 @@ export type MutationUpdateColumnArgs = {
 };
 
 
-export type MutationUpdateLabelArgs = {
-  input: UpdateLabelInput;
+export type MutationUpdateTagArgs = {
+  input: UpdateTagInput;
 };
 
 export type Organization = {
@@ -319,9 +309,9 @@ export type Project = {
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   key: Scalars['String']['output'];
-  labels: Array<Label>;
   name: Scalars['String']['output'];
   organization: Organization;
+  tags: Array<Tag>;
   updatedAt: Scalars['Time']['output'];
 };
 
@@ -336,8 +326,6 @@ export type Query = {
   card?: Maybe<Card>;
   /** Hello World query */
   helloWorld: Scalars['String']['output'];
-  /** Get all labels for a project */
-  labels: Array<Label>;
   /** Get current authenticated user */
   me?: Maybe<User>;
   /** Get all cards assigned to the current user */
@@ -348,6 +336,8 @@ export type Query = {
   organizations: Array<Organization>;
   /** Get a specific project by ID */
   project?: Maybe<Project>;
+  /** Get all tags for a project */
+  tags: Array<Tag>;
 };
 
 
@@ -366,11 +356,6 @@ export type QueryCardArgs = {
 };
 
 
-export type QueryLabelsArgs = {
-  projectId: Scalars['ID']['input'];
-};
-
-
 export type QueryOrganizationArgs = {
   id: Scalars['ID']['input'];
 };
@@ -378,6 +363,11 @@ export type QueryOrganizationArgs = {
 
 export type QueryProjectArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryTagsArgs = {
+  projectId: Scalars['ID']['input'];
 };
 
 export type RegisterInput = {
@@ -388,6 +378,16 @@ export type RegisterInput = {
 export type ReorderColumnsInput = {
   boardId: Scalars['ID']['input'];
   columnIds: Array<Scalars['ID']['input']>;
+};
+
+export type Tag = {
+  __typename?: 'Tag';
+  color: Scalars['String']['output'];
+  createdAt: Scalars['Time']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  project: Project;
 };
 
 export type UpdateBoardInput = {
@@ -401,8 +401,8 @@ export type UpdateCardInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['Time']['input']>;
   id: Scalars['ID']['input'];
-  labelIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   priority?: InputMaybe<CardPriority>;
+  tagIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -413,7 +413,7 @@ export type UpdateColumnInput = {
   wipLimit?: InputMaybe<Scalars['Int']['input']>;
 };
 
-export type UpdateLabelInput = {
+export type UpdateTagInput = {
   color?: InputMaybe<Scalars['String']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
@@ -461,7 +461,7 @@ export type BoardQueryVariables = Exact<{
 }>;
 
 
-export type BoardQuery = { __typename?: 'Query', board?: { __typename?: 'Board', id: string, name: string, description?: string | null, isDefault: boolean, createdAt: string, updatedAt: string, project: { __typename?: 'Project', id: string, name: string, key: string, organization: { __typename?: 'Organization', id: string, name: string, slug: string } }, columns: Array<{ __typename?: 'BoardColumn', id: string, name: string, position: number, isBacklog: boolean, isHidden: boolean, color?: string | null, wipLimit?: number | null, cards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, labels: Array<{ __typename?: 'Label', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null }> }> } | null };
+export type BoardQuery = { __typename?: 'Query', board?: { __typename?: 'Board', id: string, name: string, description?: string | null, isDefault: boolean, createdAt: string, updatedAt: string, project: { __typename?: 'Project', id: string, name: string, key: string, organization: { __typename?: 'Organization', id: string, name: string, slug: string } }, columns: Array<{ __typename?: 'BoardColumn', id: string, name: string, position: number, isBacklog: boolean, isHidden: boolean, color?: string | null, wipLimit?: number | null, cards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null }> }> } | null };
 
 export type BoardsQueryVariables = Exact<{
   projectId: Scalars['ID']['input'];
@@ -477,17 +477,17 @@ export type ProjectDefaultBoardQueryVariables = Exact<{
 
 export type ProjectDefaultBoardQuery = { __typename?: 'Query', boards: Array<{ __typename?: 'Board', id: string, name: string, isDefault: boolean }> };
 
-export type LabelsQueryVariables = Exact<{
+export type TagsQueryVariables = Exact<{
   projectId: Scalars['ID']['input'];
 }>;
 
 
-export type LabelsQuery = { __typename?: 'Query', labels: Array<{ __typename?: 'Label', id: string, name: string, color: string, description?: string | null, createdAt: string }> };
+export type TagsQuery = { __typename?: 'Query', tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string, description?: string | null, createdAt: string }> };
 
 export type MyCardsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MyCardsQuery = { __typename?: 'Query', myCards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, board: { __typename?: 'Board', id: string, name: string, project: { __typename?: 'Project', id: string, name: string, key: string } }, column: { __typename?: 'BoardColumn', id: string, name: string }, labels: Array<{ __typename?: 'Label', id: string, name: string, color: string }> }> };
+export type MyCardsQuery = { __typename?: 'Query', myCards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, board: { __typename?: 'Board', id: string, name: string, project: { __typename?: 'Project', id: string, name: string, key: string } }, column: { __typename?: 'BoardColumn', id: string, name: string }, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }> }> };
 
 export type CreateBoardMutationVariables = Exact<{
   input: CreateBoardInput;
@@ -550,14 +550,14 @@ export type CreateCardMutationVariables = Exact<{
 }>;
 
 
-export type CreateCardMutation = { __typename?: 'Mutation', createCard: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, labels: Array<{ __typename?: 'Label', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null } };
+export type CreateCardMutation = { __typename?: 'Mutation', createCard: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null } };
 
 export type UpdateCardMutationVariables = Exact<{
   input: UpdateCardInput;
 }>;
 
 
-export type UpdateCardMutation = { __typename?: 'Mutation', updateCard: { __typename?: 'Card', id: string, title: string, description?: string | null, priority: CardPriority, dueDate?: string | null, updatedAt: string, labels: Array<{ __typename?: 'Label', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null } };
+export type UpdateCardMutation = { __typename?: 'Mutation', updateCard: { __typename?: 'Card', id: string, title: string, description?: string | null, priority: CardPriority, dueDate?: string | null, updatedAt: string, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null } };
 
 export type MoveCardMutationVariables = Exact<{
   input: MoveCardInput;
@@ -573,26 +573,26 @@ export type DeleteCardMutationVariables = Exact<{
 
 export type DeleteCardMutation = { __typename?: 'Mutation', deleteCard: boolean };
 
-export type CreateLabelMutationVariables = Exact<{
-  input: CreateLabelInput;
+export type CreateTagMutationVariables = Exact<{
+  input: CreateTagInput;
 }>;
 
 
-export type CreateLabelMutation = { __typename?: 'Mutation', createLabel: { __typename?: 'Label', id: string, name: string, color: string, description?: string | null, createdAt: string } };
+export type CreateTagMutation = { __typename?: 'Mutation', createTag: { __typename?: 'Tag', id: string, name: string, color: string, description?: string | null, createdAt: string } };
 
-export type UpdateLabelMutationVariables = Exact<{
-  input: UpdateLabelInput;
+export type UpdateTagMutationVariables = Exact<{
+  input: UpdateTagInput;
 }>;
 
 
-export type UpdateLabelMutation = { __typename?: 'Mutation', updateLabel: { __typename?: 'Label', id: string, name: string, color: string, description?: string | null } };
+export type UpdateTagMutation = { __typename?: 'Mutation', updateTag: { __typename?: 'Tag', id: string, name: string, color: string, description?: string | null } };
 
-export type DeleteLabelMutationVariables = Exact<{
+export type DeleteTagMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type DeleteLabelMutation = { __typename?: 'Mutation', deleteLabel: boolean };
+export type DeleteTagMutation = { __typename?: 'Mutation', deleteTag: boolean };
 
 export type CreateOrganizationMutationVariables = Exact<{
   input: CreateOrganizationInput;

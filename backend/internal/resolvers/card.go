@@ -10,8 +10,8 @@ import (
 	"github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
 	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
 	cardService "github.com/thatcatdev/pulse-backend/internal/services/card"
-	labelService "github.com/thatcatdev/pulse-backend/internal/services/label"
 	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
+	tagService "github.com/thatcatdev/pulse-backend/internal/services/tag"
 )
 
 // Card returns a card by ID
@@ -123,16 +123,16 @@ func CreateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServ
 		}
 		createInput.AssigneeID = &assigneeID
 	}
-	if input.LabelIds != nil {
-		labelIDs := make([]uuid.UUID, len(input.LabelIds))
-		for i, id := range input.LabelIds {
-			labelID, err := uuid.Parse(id)
+	if input.TagIds != nil {
+		tagIDs := make([]uuid.UUID, len(input.TagIds))
+		for i, id := range input.TagIds {
+			tagID, err := uuid.Parse(id)
 			if err != nil {
 				return nil, err
 			}
-			labelIDs[i] = labelID
+			tagIDs[i] = tagID
 		}
-		createInput.LabelIDs = labelIDs
+		createInput.TagIDs = tagIDs
 	}
 	if input.DueDate != nil {
 		createInput.DueDate = input.DueDate
@@ -198,16 +198,16 @@ func UpdateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServ
 		}
 		updateInput.AssigneeID = &assigneeID
 	}
-	if input.LabelIds != nil {
-		labelIDs := make([]uuid.UUID, len(input.LabelIds))
-		for i, id := range input.LabelIds {
-			labelID, err := uuid.Parse(id)
+	if input.TagIds != nil {
+		tagIDs := make([]uuid.UUID, len(input.TagIds))
+		for i, id := range input.TagIds {
+			tagID, err := uuid.Parse(id)
 			if err != nil {
 				return nil, err
 			}
-			labelIDs[i] = labelID
+			tagIDs[i] = tagID
 		}
-		updateInput.LabelIDs = labelIDs
+		updateInput.TagIDs = tagIDs
 	}
 	if input.DueDate != nil {
 		updateInput.DueDate = input.DueDate
@@ -342,21 +342,21 @@ func CardBoard(ctx context.Context, cardSvc cardService.Service, c *model.Card) 
 	return boardToModel(b), nil
 }
 
-// CardLabels resolves the labels field of a Card
-func CardLabels(ctx context.Context, cardSvc cardService.Service, c *model.Card) ([]*model.Label, error) {
+// CardTags resolves the tags field of a Card
+func CardTags(ctx context.Context, cardSvc cardService.Service, c *model.Card) ([]*model.Tag, error) {
 	cardID, err := uuid.Parse(c.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	labels, err := cardSvc.GetLabelsForCard(ctx, cardID)
+	tags, err := cardSvc.GetTagsForCard(ctx, cardID)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]*model.Label, len(labels))
-	for i, l := range labels {
-		result[i] = labelToModel(l)
+	result := make([]*model.Tag, len(tags))
+	for i, t := range tags {
+		result[i] = tagToModel(t)
 	}
 	return result, nil
 }
@@ -424,21 +424,21 @@ func modelPriorityToCard(p model.CardPriority) card.CardPriority {
 	}
 }
 
-// ProjectLabels resolves the labels field of a Project
-func ProjectLabels(ctx context.Context, labelSvc labelService.Service, proj *model.Project) ([]*model.Label, error) {
+// ProjectTags resolves the tags field of a Project
+func ProjectTags(ctx context.Context, tagSvc tagService.Service, proj *model.Project) ([]*model.Tag, error) {
 	projID, err := uuid.Parse(proj.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	labels, err := labelSvc.GetLabelsByProjectID(ctx, projID)
+	tags, err := tagSvc.GetTagsByProjectID(ctx, projID)
 	if err != nil {
 		return nil, err
 	}
 
-	result := make([]*model.Label, len(labels))
-	for i, l := range labels {
-		result[i] = labelToModel(l)
+	result := make([]*model.Tag, len(tags))
+	for i, t := range tags {
+		result[i] = tagToModel(t)
 	}
 	return result, nil
 }

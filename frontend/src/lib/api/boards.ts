@@ -4,8 +4,8 @@ import type {
   BoardQueryVariables,
   BoardsQuery,
   BoardsQueryVariables,
-  LabelsQuery,
-  LabelsQueryVariables,
+  TagsQuery,
+  TagsQueryVariables,
   CreateBoardMutation,
   CreateBoardMutationVariables,
   UpdateBoardMutation,
@@ -30,19 +30,19 @@ import type {
   MoveCardMutationVariables,
   DeleteCardMutation,
   DeleteCardMutationVariables,
-  CreateLabelMutation,
-  CreateLabelMutationVariables,
-  UpdateLabelMutation,
-  UpdateLabelMutationVariables,
-  DeleteLabelMutation,
-  DeleteLabelMutationVariables,
+  CreateTagMutation,
+  CreateTagMutationVariables,
+  UpdateTagMutation,
+  UpdateTagMutationVariables,
+  DeleteTagMutation,
+  DeleteTagMutationVariables,
   CardPriority,
 } from '../graphql/generated';
 
 export type BoardWithColumns = NonNullable<BoardQuery['board']>;
 export type BoardColumn = BoardWithColumns['columns'][0];
 export type BoardCard = BoardColumn['cards'][0];
-export type Label = LabelsQuery['labels'][0];
+export type Tag = TagsQuery['tags'][0];
 
 const BOARD_QUERY = `
   query Board($id: ID!) {
@@ -80,7 +80,7 @@ const BOARD_QUERY = `
           dueDate
           createdAt
           updatedAt
-          labels {
+          tags {
             id
             name
             color
@@ -107,9 +107,9 @@ const BOARDS_QUERY = `
   }
 `;
 
-const LABELS_QUERY = `
-  query Labels($projectId: ID!) {
-    labels(projectId: $projectId) {
+const TAGS_QUERY = `
+  query Tags($projectId: ID!) {
+    tags(projectId: $projectId) {
       id
       name
       color
@@ -209,7 +209,7 @@ const CREATE_CARD_MUTATION = `
       priority
       dueDate
       createdAt
-      labels {
+      tags {
         id
         name
         color
@@ -231,7 +231,7 @@ const UPDATE_CARD_MUTATION = `
       priority
       dueDate
       updatedAt
-      labels {
+      tags {
         id
         name
         color
@@ -262,9 +262,9 @@ const DELETE_CARD_MUTATION = `
   }
 `;
 
-const CREATE_LABEL_MUTATION = `
-  mutation CreateLabel($input: CreateLabelInput!) {
-    createLabel(input: $input) {
+const CREATE_TAG_MUTATION = `
+  mutation CreateTag($input: CreateTagInput!) {
+    createTag(input: $input) {
       id
       name
       color
@@ -274,9 +274,9 @@ const CREATE_LABEL_MUTATION = `
   }
 `;
 
-const UPDATE_LABEL_MUTATION = `
-  mutation UpdateLabel($input: UpdateLabelInput!) {
-    updateLabel(input: $input) {
+const UPDATE_TAG_MUTATION = `
+  mutation UpdateTag($input: UpdateTagInput!) {
+    updateTag(input: $input) {
       id
       name
       color
@@ -285,9 +285,9 @@ const UPDATE_LABEL_MUTATION = `
   }
 `;
 
-const DELETE_LABEL_MUTATION = `
-  mutation DeleteLabel($id: ID!) {
-    deleteLabel(id: $id)
+const DELETE_TAG_MUTATION = `
+  mutation DeleteTag($id: ID!) {
+    deleteTag(id: $id)
   }
 `;
 
@@ -388,11 +388,11 @@ export async function createCard(
   description?: string,
   priority?: CardPriority,
   assigneeId?: string,
-  labelIds?: string[],
+  tagIds?: string[],
   dueDate?: string
 ): Promise<CreateCardMutation['createCard']> {
   const data = await graphql<CreateCardMutation>(CREATE_CARD_MUTATION, {
-    input: { columnId, title, description, priority, assigneeId, labelIds, dueDate },
+    input: { columnId, title, description, priority, assigneeId, tagIds, dueDate },
   } as CreateCardMutationVariables);
   return data.createCard;
 }
@@ -403,11 +403,11 @@ export async function updateCard(
   description?: string,
   priority?: CardPriority,
   assigneeId?: string,
-  labelIds?: string[],
+  tagIds?: string[],
   dueDate?: string | null
 ): Promise<UpdateCardMutation['updateCard']> {
   const data = await graphql<UpdateCardMutation>(UPDATE_CARD_MUTATION, {
-    input: { id, title, description, priority, assigneeId, labelIds, dueDate },
+    input: { id, title, description, priority, assigneeId, tagIds, dueDate },
   } as UpdateCardMutationVariables);
   return data.updateCard;
 }
@@ -430,39 +430,39 @@ export async function deleteCard(id: string): Promise<boolean> {
   return data.deleteCard;
 }
 
-// Label operations
-export async function getLabels(projectId: string): Promise<Label[]> {
-  const data = await graphql<LabelsQuery>(LABELS_QUERY, { projectId } as LabelsQueryVariables);
-  return data.labels;
+// Tag operations
+export async function getTags(projectId: string): Promise<Tag[]> {
+  const data = await graphql<TagsQuery>(TAGS_QUERY, { projectId } as TagsQueryVariables);
+  return data.tags;
 }
 
-export async function createLabel(
+export async function createTag(
   projectId: string,
   name: string,
   color: string,
   description?: string
-): Promise<CreateLabelMutation['createLabel']> {
-  const data = await graphql<CreateLabelMutation>(CREATE_LABEL_MUTATION, {
+): Promise<CreateTagMutation['createTag']> {
+  const data = await graphql<CreateTagMutation>(CREATE_TAG_MUTATION, {
     input: { projectId, name, color, description },
-  } as CreateLabelMutationVariables);
-  return data.createLabel;
+  } as CreateTagMutationVariables);
+  return data.createTag;
 }
 
-export async function updateLabel(
+export async function updateTag(
   id: string,
   name?: string,
   color?: string,
   description?: string
-): Promise<UpdateLabelMutation['updateLabel']> {
-  const data = await graphql<UpdateLabelMutation>(UPDATE_LABEL_MUTATION, {
+): Promise<UpdateTagMutation['updateTag']> {
+  const data = await graphql<UpdateTagMutation>(UPDATE_TAG_MUTATION, {
     input: { id, name, color, description },
-  } as UpdateLabelMutationVariables);
-  return data.updateLabel;
+  } as UpdateTagMutationVariables);
+  return data.updateTag;
 }
 
-export async function deleteLabel(id: string): Promise<boolean> {
-  const data = await graphql<DeleteLabelMutation>(DELETE_LABEL_MUTATION, {
+export async function deleteTag(id: string): Promise<boolean> {
+  const data = await graphql<DeleteTagMutation>(DELETE_TAG_MUTATION, {
     id,
-  } as DeleteLabelMutationVariables);
-  return data.deleteLabel;
+  } as DeleteTagMutationVariables);
+  return data.deleteTag;
 }

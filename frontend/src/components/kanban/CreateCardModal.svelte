@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { createCard, type Label } from '../../lib/api/boards';
+  import { createCard, type Tag } from '../../lib/api/boards';
   import { CardPriority } from '../../lib/graphql/generated';
   import { Button } from '../ui';
   import CardForm from './CardForm.svelte';
@@ -7,18 +7,18 @@
   interface Props {
     columnId: string;
     projectId: string;
-    labels: Label[];
+    tags: Tag[];
     onClose: () => void;
     onCreated: () => void;
-    onLabelsChanged?: () => void;
+    onTagsChanged?: () => void;
   }
 
-  let { columnId, projectId, labels, onClose, onCreated, onLabelsChanged }: Props = $props();
+  let { columnId, projectId, tags, onClose, onCreated, onTagsChanged }: Props = $props();
 
   let title = $state('');
   let description = $state('');
   let priority = $state<CardPriority>(CardPriority.None);
-  let selectedLabelIds = $state<string[]>([]);
+  let selectedTagIds = $state<string[]>([]);
   let dueDate = $state('');
   let loading = $state(false);
   let error = $state<string | null>(null);
@@ -41,7 +41,7 @@
         description.trim() || undefined,
         priority,
         undefined,
-        selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
+        selectedTagIds.length > 0 ? selectedTagIds : undefined,
         dueDateRfc3339
       );
       onCreated();
@@ -86,15 +86,15 @@
             {description}
             {priority}
             {dueDate}
-            {selectedLabelIds}
+            {selectedTagIds}
             {projectId}
-            {labels}
+            {tags}
             onTitleChange={(v) => title = v}
             onDescriptionChange={(v) => description = v}
             onPriorityChange={(v) => priority = v}
             onDueDateChange={(v) => dueDate = v}
-            onLabelSelectionChange={(ids) => selectedLabelIds = ids}
-            {onLabelsChanged}
+            onTagSelectionChange={(ids) => selectedTagIds = ids}
+            {onTagsChanged}
             {error}
             disabled={loading}
           />

@@ -109,19 +109,19 @@ func (r *mutationResolver) DeleteCard(ctx context.Context, id string) (bool, err
 	return resolvers.DeleteCard(ctx, r.OrganizationService, r.CardService, r.BoardService, id)
 }
 
-// CreateLabel is the resolver for the createLabel field.
-func (r *mutationResolver) CreateLabel(ctx context.Context, input model.CreateLabelInput) (*model.Label, error) {
-	return resolvers.CreateLabel(ctx, r.OrganizationService, r.LabelService, r.ProjectService, input)
+// CreateTag is the resolver for the createTag field.
+func (r *mutationResolver) CreateTag(ctx context.Context, input model.CreateTagInput) (*model.Tag, error) {
+	return resolvers.CreateTag(ctx, r.OrganizationService, r.TagService, r.ProjectService, input)
 }
 
-// UpdateLabel is the resolver for the updateLabel field.
-func (r *mutationResolver) UpdateLabel(ctx context.Context, input model.UpdateLabelInput) (*model.Label, error) {
-	return resolvers.UpdateLabel(ctx, r.OrganizationService, r.LabelService, input)
+// UpdateTag is the resolver for the updateTag field.
+func (r *mutationResolver) UpdateTag(ctx context.Context, input model.UpdateTagInput) (*model.Tag, error) {
+	return resolvers.UpdateTag(ctx, r.OrganizationService, r.TagService, input)
 }
 
-// DeleteLabel is the resolver for the deleteLabel field.
-func (r *mutationResolver) DeleteLabel(ctx context.Context, id string) (bool, error) {
-	return resolvers.DeleteLabel(ctx, r.OrganizationService, r.LabelService, id)
+// DeleteTag is the resolver for the deleteTag field.
+func (r *mutationResolver) DeleteTag(ctx context.Context, id string) (bool, error) {
+	return resolvers.DeleteTag(ctx, r.OrganizationService, r.TagService, id)
 }
 
 // HelloWorld is the resolver for the helloWorld field.
@@ -169,9 +169,9 @@ func (r *queryResolver) MyCards(ctx context.Context) ([]*model.Card, error) {
 	return resolvers.MyCards(ctx, r.CardService)
 }
 
-// Labels is the resolver for the labels field.
-func (r *queryResolver) Labels(ctx context.Context, projectID string) ([]*model.Label, error) {
-	return resolvers.Labels(ctx, r.OrganizationService, r.LabelService, r.ProjectService, projectID)
+// Tags is the resolver for the tags field.
+func (r *queryResolver) Tags(ctx context.Context, projectID string) ([]*model.Tag, error) {
+	return resolvers.Tags(ctx, r.OrganizationService, r.TagService, r.ProjectService, projectID)
 }
 
 // Mutation returns generated.MutationResolver implementation.

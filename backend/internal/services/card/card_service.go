@@ -9,8 +9,8 @@ import (
 	"github.com/thatcatdev/pulse-backend/internal/db/repositories/board"
 	"github.com/thatcatdev/pulse-backend/internal/db/repositories/board_column"
 	"github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/card_label"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/label"
+	"github.com/thatcatdev/pulse-backend/internal/db/repositories/card_tag"
+	"github.com/thatcatdev/pulse-backend/internal/db/repositories/tag"
 	"github.com/thatcatdev/pulse-backend/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -29,7 +29,7 @@ type CreateCardInput struct {
 	Description string
 	Priority    card.CardPriority
 	AssigneeID  *uuid.UUID
-	LabelIDs    []uuid.UUID
+	TagIDs      []uuid.UUID
 	DueDate     *time.Time
 	CreatedBy   *uuid.UUID
 }
@@ -40,7 +40,7 @@ type UpdateCardInput struct {
 	Description *string
 	Priority    *card.CardPriority
 	AssigneeID  *uuid.UUID
-	LabelIDs    []uuid.UUID
+	TagIDs      []uuid.UUID
 	DueDate     *time.Time
 }
 
@@ -53,32 +53,32 @@ type Service interface {
 	UpdateCard(ctx context.Context, input UpdateCardInput) (*card.Card, error)
 	MoveCard(ctx context.Context, cardID, targetColumnID uuid.UUID, afterCardID *uuid.UUID) (*card.Card, error)
 	DeleteCard(ctx context.Context, id uuid.UUID) error
-	GetLabelsForCard(ctx context.Context, cardID uuid.UUID) ([]*label.Label, error)
+	GetTagsForCard(ctx context.Context, cardID uuid.UUID) ([]*tag.Tag, error)
 	GetBoardByCardID(ctx context.Context, cardID uuid.UUID) (*board.Board, error)
 	GetColumnByCardID(ctx context.Context, cardID uuid.UUID) (*board_column.BoardColumn, error)
 }
 
 type service struct {
-	cardRepo      card.Repository
-	columnRepo    board_column.Repository
-	boardRepo     board.Repository
-	labelRepo     label.Repository
-	cardLabelRepo card_label.Repository
+	cardRepo    card.Repository
+	columnRepo  board_column.Repository
+	boardRepo   board.Repository
+	tagRepo     tag.Repository
+	cardTagRepo card_tag.Repository
 }
 
 func NewService(
 	cardRepo card.Repository,
 	columnRepo board_column.Repository,
 	boardRepo board.Repository,
-	labelRepo label.Repository,
-	cardLabelRepo card_label.Repository,
+	tagRepo tag.Repository,
+	cardTagRepo card_tag.Repository,
 ) Service {
 	return &service{
-		cardRepo:      cardRepo,
-		columnRepo:    columnRepo,
-		boardRepo:     boardRepo,
-		labelRepo:     labelRepo,
-		cardLabelRepo: cardLabelRepo,
+		cardRepo:    cardRepo,
+		columnRepo:  columnRepo,
+		boardRepo:   boardRepo,
+		tagRepo:     tagRepo,
+		cardTagRepo: cardTagRepo,
 	}
 }
 
@@ -138,9 +138,9 @@ func (s *service) CreateCard(ctx context.Context, input CreateCardInput) (*card.
 		return nil, err
 	}
 
-	// Add labels if provided
-	if len(input.LabelIDs) > 0 {
-		if err := s.cardLabelRepo.SetLabelsForCard(ctx, c.ID, input.LabelIDs); err != nil {
+	// Add tags if provided
+	if len(input.TagIDs) > 0 {
+		if err := s.cardTagRepo.SetTagsForCard(ctx, c.ID, input.TagIDs); err != nil {
 			return nil, err
 		}
 	}
@@ -220,9 +220,9 @@ func (s *service) UpdateCard(ctx context.Context, input UpdateCardInput) (*card.
 		return nil, err
 	}
 
-	// Update labels if provided
-	if input.LabelIDs != nil {
-		if err := s.cardLabelRepo.SetLabelsForCard(ctx, c.ID, input.LabelIDs); err != nil {
+	// Update tags if provided
+	if input.TagIDs != nil {
+		if err := s.cardTagRepo.SetTagsForCard(ctx, c.ID, input.TagIDs); err != nil {
 			return nil, err
 		}
 	}
@@ -280,26 +280,26 @@ func (s *service) DeleteCard(ctx context.Context, id uuid.UUID) error {
 	return s.cardRepo.Delete(ctx, id)
 }
 
-func (s *service) GetLabelsForCard(ctx context.Context, cardID uuid.UUID) ([]*label.Label, error) {
-	ctx, span := s.startServiceSpan(ctx, "GetLabelsForCard")
+func (s *service) GetTagsForCard(ctx context.Context, cardID uuid.UUID) ([]*tag.Tag, error) {
+	ctx, span := s.startServiceSpan(ctx, "GetTagsForCard")
 	span.SetAttributes(attribute.String("card.id", cardID.String()))
 	defer span.End()
 
-	cardLabels, err := s.cardLabelRepo.GetByCardID(ctx, cardID)
+	cardTags, err := s.cardTagRepo.GetByCardID(ctx, cardID)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(cardLabels) == 0 {
-		return []*label.Label{}, nil
+	if len(cardTags) == 0 {
+		return []*tag.Tag{}, nil
 	}
 
-	labelIDs := make([]uuid.UUID, len(cardLabels))
-	for i, cl := range cardLabels {
-		labelIDs[i] = cl.LabelID
+	tagIDs := make([]uuid.UUID, len(cardTags))
+	for i, ct := range cardTags {
+		tagIDs[i] = ct.TagID
 	}
 
-	return s.labelRepo.GetByIDs(ctx, labelIDs)
+	return s.tagRepo.GetByIDs(ctx, tagIDs)
 }
 
 func (s *service) GetBoardByCardID(ctx context.Context, cardID uuid.UUID) (*board.Board, error) {

@@ -5,9 +5,9 @@ import (
 	"github.com/thatcatdev/pulse-backend/internal/services/auth"
 	"github.com/thatcatdev/pulse-backend/internal/services/board"
 	"github.com/thatcatdev/pulse-backend/internal/services/card"
-	"github.com/thatcatdev/pulse-backend/internal/services/label"
 	"github.com/thatcatdev/pulse-backend/internal/services/organization"
 	"github.com/thatcatdev/pulse-backend/internal/services/project"
+	"github.com/thatcatdev/pulse-backend/internal/services/tag"
 )
 
 // This file will not be regenerated automatically.
@@ -23,5 +23,5 @@ type Resolver struct {
 	ProjectService      project.Service
 	BoardService        board.Service
 	CardService         card.Service
-	LabelService        label.Service
+	TagService          tag.Service
 }

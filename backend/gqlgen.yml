@@ -81,13 +81,13 @@ models:
         resolver: true
       board:
         resolver: true
-      labels:
+      tags:
         resolver: true
       assignee:
         resolver: true
       createdBy:
         resolver: true
-  Label:
+  Tag:
     fields:
       project:
         resolver: true
@@ -97,5 +97,5 @@ models:
         resolver: true
       defaultBoard:
         resolver: true
-      labels:
+      tags:
         resolver: true

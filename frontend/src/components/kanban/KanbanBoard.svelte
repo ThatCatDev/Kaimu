@@ -4,8 +4,8 @@
   import CreateCardModal from './CreateCardModal.svelte';
   import CardDetailModal from './CardDetailModal.svelte';
   import CardDetailPanel from './CardDetailPanel.svelte';
-  import type { BoardWithColumns, BoardColumn, BoardCard, Label } from '../../lib/api/boards';
-  import { getBoard, moveCard, getLabels, deleteCard } from '../../lib/api/boards';
+  import type { BoardWithColumns, BoardColumn, BoardCard, Tag } from '../../lib/api/boards';
+  import { getBoard, moveCard, getTags, deleteCard } from '../../lib/api/boards';
 
   interface Props {
     boardId: string;
@@ -14,7 +14,7 @@
   let { boardId }: Props = $props();
 
   let board = $state<BoardWithColumns | null>(null);
-  let labels = $state<Label[]>([]);
+  let tags = $state<Tag[]>([]);
   let loading = $state(true);
   let error = $state<string | null>(null);
   let showHiddenColumns = $state(false);
@@ -67,7 +67,7 @@
       error = null;
       board = await getBoard(boardId);
       if (board) {
-        labels = await getLabels(board.project.id);
+        tags = await getTags(board.project.id);
       }
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load board';
@@ -80,16 +80,16 @@
     try {
       board = await getBoard(boardId);
       if (board) {
-        labels = await getLabels(board.project.id);
+        tags = await getTags(board.project.id);
       }
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to refresh board';
     }
   }
 
-  async function reloadLabels() {
+  async function reloadTags() {
     if (board) {
-      labels = await getLabels(board.project.id);
+      tags = await getTags(board.project.id);
     }
   }
 
@@ -243,10 +243,10 @@
     <CreateCardModal
       columnId={createCardColumnId}
       projectId={board.project.id}
-      {labels}
+      {tags}
       onClose={closeCreateCardModal}
       onCreated={handleCardCreated}
-      onLabelsChanged={reloadLabels}
+      onTagsChanged={reloadTags}
     />
   {/if}
 
@@ -255,10 +255,10 @@
     <CardDetailModal
       card={selectedCard}
       projectId={board.project.id}
-      {labels}
+      {tags}
       onClose={closeCardDetailModal}
       onUpdated={handleCardUpdated}
-      onLabelsChanged={reloadLabels}
+      onTagsChanged={reloadTags}
       viewMode={cardViewMode}
       onViewModeChange={setCardViewMode}
     />
@@ -269,11 +269,11 @@
     <CardDetailPanel
       card={selectedCard}
       projectId={board?.project?.id ?? ''}
-      {labels}
+      {tags}
       isOpen={showCardDetailModal}
       onClose={closeCardDetailModal}
       onUpdated={handleCardUpdated}
-      onLabelsChanged={reloadLabels}
+      onTagsChanged={reloadTags}
       viewMode={cardViewMode}
       onViewModeChange={setCardViewMode}
     />

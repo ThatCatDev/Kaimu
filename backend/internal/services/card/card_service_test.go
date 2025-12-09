@@ -14,10 +14,10 @@ import (
 	columnMocks "github.com/thatcatdev/pulse-backend/internal/db/repositories/board_column/mocks"
 	"github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
 	cardMocks "github.com/thatcatdev/pulse-backend/internal/db/repositories/card/mocks"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/card_label"
-	cardLabelMocks "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_label/mocks"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/label"
-	labelMocks "github.com/thatcatdev/pulse-backend/internal/db/repositories/label/mocks"
+	"github.com/thatcatdev/pulse-backend/internal/db/repositories/card_tag"
+	cardTagMocks "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_tag/mocks"
+	"github.com/thatcatdev/pulse-backend/internal/db/repositories/tag"
+	tagMocks "github.com/thatcatdev/pulse-backend/internal/db/repositories/tag/mocks"
 	"go.uber.org/mock/gomock"
 	"gorm.io/gorm"
 )
@@ -29,17 +29,17 @@ func TestCreateCard(t *testing.T) {
 	mockCardRepo := cardMocks.NewMockRepository(ctrl)
 	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
 	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
-	mockLabelRepo := labelMocks.NewMockRepository(ctrl)
-	mockCardLabelRepo := cardLabelMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
 
-	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockLabelRepo, mockCardLabelRepo)
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
 	ctx := context.Background()
 
 	columnID := uuid.New()
 	boardID := uuid.New()
 	userID := uuid.New()
 
-	t.Run("success without labels", func(t *testing.T) {
+	t.Run("success without tags", func(t *testing.T) {
 		mockColumnRepo.EXPECT().
 			GetByID(gomock.Any(), columnID).
 			Return(&board_column.BoardColumn{ID: columnID, BoardID: boardID}, nil)
@@ -72,9 +72,9 @@ func TestCreateCard(t *testing.T) {
 		assert.Equal(t, "Test Card", result.Title)
 	})
 
-	t.Run("success with labels", func(t *testing.T) {
-		labelID1 := uuid.New()
-		labelID2 := uuid.New()
+	t.Run("success with tags", func(t *testing.T) {
+		tagID1 := uuid.New()
+		tagID2 := uuid.New()
 
 		mockColumnRepo.EXPECT().
 			GetByID(gomock.Any(), columnID).
@@ -91,14 +91,14 @@ func TestCreateCard(t *testing.T) {
 				return nil
 			})
 
-		mockCardLabelRepo.EXPECT().
-			SetLabelsForCard(gomock.Any(), gomock.Any(), []uuid.UUID{labelID1, labelID2}).
+		mockCardTagRepo.EXPECT().
+			SetTagsForCard(gomock.Any(), gomock.Any(), []uuid.UUID{tagID1, tagID2}).
 			Return(nil)
 
 		input := CreateCardInput{
 			ColumnID:  columnID,
-			Title:     "Card with Labels",
-			LabelIDs:  []uuid.UUID{labelID1, labelID2},
+			Title:     "Card with Tags",
+			TagIDs:    []uuid.UUID{tagID1, tagID2},
 			CreatedBy: &userID,
 		}
 
@@ -130,10 +130,10 @@ func TestGetCard(t *testing.T) {
 	mockCardRepo := cardMocks.NewMockRepository(ctrl)
 	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
 	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
-	mockLabelRepo := labelMocks.NewMockRepository(ctrl)
-	mockCardLabelRepo := cardLabelMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
 
-	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockLabelRepo, mockCardLabelRepo)
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
 	ctx := context.Background()
 
 	cardID := uuid.New()
@@ -170,10 +170,10 @@ func TestGetCardsByColumnID(t *testing.T) {
 	mockCardRepo := cardMocks.NewMockRepository(ctrl)
 	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
 	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
-	mockLabelRepo := labelMocks.NewMockRepository(ctrl)
-	mockCardLabelRepo := cardLabelMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
 
-	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockLabelRepo, mockCardLabelRepo)
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
 	ctx := context.Background()
 
 	columnID := uuid.New()
@@ -200,10 +200,10 @@ func TestUpdateCard(t *testing.T) {
 	mockCardRepo := cardMocks.NewMockRepository(ctrl)
 	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
 	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
-	mockLabelRepo := labelMocks.NewMockRepository(ctrl)
-	mockCardLabelRepo := cardLabelMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
 
-	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockLabelRepo, mockCardLabelRepo)
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
 	ctx := context.Background()
 
 	cardID := uuid.New()
@@ -239,8 +239,8 @@ func TestUpdateCard(t *testing.T) {
 		assert.Equal(t, "New Title", result.Title)
 	})
 
-	t.Run("success - update labels", func(t *testing.T) {
-		labelID := uuid.New()
+	t.Run("success - update tags", func(t *testing.T) {
+		tagID := uuid.New()
 		existingCard := &card.Card{
 			ID:    cardID,
 			Title: "Test Card",
@@ -253,13 +253,13 @@ func TestUpdateCard(t *testing.T) {
 			Update(gomock.Any(), gomock.Any()).
 			Return(nil)
 
-		mockCardLabelRepo.EXPECT().
-			SetLabelsForCard(gomock.Any(), cardID, []uuid.UUID{labelID}).
+		mockCardTagRepo.EXPECT().
+			SetTagsForCard(gomock.Any(), cardID, []uuid.UUID{tagID}).
 			Return(nil)
 
 		input := UpdateCardInput{
-			ID:       cardID,
-			LabelIDs: []uuid.UUID{labelID},
+			ID:     cardID,
+			TagIDs: []uuid.UUID{tagID},
 		}
 
 		result, err := svc.UpdateCard(ctx, input)
@@ -286,10 +286,10 @@ func TestMoveCard(t *testing.T) {
 	mockCardRepo := cardMocks.NewMockRepository(ctrl)
 	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
 	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
-	mockLabelRepo := labelMocks.NewMockRepository(ctrl)
-	mockCardLabelRepo := cardLabelMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
 
-	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockLabelRepo, mockCardLabelRepo)
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
 	ctx := context.Background()
 
 	cardID := uuid.New()
@@ -393,10 +393,10 @@ func TestDeleteCard(t *testing.T) {
 	mockCardRepo := cardMocks.NewMockRepository(ctrl)
 	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
 	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
-	mockLabelRepo := labelMocks.NewMockRepository(ctrl)
-	mockCardLabelRepo := cardLabelMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
 
-	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockLabelRepo, mockCardLabelRepo)
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
 	ctx := context.Background()
 
 	cardID := uuid.New()
@@ -411,50 +411,50 @@ func TestDeleteCard(t *testing.T) {
 	})
 }
 
-func TestGetLabelsForCard(t *testing.T) {
+func TestGetTagsForCard(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mockCardRepo := cardMocks.NewMockRepository(ctrl)
 	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
 	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
-	mockLabelRepo := labelMocks.NewMockRepository(ctrl)
-	mockCardLabelRepo := cardLabelMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
 
-	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockLabelRepo, mockCardLabelRepo)
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
 	ctx := context.Background()
 
 	cardID := uuid.New()
-	labelID1 := uuid.New()
-	labelID2 := uuid.New()
+	tagID1 := uuid.New()
+	tagID2 := uuid.New()
 
-	t.Run("success with multiple labels", func(t *testing.T) {
-		cardLabels := []*card_label.CardLabel{
-			{CardID: cardID, LabelID: labelID1},
-			{CardID: cardID, LabelID: labelID2},
+	t.Run("success with multiple tags", func(t *testing.T) {
+		cardTags := []*card_tag.CardTag{
+			{CardID: cardID, TagID: tagID1},
+			{CardID: cardID, TagID: tagID2},
 		}
-		mockCardLabelRepo.EXPECT().
+		mockCardTagRepo.EXPECT().
 			GetByCardID(gomock.Any(), cardID).
-			Return(cardLabels, nil)
+			Return(cardTags, nil)
 
-		mockLabelRepo.EXPECT().
-			GetByIDs(gomock.Any(), []uuid.UUID{labelID1, labelID2}).
-			Return([]*label.Label{
-				{ID: labelID1, Name: "Bug", Color: "#EF4444"},
-				{ID: labelID2, Name: "Feature", Color: "#10B981"},
+		mockTagRepo.EXPECT().
+			GetByIDs(gomock.Any(), []uuid.UUID{tagID1, tagID2}).
+			Return([]*tag.Tag{
+				{ID: tagID1, Name: "Bug", Color: "#EF4444"},
+				{ID: tagID2, Name: "Feature", Color: "#10B981"},
 			}, nil)
 
-		result, err := svc.GetLabelsForCard(ctx, cardID)
+		result, err := svc.GetTagsForCard(ctx, cardID)
 		require.NoError(t, err)
 		assert.Len(t, result, 2)
 	})
 
-	t.Run("success empty labels", func(t *testing.T) {
-		mockCardLabelRepo.EXPECT().
+	t.Run("success empty tags", func(t *testing.T) {
+		mockCardTagRepo.EXPECT().
 			GetByCardID(gomock.Any(), cardID).
-			Return([]*card_label.CardLabel{}, nil)
+			Return([]*card_tag.CardTag{}, nil)
 
-		result, err := svc.GetLabelsForCard(ctx, cardID)
+		result, err := svc.GetTagsForCard(ctx, cardID)
 		require.NoError(t, err)
 		assert.Empty(t, result)
 	})
@@ -467,10 +467,10 @@ func TestGetBoardByCardID(t *testing.T) {
 	mockCardRepo := cardMocks.NewMockRepository(ctrl)
 	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
 	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
-	mockLabelRepo := labelMocks.NewMockRepository(ctrl)
-	mockCardLabelRepo := cardLabelMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
 
-	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockLabelRepo, mockCardLabelRepo)
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
 	ctx := context.Background()
 
 	cardID := uuid.New()
@@ -508,10 +508,10 @@ func TestGetColumnByCardID(t *testing.T) {
 	mockCardRepo := cardMocks.NewMockRepository(ctrl)
 	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
 	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
-	mockLabelRepo := labelMocks.NewMockRepository(ctrl)
-	mockCardLabelRepo := cardLabelMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
 
-	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockLabelRepo, mockCardLabelRepo)
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
 	ctx := context.Background()
 
 	cardID := uuid.New()
@@ -549,10 +549,10 @@ func TestGetCardsByAssigneeID(t *testing.T) {
 	mockCardRepo := cardMocks.NewMockRepository(ctrl)
 	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
 	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
-	mockLabelRepo := labelMocks.NewMockRepository(ctrl)
-	mockCardLabelRepo := cardLabelMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
 
-	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockLabelRepo, mockCardLabelRepo)
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
 	ctx := context.Background()
 
 	assigneeID := uuid.New()

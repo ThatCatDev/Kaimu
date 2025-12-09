@@ -13,19 +13,19 @@ import (
 	boardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board"
 	boardColumnRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board_column"
 	cardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
-	cardLabelRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_label"
-	labelRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/label"
+	cardTagRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_tag"
 	orgRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
 	orgMemberRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
 	projectRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/project"
+	tagRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
 	"github.com/thatcatdev/pulse-backend/internal/directives"
 	"github.com/thatcatdev/pulse-backend/internal/services/auth"
 	"github.com/thatcatdev/pulse-backend/internal/services/board"
 	"github.com/thatcatdev/pulse-backend/internal/services/card"
-	"github.com/thatcatdev/pulse-backend/internal/services/label"
 	"github.com/thatcatdev/pulse-backend/internal/services/organization"
 	"github.com/thatcatdev/pulse-backend/internal/services/project"
+	"github.com/thatcatdev/pulse-backend/internal/services/tag"
 )
 
 // Dependencies holds all initialized dependencies for the application
@@ -35,7 +35,7 @@ type Dependencies struct {
 	ProjectService      project.Service
 	BoardService        board.Service
 	CardService         card.Service
-	LabelService        label.Service
+	TagService          tag.Service
 }
 
 // InitializeDependencies creates all application dependencies
@@ -51,8 +51,8 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 	boardRepository := boardRepo.NewRepository(database.DB)
 	boardColumnRepository := boardColumnRepo.NewRepository(database.DB)
 	cardRepository := cardRepo.NewRepository(database.DB)
-	labelRepository := labelRepo.NewRepository(database.DB)
-	cardLabelRepository := cardLabelRepo.NewRepository(database.DB)
+	tagRepository := tagRepo.NewRepository(database.DB)
+	cardTagRepository := cardTagRepo.NewRepository(database.DB)
 
 	// Initialize services
 	authService := auth.NewService(
@@ -82,12 +82,12 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		cardRepository,
 		boardColumnRepository,
 		boardRepository,
-		labelRepository,
-		cardLabelRepository,
+		tagRepository,
+		cardTagRepository,
 	)
 
-	labelService := label.NewService(
-		labelRepository,
+	tagService := tag.NewService(
+		tagRepository,
 		projectRepository,
 	)
 
@@ -97,7 +97,7 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		ProjectService:      projectService,
 		BoardService:        boardService,
 		CardService:         cardService,
-		LabelService:        labelService,
+		TagService:          tagService,
 	}
 }
 
@@ -124,7 +124,7 @@ func BuildRootHandlerWithContext(ctx context.Context, conf config.Config, deps *
 		ProjectService:      deps.ProjectService,
 		BoardService:        deps.BoardService,
 		CardService:         deps.CardService,
-		LabelService:        deps.LabelService,
+		TagService:          deps.TagService,
 	}
 
 	cfg := generated.Config{Resolvers: resolvers, Directives: directives.GetDirectives()}

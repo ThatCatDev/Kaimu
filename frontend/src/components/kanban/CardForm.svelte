@@ -1,23 +1,23 @@
 <script lang="ts">
   import { CardPriority } from '../../lib/graphql/generated';
   import { Input, Textarea, Select } from '../ui';
-  import LabelPicker from './LabelPicker.svelte';
-  import type { Label } from '../../lib/api/boards';
+  import TagPicker from './TagPicker.svelte';
+  import type { Tag } from '../../lib/api/boards';
 
   interface Props {
     title: string;
     description: string;
     priority: CardPriority;
     dueDate: string;
-    selectedLabelIds: string[];
+    selectedTagIds: string[];
     projectId: string;
-    labels: Label[];
+    tags: Tag[];
     onTitleChange: (value: string) => void;
     onDescriptionChange: (value: string) => void;
     onPriorityChange: (value: CardPriority) => void;
     onDueDateChange: (value: string) => void;
-    onLabelSelectionChange: (ids: string[]) => void;
-    onLabelsChanged?: () => void;
+    onTagSelectionChange: (ids: string[]) => void;
+    onTagsChanged?: () => void;
     error?: string | null;
     disabled?: boolean;
     descriptionRows?: number;
@@ -29,15 +29,15 @@
     description,
     priority,
     dueDate,
-    selectedLabelIds,
+    selectedTagIds,
     projectId,
-    labels,
+    tags,
     onTitleChange,
     onDescriptionChange,
     onPriorityChange,
     onDueDateChange,
-    onLabelSelectionChange,
-    onLabelsChanged,
+    onTagSelectionChange,
+    onTagsChanged,
     error = null,
     disabled = false,
     descriptionRows = 3,
@@ -114,12 +114,12 @@
     />
   </div>
 
-  <LabelPicker
+  <TagPicker
     {projectId}
-    {labels}
-    {selectedLabelIds}
-    onSelectionChange={onLabelSelectionChange}
-    {onLabelsChanged}
+    {tags}
+    {selectedTagIds}
+    onSelectionChange={onTagSelectionChange}
+    {onTagsChanged}
     {disabled}
   />
 </div>

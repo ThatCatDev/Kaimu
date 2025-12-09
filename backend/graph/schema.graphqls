@@ -17,8 +17,8 @@ type Query {
     card(id: ID!): Card
     "Get all cards assigned to the current user"
     myCards: [Card!]!
-    "Get all labels for a project"
-    labels(projectId: ID!): [Label!]!
+    "Get all tags for a project"
+    tags(projectId: ID!): [Tag!]!
 }
 
 type Mutation {
@@ -64,10 +64,10 @@ type Mutation {
     "Delete a card"
     deleteCard(id: ID!): Boolean!
 
-    "Create a new label"
-    createLabel(input: CreateLabelInput!): Label!
-    "Update a label"
-    updateLabel(input: UpdateLabelInput!): Label!
-    "Delete a label"
-    deleteLabel(id: ID!): Boolean!
+    "Create a new tag"
+    createTag(input: CreateTagInput!): Tag!
+    "Update a tag"
+    updateTag(input: UpdateTagInput!): Tag!
+    "Delete a tag"
+    deleteTag(id: ID!): Boolean!
 }

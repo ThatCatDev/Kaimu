@@ -507,94 +507,110 @@ test.describe('Kanban UI Improvements', () => {
     });
   });
 
-  test.describe('Inline Label Creation', () => {
-    test('can create label by typing and pressing enter', async ({ page }) => {
+  test.describe('Inline Tag Creation', () => {
+    test('can create tag by typing and pressing enter', async ({ page }) => {
       await navigateToBoard(page);
 
       // Create a card and open it
       await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Label Create ${randomId}`);
+      await page.fill('#title', `Tag Create ${randomId}`);
       await page.getByRole('button', { name: 'Create Card' }).click();
-      await expect(page.getByText(`Label Create ${randomId}`)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(`Tag Create ${randomId}`)).toBeVisible({ timeout: 5000 });
 
       // Open card detail
-      await page.getByText(`Label Create ${randomId}`).click();
+      await page.getByText(`Tag Create ${randomId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
-      // Type in the label input
-      const labelInput = page.locator('input[placeholder*="search or create labels"]');
-      await labelInput.fill(`NewLabel${randomId}`);
+      // Type in the tag input
+      const tagInput = page.locator('input[placeholder*="search or create tags"]');
+      await tagInput.fill(`NewTag${randomId}`);
 
       // Should show "Create" option in dropdown
-      await expect(page.getByText(`Create "NewLabel${randomId}"`)).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText(`Create "NewTag${randomId}"`)).toBeVisible({ timeout: 5000 });
 
-      // Press Enter to create
-      await labelInput.press('Enter');
+      // Press Enter to open color picker
+      await tagInput.press('Enter');
 
-      // Label should be created and selected (shown in selected labels area)
-      await expect(page.locator('.rounded-full').filter({ hasText: `NewLabel${randomId}` })).toBeVisible({ timeout: 5000 });
+      // Color picker appears - click Create Tag button
+      const colorPicker = page.locator('.absolute.z-20');
+      await expect(colorPicker).toBeVisible({ timeout: 5000 });
+      await colorPicker.getByRole('button', { name: 'Create Tag' }).click();
+
+      // Tag should be created and selected (shown in selected tags area)
+      await expect(page.locator('span.inline-flex').filter({ hasText: `NewTag${randomId}` })).toBeVisible({ timeout: 5000 });
 
       await page.keyboard.press('Escape');
     });
 
-    test('can search and select existing labels', async ({ page }) => {
+    test('can search and select existing tags', async ({ page }) => {
       await navigateToBoard(page);
 
-      // First create a label via a card
+      // First create a tag via a card
       await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `First Label Card ${randomId}`);
+      await page.fill('#title', `First Tag Card ${randomId}`);
       await page.getByRole('button', { name: 'Create Card' }).click();
-      await page.getByText(`First Label Card ${randomId}`).click();
+      await page.getByText(`First Tag Card ${randomId}`).click();
 
-      const labelInput = page.locator('input[placeholder*="search or create labels"]');
-      await labelInput.fill(`SearchLabel${randomId}`);
-      await page.getByText(`Create "SearchLabel${randomId}"`).click();
+      const tagInput = page.locator('input[placeholder*="search or create tags"]');
+      await tagInput.fill(`SearchTag${randomId}`);
+      await page.getByText(`Create "SearchTag${randomId}"`).click();
+
+      // Color picker appears - click Create Tag button
+      const colorPicker = page.locator('.absolute.z-20');
+      await expect(colorPicker).toBeVisible({ timeout: 5000 });
+      await colorPicker.getByRole('button', { name: 'Create Tag' }).click();
+
       await page.keyboard.press('Escape');
 
-      // Now create another card and search for that label
+      // Now create another card and search for that tag
       await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Second Label Card ${randomId}`);
+      await page.fill('#title', `Second Tag Card ${randomId}`);
       await page.getByRole('button', { name: 'Create Card' }).click();
-      await page.getByText(`Second Label Card ${randomId}`).click();
+      await page.getByText(`Second Tag Card ${randomId}`).click();
 
-      // Search for the existing label
-      const labelInput2 = page.locator('input[placeholder*="search or create labels"]');
-      await labelInput2.fill(`SearchLabel${randomId}`);
+      // Search for the existing tag
+      const tagInput2 = page.locator('input[placeholder*="search or create tags"]');
+      await tagInput2.fill(`SearchTag${randomId}`);
 
-      // Should show the existing label in dropdown
-      await expect(page.locator('.absolute.z-10').getByText(`SearchLabel${randomId}`)).toBeVisible({ timeout: 5000 });
+      // Should show the existing tag in dropdown
+      await expect(page.locator('.absolute.z-10').getByText(`SearchTag${randomId}`)).toBeVisible({ timeout: 5000 });
 
       // Click to select
-      await page.locator('.absolute.z-10').getByText(`SearchLabel${randomId}`).click();
+      await page.locator('.absolute.z-10').getByText(`SearchTag${randomId}`).click();
 
-      // Label should be selected
-      await expect(page.locator('.rounded-full').filter({ hasText: `SearchLabel${randomId}` })).toBeVisible();
+      // Tag should be selected
+      await expect(page.locator('span.inline-flex').filter({ hasText: `SearchTag${randomId}` })).toBeVisible();
 
       await page.keyboard.press('Escape');
     });
 
-    test('can remove selected label by clicking X', async ({ page }) => {
+    test('can remove selected tag by clicking X', async ({ page }) => {
       await navigateToBoard(page);
 
       await clickAddCardInColumn(page, 'Todo');
-      await page.fill('#title', `Remove Label ${randomId}`);
+      await page.fill('#title', `Remove Tag ${randomId}`);
       await page.getByRole('button', { name: 'Create Card' }).click();
-      await page.getByText(`Remove Label ${randomId}`).click();
+      await page.getByText(`Remove Tag ${randomId}`).click();
 
-      // Create and select a label
-      const labelInput = page.locator('input[placeholder*="search or create labels"]');
-      await labelInput.fill(`RemoveMe${randomId}`);
-      await labelInput.press('Enter');
+      // Create and select a tag
+      const tagInput = page.locator('input[placeholder*="search or create tags"]');
+      await tagInput.fill(`RemoveMe${randomId}`);
+      await tagInput.press('Enter');
 
-      // Verify label is selected
-      const selectedLabel = page.locator('.rounded-full').filter({ hasText: `RemoveMe${randomId}` });
-      await expect(selectedLabel).toBeVisible({ timeout: 5000 });
+      // Color picker appears - click Create Tag button
+      const colorPicker = page.locator('.absolute.z-20');
+      await expect(colorPicker).toBeVisible({ timeout: 5000 });
+      await colorPicker.getByRole('button', { name: 'Create Tag' }).click();
 
-      // Click the X button on the label to remove it
-      await selectedLabel.locator('button').click();
+      // Verify tag is selected
+      const selectedTag = page.locator('span.inline-flex').filter({ hasText: `RemoveMe${randomId}` }).filter({ has: page.locator('button') });
+      await expect(selectedTag).toBeVisible({ timeout: 5000 });
 
-      // Label should be removed from selection
-      await expect(selectedLabel).not.toBeVisible({ timeout: 5000 });
+      // Click the X button on the tag to remove it
+      await selectedTag.locator('button').click();
+
+      // Tag should be removed from selection
+      await expect(selectedTag).not.toBeVisible({ timeout: 5000 });
 
       await page.keyboard.press('Escape');
     });

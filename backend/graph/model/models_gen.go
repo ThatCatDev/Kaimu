@@ -47,7 +47,7 @@ type Card struct {
 	Position    float64      `json:"position"`
 	Priority    CardPriority `json:"priority"`
 	Assignee    *User        `json:"assignee,omitempty"`
-	Labels      []*Label     `json:"labels"`
+	Tags        []*Tag       `json:"tags"`
 	DueDate     *time.Time   `json:"dueDate,omitempty"`
 	CreatedAt   time.Time    `json:"createdAt"`
 	UpdatedAt   time.Time    `json:"updatedAt"`
@@ -66,7 +66,7 @@ type CreateCardInput struct {
 	Description *string       `json:"description,omitempty"`
 	Priority    *CardPriority `json:"priority,omitempty"`
 	AssigneeID  *string       `json:"assigneeId,omitempty"`
-	LabelIds    []string      `json:"labelIds,omitempty"`
+	TagIds      []string      `json:"tagIds,omitempty"`
 	DueDate     *time.Time    `json:"dueDate,omitempty"`
 }
 
@@ -74,13 +74,6 @@ type CreateColumnInput struct {
 	BoardID   string `json:"boardId"`
 	Name      string `json:"name"`
 	IsBacklog *bool  `json:"isBacklog,omitempty"`
-}
-
-type CreateLabelInput struct {
-	ProjectID   string  `json:"projectId"`
-	Name        string  `json:"name"`
-	Color       string  `json:"color"`
-	Description *string `json:"description,omitempty"`
 }
 
 type CreateOrganizationInput struct {
@@ -95,13 +88,11 @@ type CreateProjectInput struct {
 	Description    *string `json:"description,omitempty"`
 }
 
-type Label struct {
-	ID          string    `json:"id"`
-	Project     *Project  `json:"project"`
-	Name        string    `json:"name"`
-	Color       string    `json:"color"`
-	Description *string   `json:"description,omitempty"`
-	CreatedAt   time.Time `json:"createdAt"`
+type CreateTagInput struct {
+	ProjectID   string  `json:"projectId"`
+	Name        string  `json:"name"`
+	Color       string  `json:"color"`
+	Description *string `json:"description,omitempty"`
 }
 
 type LoginInput struct {
@@ -142,7 +133,7 @@ type Project struct {
 	Description  *string       `json:"description,omitempty"`
 	Boards       []*Board      `json:"boards"`
 	DefaultBoard *Board        `json:"defaultBoard,omitempty"`
-	Labels       []*Label      `json:"labels"`
+	Tags         []*Tag        `json:"tags"`
 	CreatedAt    time.Time     `json:"createdAt"`
 	UpdatedAt    time.Time     `json:"updatedAt"`
 }
@@ -157,6 +148,15 @@ type ReorderColumnsInput struct {
 	ColumnIds []string `json:"columnIds"`
 }
 
+type Tag struct {
+	ID          string    `json:"id"`
+	Project     *Project  `json:"project"`
+	Name        string    `json:"name"`
+	Color       string    `json:"color"`
+	Description *string   `json:"description,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
+}
+
 type UpdateBoardInput struct {
 	ID          string  `json:"id"`
 	Name        *string `json:"name,omitempty"`
@@ -169,7 +169,7 @@ type UpdateCardInput struct {
 	Description *string       `json:"description,omitempty"`
 	Priority    *CardPriority `json:"priority,omitempty"`
 	AssigneeID  *string       `json:"assigneeId,omitempty"`
-	LabelIds    []string      `json:"labelIds,omitempty"`
+	TagIds      []string      `json:"tagIds,omitempty"`
 	DueDate     *time.Time    `json:"dueDate,omitempty"`
 }
 
@@ -180,7 +180,7 @@ type UpdateColumnInput struct {
 	WipLimit *int    `json:"wipLimit,omitempty"`
 }
 
-type UpdateLabelInput struct {
+type UpdateTagInput struct {
 	ID          string  `json:"id"`
 	Name        *string `json:"name,omitempty"`
 	Color       *string `json:"color,omitempty"`
