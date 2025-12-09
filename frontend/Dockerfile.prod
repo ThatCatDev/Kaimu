@@ -1,0 +1,31 @@
+FROM oven/bun:1 AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json bun.lock ./
+
+# Install dependencies
+RUN bun install --frozen-lockfile
+
+# Copy source
+COPY . .
+
+# Build
+RUN bun run build
+
+# Production stage - use node for better SSR compatibility
+FROM node:20-slim
+
+WORKDIR /app
+
+# Copy built assets
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./
+
+# Install only production deps needed for preview
+RUN npm install astro
+
+EXPOSE 4321
+
+CMD ["npx", "astro", "preview", "--host", "0.0.0.0"]

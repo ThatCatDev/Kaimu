@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: pulse
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: pulse
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pulse"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - pulse-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      DBHOST: postgres
+      DBNAME: pulse
+      DBUSERNAME: pulse
+      DBPASSWORD: mysecretpassword
+      DBPORT: 5432
+      DBSSL: disable
+      PORT: 3000
+      ENV: development
+    volumes:
+      - ./backend:/app
+      - go_modules:/go/pkg/mod
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - pulse-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4321:4321"
+    environment:
+      PUBLIC_API_URL: http://localhost:3000/graphql
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - pulse-network
+
+networks:
+  pulse-network:
+
+volumes:
+  postgres_data:
+  go_modules:

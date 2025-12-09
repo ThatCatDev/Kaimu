@@ -1,0 +1,33 @@
+{
+  "name": "frontend",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "codegen": "graphql-codegen --config codegen.ts",
+    "codegen:watch": "graphql-codegen --config codegen.ts --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.6",
+    "@astrojs/svelte": "^7.2.2",
+    "@tailwindcss/vite": "^4.1.17",
+    "astro": "^5.16.4",
+    "sswr": "^2.2.0",
+    "svelte": "^5.45.8",
+    "tailwindcss": "^4.1.17",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^6.1.0",
+    "@graphql-codegen/client-preset": "^5.2.1",
+    "@graphql-codegen/typescript": "^5.0.6",
+    "@graphql-codegen/typescript-operations": "^5.0.6",
+    "@playwright/test": "^1.57.0",
+    "graphql": "^16.12.0"
+  }
+}

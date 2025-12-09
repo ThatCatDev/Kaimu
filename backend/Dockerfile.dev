@@ -1,0 +1,17 @@
+FROM golang:1.25
+
+WORKDIR /app
+
+# Install air for hot reload
+RUN go install github.com/air-verse/air@latest
+
+# Copy go mod and sum files first for caching
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+EXPOSE 3000
+
+# Air binary is in /go/bin which is in PATH
+CMD ["air", "-c", ".air.toml"]

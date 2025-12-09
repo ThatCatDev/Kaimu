@@ -1,0 +1,19 @@
+type User {
+    id: ID!
+    username: String!
+    createdAt: Time!
+}
+
+type AuthPayload {
+    user: User!
+}
+
+input RegisterInput {
+    username: String!
+    password: String!
+}
+
+input LoginInput {
+    username: String!
+    password: String!
+}

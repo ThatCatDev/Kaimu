@@ -1,0 +1,15 @@
+type Query {
+    "Hello World query"
+    helloWorld: String!
+    "Get current authenticated user"
+    me: User
+}
+
+type Mutation {
+    "Register a new user"
+    register(input: RegisterInput!): AuthPayload!
+    "Login with username and password"
+    login(input: LoginInput!): AuthPayload!
+    "Logout current user"
+    logout: Boolean!
+}

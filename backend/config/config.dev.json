@@ -1,0 +1,10 @@
+{
+  "dbconfig": {
+    "host": "localhost",
+    "user": "pulse",
+    "password": "mysecretpassword",
+    "database": "pulse",
+    "port": 5432,
+    "sslmode": "disable"
+  }
+}
