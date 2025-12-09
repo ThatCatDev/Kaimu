@@ -1,11 +1,12 @@
 <script lang="ts">
   import { updateCard, deleteCard, type BoardCard, type Tag } from '../../lib/api/boards';
   import { CardPriority } from '../../lib/graphql/generated';
-  import { Button, ConfirmModal } from '../ui';
+  import { Button, Modal, ConfirmModal } from '../ui';
   import CardForm from './CardForm.svelte';
 
   interface Props {
-    card: BoardCard;
+    open: boolean;
+    card: BoardCard | null;
     projectId: string;
     tags: Tag[];
     onClose: () => void;
@@ -15,25 +16,38 @@
     onViewModeChange: (mode: 'modal' | 'panel') => void;
   }
 
-  let { card, projectId, tags, onClose, onUpdated, onTagsChanged, viewMode, onViewModeChange }: Props = $props();
+  let { open, card, projectId, tags, onClose, onUpdated, onTagsChanged, viewMode, onViewModeChange }: Props = $props();
 
-  let title = $state(card.title);
-  let description = $state(card.description ?? '');
-  let priority = $state<CardPriority>(card.priority);
-  let selectedTagIds = $state<string[]>(card.tags?.map(t => t.id) ?? []);
-  let dueDate = $state(card.dueDate ? card.dueDate.split('T')[0] : '');
+  let title = $state('');
+  let description = $state('');
+  let priority = $state<CardPriority>(CardPriority.None);
+  let selectedTagIds = $state<string[]>([]);
+  let dueDate = $state('');
   let saving = $state(false);
   let deleting = $state(false);
   let error = $state<string | null>(null);
   let saveTimeout: ReturnType<typeof setTimeout> | null = null;
   let showDeleteConfirm = $state(false);
-  let lastSavedData = $state<string>(JSON.stringify({
-    title: card.title,
-    description: card.description ?? '',
-    priority: card.priority,
-    selectedTagIds: card.tags?.map(t => t.id) ?? [],
-    dueDate: card.dueDate ? card.dueDate.split('T')[0] : ''
-  }));
+  let lastSavedData = $state<string>('');
+
+  // Initialize form when card changes or modal opens
+  $effect(() => {
+    if (open && card) {
+      title = card.title;
+      description = card.description ?? '';
+      priority = card.priority;
+      selectedTagIds = card.tags?.map(t => t.id) ?? [];
+      dueDate = card.dueDate ? card.dueDate.split('T')[0] : '';
+      error = null;
+      lastSavedData = JSON.stringify({
+        title: card.title,
+        description: card.description ?? '',
+        priority: card.priority,
+        selectedTagIds: card.tags?.map(t => t.id) ?? [],
+        dueDate: card.dueDate ? card.dueDate.split('T')[0] : ''
+      });
+    }
+  });
 
   function getCurrentDataHash(): string {
     return JSON.stringify({ title, description, priority, selectedTagIds, dueDate });
@@ -41,6 +55,8 @@
 
   // Auto-save effect
   $effect(() => {
+    if (!open || !card) return;
+
     const currentData = getCurrentDataHash();
     if (lastSavedData && currentData !== lastSavedData && title.trim()) {
       if (saveTimeout) clearTimeout(saveTimeout);
@@ -54,7 +70,7 @@
   });
 
   async function autoSave() {
-    if (!title.trim() || saving) return;
+    if (!card || !title.trim() || saving) return;
 
     try {
       saving = true;
@@ -77,11 +93,6 @@
     }
   }
 
-  async function handleSubmit(e: Event) {
-    e.preventDefault();
-    await handleClose();
-  }
-
   async function handleClose() {
     if (saveTimeout) {
       clearTimeout(saveTimeout);
@@ -90,11 +101,19 @@
     onUpdated();
   }
 
+  async function handleOpenChange(newOpen: boolean) {
+    if (!newOpen) {
+      await handleClose();
+    }
+  }
+
   function handleDeleteClick() {
     showDeleteConfirm = true;
   }
 
   async function confirmDelete() {
+    if (!card) return;
+
     try {
       deleting = true;
       showDeleteConfirm = false;
@@ -117,65 +136,24 @@
       minute: '2-digit',
     });
   }
-
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-      handleClose();
-    }
-    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
-      e.preventDefault();
-      handleSubmit(e);
-    }
-  }
-
-  function handleBackdropClick(e: MouseEvent) {
-    if (e.target === e.currentTarget) {
-      handleClose();
-    }
-  }
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
-
-<!-- Backdrop -->
-<div
-  class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-50 animate-fade-in"
-  onclick={handleBackdropClick}
-  role="dialog"
-  aria-modal="true"
->
-  <!-- Modal -->
-  <div class="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
-    <div
-      class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto animate-scale-in"
-      onclick={(e) => e.stopPropagation()}
+<Modal {open} onOpenChange={handleOpenChange} title="Card Details" size="2xl">
+  {#snippet headerActions()}
+    <button
+      type="button"
+      class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+      onclick={() => onViewModeChange('panel')}
+      title="Switch to side panel view"
     >
-    <form onsubmit={handleSubmit}>
-      <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-        <h2 class="text-lg font-semibold text-gray-900">Card Details</h2>
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            class="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
-            onclick={() => onViewModeChange('panel')}
-            title="Switch to side panel view"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3h12v18H9M3 9h6M3 15h6" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            class="text-gray-400 hover:text-gray-600"
-            onclick={handleClose}
-          >
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3h12v18H9M3 9h6M3 15h6" />
+      </svg>
+    </button>
+  {/snippet}
 
+  {#snippet children()}
+    {#if card}
       <div class="px-6 py-4">
         <CardForm
           {title}
@@ -203,33 +181,32 @@
           {/if}
         </div>
       </div>
+    {/if}
+  {/snippet}
 
-      <div class="px-6 py-4 border-t border-gray-200">
-        <div class="flex items-center justify-between mb-2">
-          <Button variant="danger" onclick={handleDeleteClick} disabled={deleting || saving}>
-            {deleting ? 'Deleting...' : 'Delete Card'}
-          </Button>
-          <div class="flex items-center gap-4">
-            {#if saving}
-              <span class="text-xs text-gray-400">Saving...</span>
-            {:else if getCurrentDataHash() === lastSavedData}
-              <span class="text-xs text-green-600">Saved</span>
-            {/if}
-            <Button variant="secondary" onclick={handleClose} disabled={deleting}>
-              Close
-            </Button>
-          </div>
-        </div>
-        <div class="text-xs text-gray-400 text-center">
-          <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-gray-600">Esc</kbd> to close
-          <span class="mx-2">·</span>
-          Auto-saves as you type
-        </div>
+  {#snippet footer()}
+    <div class="flex items-center justify-between">
+      <Button variant="danger" onclick={handleDeleteClick} disabled={deleting || saving}>
+        {deleting ? 'Deleting...' : 'Delete Card'}
+      </Button>
+      <div class="flex items-center gap-4">
+        {#if saving}
+          <span class="text-xs text-gray-400">Saving...</span>
+        {:else if getCurrentDataHash() === lastSavedData}
+          <span class="text-xs text-green-600">Saved</span>
+        {/if}
+        <Button variant="secondary" onclick={handleClose} disabled={deleting}>
+          Close
+        </Button>
       </div>
-    </form>
     </div>
-  </div>
-</div>
+    <div class="text-xs text-gray-400 text-center mt-3">
+      <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-gray-600">Esc</kbd> to close
+      <span class="mx-2">·</span>
+      Auto-saves as you type
+    </div>
+  {/snippet}
+</Modal>
 
 <ConfirmModal
   isOpen={showDeleteConfirm}
@@ -241,29 +218,3 @@
   onConfirm={confirmDelete}
   onCancel={() => showDeleteConfirm = false}
 />
-
-<style>
-  @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
-  }
-
-  @keyframes scale-in {
-    from {
-      opacity: 0;
-      transform: scale(0.95) translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
-
-  :global(.animate-fade-in) {
-    animation: fade-in 0.15s ease-out;
-  }
-
-  :global(.animate-scale-in) {
-    animation: scale-in 0.2s ease-out;
-  }
-</style>
