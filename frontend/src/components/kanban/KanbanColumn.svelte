@@ -17,6 +17,11 @@
     onDelete?: () => void;
     onQuickDelete?: (card: BoardCard) => void;
     priorityStyle?: 'border' | 'badge';
+    // Permission props
+    canManageBoard?: boolean;
+    canEditCard?: boolean;
+    canMoveCard?: boolean;
+    canDeleteCard?: boolean;
   }
 
   let {
@@ -31,7 +36,11 @@
     onToggleVisibility,
     onDelete,
     onQuickDelete,
-    priorityStyle = 'badge'
+    priorityStyle = 'badge',
+    canManageBoard = true,
+    canEditCard = true,
+    canMoveCard = true,
+    canDeleteCard = true
   }: Props = $props();
 
   let items = $state(cards.map(card => ({ ...card, id: card.id })));
@@ -80,14 +89,16 @@
         <span class="text-xs text-gray-400 flex-shrink-0">(hidden)</span>
       {/if}
     </div>
-    <ColumnSettingsMenu
-      {column}
-      onRename={onRename ?? (() => {})}
-      onEditColor={onEditColor ?? (() => {})}
-      onEditWipLimit={onEditWipLimit ?? (() => {})}
-      onToggleVisibility={onToggleVisibility ?? (() => {})}
-      onDelete={onDelete ?? (() => {})}
-    />
+    {#if canManageBoard}
+      <ColumnSettingsMenu
+        {column}
+        onRename={onRename ?? (() => {})}
+        onEditColor={onEditColor ?? (() => {})}
+        onEditWipLimit={onEditWipLimit ?? (() => {})}
+        onToggleVisibility={onToggleVisibility ?? (() => {})}
+        onDelete={onDelete ?? (() => {})}
+      />
+    {/if}
   </div>
 
   <div class="flex-1 flex flex-col min-h-0">
@@ -96,8 +107,8 @@
       use:dndzone={{
         items,
         flipDurationMs: 200,
-        dropTargetStyle: { outline: '2px dashed #6366f1', outlineOffset: '-2px' },
-        dragDisabled: false,
+        dropTargetStyle: canMoveCard ? { outline: '2px dashed #6366f1', outlineOffset: '-2px' } : {},
+        dragDisabled: !canMoveCard,
         type: 'cards',
       }}
       onconsider={handleConsider}
@@ -105,24 +116,33 @@
     >
       {#each items as card (card.id)}
         <div class="mb-2">
-          <KanbanCard {card} {onCardClick} {onQuickDelete} {priorityStyle} />
+          <KanbanCard
+            {card}
+            {onCardClick}
+            onQuickDelete={canDeleteCard ? onQuickDelete : undefined}
+            {priorityStyle}
+            {canEditCard}
+            {canDeleteCard}
+          />
         </div>
       {/each}
     </div>
 
-    <!-- Add card button - sticky at bottom -->
-    <div class="p-2 pt-0 sticky bottom-0 bg-gray-100">
-      <button
-        type="button"
-        class="w-full py-2 px-4 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
-        onclick={handleAddCard}
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-        </svg>
-        Add card
-      </button>
-    </div>
+    <!-- Add card button - sticky at bottom, only show if user can add cards -->
+    {#if onAddCard}
+      <div class="p-2 pt-0 sticky bottom-0 bg-gray-100">
+        <button
+          type="button"
+          class="w-full py-2 px-4 text-sm text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+          onclick={handleAddCard}
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
+          Add card
+        </button>
+      </div>
+    {/if}
   </div>
 
   {#if column.wipLimit && cards.length >= column.wipLimit}

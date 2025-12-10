@@ -284,8 +284,8 @@ test.describe('Kanban Cards with Tags', () => {
     await expect(bugBadge).toBeVisible();
     await expect(featureBadge).toBeVisible();
 
-    // Change title (scoped to dialog) - CardDetailModal uses empty prefix so id is just "title"
-    await dialog.locator('#title').fill(`Persist Tags Updated ${ctx.testId}`);
+    // Change title (scoped to dialog) - CardDetailModal uses "detail-" prefix
+    await dialog.locator('#detail-title').fill(`Persist Tags Updated ${ctx.testId}`);
     await expect(page.getByText('Saved')).toBeVisible({ timeout: 10000 });
     await page.getByRole('button', { name: 'Close' }).click();
 
@@ -484,8 +484,9 @@ test.describe('Kanban Cards with Tags', () => {
     // Color picker should close and tag should be selected
     await expect(colorPicker).not.toBeVisible({ timeout: 5000 });
 
-    // New tag should appear as a badge
-    const newTagBadge = page.locator('span.inline-flex').filter({ hasText: newTagName }).filter({ has: page.locator('button') });
+    // New tag should appear as a badge in Create Card modal
+    const createCardModal = page.getByLabel('Create Card');
+    const newTagBadge = createCardModal.locator('span.inline-flex').filter({ hasText: newTagName }).filter({ has: page.locator('button') });
     await expect(newTagBadge).toBeVisible();
 
     // Create the card
@@ -495,7 +496,11 @@ test.describe('Kanban Cards with Tags', () => {
     // Verify the new tag persists
     await page.getByText(`Card With New Tag ${ctx.testId}`).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
-    await expect(newTagBadge).toBeVisible();
+
+    // Check badge in Card Details modal
+    const cardDetailsModal = page.getByLabel('Card Details');
+    const newTagBadgeInDetails = cardDetailsModal.locator('span.inline-flex').filter({ hasText: newTagName }).filter({ has: page.locator('button') });
+    await expect(newTagBadgeInDetails).toBeVisible();
 
     await page.getByRole('button', { name: 'Close' }).click();
   });
@@ -749,8 +754,9 @@ test.describe('Kanban Cards with Tags', () => {
     await colorPicker.locator('button[style*="background-color: rgb(20, 184, 166)"]').click(); // teal
     await colorPicker.getByRole('button', { name: 'Create Tag' }).click();
 
-    // Tag should be added
-    let newTagBadge = page.locator('span.inline-flex').filter({ hasText: newTagName }).filter({ has: page.locator('button') });
+    // Tag should be added (scope to Card Details modal to avoid conflicts)
+    const cardDetailsModal = page.getByLabel('Card Details');
+    let newTagBadge = cardDetailsModal.locator('span.inline-flex').filter({ hasText: newTagName }).filter({ has: page.locator('button') });
     await expect(newTagBadge).toBeVisible({ timeout: 5000 });
 
     // Wait for auto-save
@@ -763,8 +769,9 @@ test.describe('Kanban Cards with Tags', () => {
     await page.getByText(`Edit Mode Tag ${ctx.testId}`).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
-    // Re-locate the badge after reopening
-    newTagBadge = page.locator('span.inline-flex').filter({ hasText: newTagName }).filter({ has: page.locator('button') });
+    // Re-locate the badge after reopening (scope to Card Details modal)
+    const cardDetailsModal2 = page.getByLabel('Card Details');
+    newTagBadge = cardDetailsModal2.locator('span.inline-flex').filter({ hasText: newTagName }).filter({ has: page.locator('button') });
     await expect(newTagBadge).toBeVisible({ timeout: 10000 });
 
     await page.getByRole('button', { name: 'Close' }).click();

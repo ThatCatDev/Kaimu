@@ -21,6 +21,24 @@ type Query {
     myCards: [Card!]!
     "Get all tags for a project"
     tags(projectId: ID!): [Tag!]!
+
+    # RBAC Queries
+    "Get all available permissions"
+    permissions: [Permission!]!
+    "Get roles for an organization (includes system roles)"
+    roles(organizationId: ID!): [Role!]!
+    "Get a specific role by ID"
+    role(id: ID!): Role
+    "Get organization members with roles"
+    organizationMembers(organizationId: ID!): [OrganizationMember!]!
+    "Get project members"
+    projectMembers(projectId: ID!): [ProjectMember!]!
+    "Get pending invitations for an organization"
+    invitations(organizationId: ID!): [Invitation!]!
+    "Check if current user has a specific permission"
+    hasPermission(permission: String!, resourceType: String!, resourceId: ID!): Boolean!
+    "Get current user's permissions for a resource"
+    myPermissions(resourceType: String!, resourceId: ID!): [String!]!
 }
 
 type Mutation {
@@ -30,6 +48,8 @@ type Mutation {
     login(input: LoginInput!): AuthPayload!
     "Logout current user"
     logout: Boolean!
+    "Update current user's profile"
+    updateMe(input: UpdateMeInput!): User!
     "Create a new organization"
     createOrganization(input: CreateOrganizationInput!): Organization!
     "Update an organization"
@@ -76,4 +96,28 @@ type Mutation {
     updateTag(input: UpdateTagInput!): Tag!
     "Delete a tag"
     deleteTag(id: ID!): Boolean!
+
+    # RBAC Mutations
+    "Create a custom role"
+    createRole(input: CreateRoleInput!): Role!
+    "Update a custom role"
+    updateRole(input: UpdateRoleInput!): Role!
+    "Delete a custom role"
+    deleteRole(id: ID!): Boolean!
+    "Invite a user to an organization"
+    inviteMember(input: InviteMemberInput!): Invitation!
+    "Cancel a pending invitation"
+    cancelInvitation(id: ID!): Boolean!
+    "Resend an invitation"
+    resendInvitation(id: ID!): Invitation!
+    "Accept an invitation (for the invited user)"
+    acceptInvitation(token: String!): Organization!
+    "Change a member's role in an organization"
+    changeMemberRole(organizationId: ID!, input: ChangeMemberRoleInput!): OrganizationMember!
+    "Remove a member from an organization"
+    removeMember(organizationId: ID!, userId: ID!): Boolean!
+    "Assign/change a project-specific role"
+    assignProjectRole(input: AssignProjectRoleInput!): ProjectMember!
+    "Remove a member from a project"
+    removeProjectMember(projectId: ID!, userId: ID!): Boolean!
 }

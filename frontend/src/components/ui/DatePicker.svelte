@@ -12,6 +12,7 @@
     id?: string;
     minValue?: string;
     maxValue?: string;
+    readOnly?: boolean;
   }
 
   let {
@@ -23,8 +24,19 @@
     placeholder = 'Select date...',
     id,
     minValue,
-    maxValue
+    maxValue,
+    readOnly = false
   }: Props = $props();
+
+  function formatDisplayDate(dateStr: string): string {
+    if (!dateStr) return '—';
+    try {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch {
+      return dateStr;
+    }
+  }
 
   // Convert string to CalendarDate for Bits UI
   let calendarValue = $state<CalendarDate | undefined>(undefined);
@@ -61,15 +73,18 @@
 
 <div class="w-full">
   {#if label}
-    <label for={id} class="block text-sm font-medium text-gray-700 mb-1">
+    <label for={id} class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
       {label}
-      {#if required}
+      {#if required && !readOnly}
         <span class="text-red-500">*</span>
       {/if}
     </label>
   {/if}
 
-  <DatePicker.Root
+  {#if readOnly}
+    <p class="text-sm text-gray-900">{formatDisplayDate(value)}</p>
+  {:else}
+    <DatePicker.Root
     value={calendarValue}
     onValueChange={handleValueChange}
     placeholder={placeholderDate}
@@ -182,9 +197,10 @@
         {/snippet}
       </DatePicker.Calendar>
     </DatePicker.Content>
-  </DatePicker.Root>
+    </DatePicker.Root>
+  {/if}
 
-  {#if error}
+  {#if error && !readOnly}
     <p class="mt-1 text-xs text-red-600">{error}</p>
   {/if}
 </div>

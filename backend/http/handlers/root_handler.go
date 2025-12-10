@@ -14,20 +14,28 @@ import (
 	boardColumnRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board_column"
 	cardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
 	cardTagRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_tag"
+	invitationRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/invitation"
 	oidcIdentityRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/oidc_identity"
 	orgRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
 	orgMemberRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
+	permissionRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/permission"
 	projectRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/project"
+	projectMemberRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/project_member"
+	roleRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/role"
+	rolePermissionRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/role_permission"
 	tagRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
 	"github.com/thatcatdev/pulse-backend/internal/directives"
 	"github.com/thatcatdev/pulse-backend/internal/services/auth"
 	"github.com/thatcatdev/pulse-backend/internal/services/board"
 	"github.com/thatcatdev/pulse-backend/internal/services/card"
+	"github.com/thatcatdev/pulse-backend/internal/services/invitation"
 	"github.com/thatcatdev/pulse-backend/internal/services/oidc"
 	"github.com/thatcatdev/pulse-backend/internal/services/organization"
 	"github.com/thatcatdev/pulse-backend/internal/services/project"
+	"github.com/thatcatdev/pulse-backend/internal/services/rbac"
 	"github.com/thatcatdev/pulse-backend/internal/services/tag"
+	"github.com/thatcatdev/pulse-backend/internal/services/user"
 )
 
 // Dependencies holds all initialized dependencies for the application
@@ -39,6 +47,9 @@ type Dependencies struct {
 	BoardService        board.Service
 	CardService         card.Service
 	TagService          tag.Service
+	RBACService         rbac.Service
+	InvitationService   invitation.Service
+	UserService         user.Service
 	OIDCHandler         *OIDCHandler
 }
 
@@ -58,6 +69,11 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 	tagRepository := tagRepo.NewRepository(database.DB)
 	cardTagRepository := cardTagRepo.NewRepository(database.DB)
 	oidcIdentityRepository := oidcIdentityRepo.NewRepository(database.DB)
+	permissionRepository := permissionRepo.NewRepository(database.DB)
+	roleRepository := roleRepo.NewRepository(database.DB)
+	rolePermissionRepository := rolePermissionRepo.NewRepository(database.DB)
+	projectMemberRepository := projectMemberRepo.NewRepository(database.DB)
+	invitationRepository := invitationRepo.NewRepository(database.DB)
 
 	// Initialize services
 	authService := auth.NewService(
@@ -96,6 +112,26 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		projectRepository,
 	)
 
+	rbacService := rbac.NewService(
+		permissionRepository,
+		roleRepository,
+		rolePermissionRepository,
+		orgMemberRepository,
+		projectMemberRepository,
+		projectRepository,
+		userRepository,
+	)
+
+	invitationService := invitation.NewService(
+		invitationRepository,
+		orgRepository,
+		orgMemberRepository,
+		userRepository,
+		roleRepository,
+	)
+
+	userService := user.NewService(userRepository)
+
 	// Initialize OIDC service and handler
 	stateManager := oidc.NewStateManager(cfg.OIDCConfig.StateExpirationMinutes)
 	oidcService := oidc.NewService(
@@ -120,6 +156,9 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		BoardService:        boardService,
 		CardService:         cardService,
 		TagService:          tagService,
+		RBACService:         rbacService,
+		InvitationService:   invitationService,
+		UserService:         userService,
 		OIDCHandler:         oidcHandler,
 	}
 }
@@ -149,6 +188,9 @@ func BuildRootHandlerWithContext(ctx context.Context, conf config.Config, deps *
 		BoardService:        deps.BoardService,
 		CardService:         deps.CardService,
 		TagService:          deps.TagService,
+		RBACService:         deps.RBACService,
+		InvitationService:   deps.InvitationService,
+		UserService:         deps.UserService,
 	}
 
 	cfg := generated.Config{Resolvers: resolvers, Directives: directives.GetDirectives()}

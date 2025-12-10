@@ -1,17 +1,28 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { toast } from 'svelte-sonner';
   import { getProject, deleteProject, updateProject } from '../lib/api/projects';
   import { getMe } from '../lib/api/auth';
   import { getBoards, createBoard, deleteBoard } from '../lib/api/boards';
   import EditableTitle from './EditableTitle.svelte';
   import { ConfirmModal, Button, Input, Textarea } from './ui';
   import type { ProjectQuery, User, BoardsQuery } from '../lib/graphql/generated';
+  import { Permissions } from '../lib/stores/permissions.svelte';
+  import { getMyPermissions } from '../lib/api/rbac';
 
   interface Props {
     projectId: string;
   }
 
   let { projectId }: Props = $props();
+
+  // Permissions - loaded client-side
+  let permissions = $state<string[]>([]);
+
+  let canManageProject = $derived(permissions.includes(Permissions.PROJECT_MANAGE));
+  let canDeleteProject = $derived(permissions.includes(Permissions.PROJECT_DELETE));
+  let canCreateBoard = $derived(permissions.includes(Permissions.BOARD_CREATE));
+  let canDeleteBoard = $derived(permissions.includes(Permissions.BOARD_DELETE));
 
   type ProjectWithOrg = NonNullable<ProjectQuery['project']>;
   type Board = BoardsQuery['boards'][0];
@@ -41,12 +52,17 @@
 
   onMount(async () => {
     try {
-      const [me, proj] = await Promise.all([getMe(), getProject(projectId)]);
+      const [me, proj, perms] = await Promise.all([
+        getMe(),
+        getProject(projectId),
+        getMyPermissions('project', projectId)
+      ]);
       if (!me) {
         window.location.href = '/login';
         return;
       }
       user = me;
+      permissions = perms;
       if (!proj) {
         error = 'Project not found';
         return;
@@ -69,9 +85,11 @@
     try {
       deletingProject = true;
       await deleteProject(projectId);
+      toast.success('Project deleted');
       window.location.href = `/organizations/${project.organization.id}`;
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to delete project';
+      const message = e instanceof Error ? e.message : 'Failed to delete project';
+      toast.error(message);
       showDeleteProjectModal = false;
     } finally {
       deletingProject = false;
@@ -87,8 +105,10 @@
       showCreateBoardModal = false;
       newBoardName = '';
       newBoardDescription = '';
+      toast.success('Board created');
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to create board';
+      const message = e instanceof Error ? e.message : 'Failed to create board';
+      toast.error(message);
     } finally {
       creatingBoard = false;
     }
@@ -102,8 +122,10 @@
       boards = await getBoards(projectId);
       showDeleteBoardModal = false;
       boardToDelete = null;
+      toast.success('Board deleted');
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to delete board';
+      const message = e instanceof Error ? e.message : 'Failed to delete board';
+      toast.error(message);
     } finally {
       deletingBoard = false;
     }
@@ -142,7 +164,11 @@
       <div class="flex items-start justify-between">
         <div>
           <h1 class="text-2xl font-bold text-gray-900">
-            <EditableTitle value={project.name} onSave={handleRename} />
+            {#if canManageProject}
+              <EditableTitle value={project.name} onSave={handleRename} />
+            {:else}
+              {project.name}
+            {/if}
           </h1>
           <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 mt-2">
             {project.key}
@@ -152,26 +178,30 @@
           {/if}
         </div>
         <div class="flex items-center gap-4">
-          <button
-            type="button"
-            onclick={() => showDeleteProjectModal = true}
-            class="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            Delete
-          </button>
-          <button
-            type="button"
-            onclick={() => showCreateBoardModal = true}
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            New Board
-          </button>
+          {#if canDeleteProject}
+            <button
+              type="button"
+              onclick={() => showDeleteProjectModal = true}
+              class="inline-flex items-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            >
+              <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              Delete
+            </button>
+          {/if}
+          {#if canCreateBoard}
+            <button
+              type="button"
+              onclick={() => showCreateBoardModal = true}
+              class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              New Board
+            </button>
+          {/if}
         </div>
       </div>
     </div>
@@ -211,16 +241,18 @@
                 >
                   {board.name}
                 </a>
-                <button
-                  type="button"
-                  onclick={() => openDeleteBoardModal(board)}
-                  class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-600 transition-opacity"
-                  title="Delete board"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
+                {#if canDeleteBoard}
+                  <button
+                    type="button"
+                    onclick={() => openDeleteBoardModal(board)}
+                    class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-600 transition-opacity"
+                    title="Delete board"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                {/if}
               </li>
             {/each}
           </ul>

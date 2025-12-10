@@ -57,6 +57,31 @@ func (r *cardResolver) CreatedBy(ctx context.Context, obj *model.Card) (*model.U
 	return resolvers.CardCreatedBy(ctx, r.CardService, obj)
 }
 
+// Role is the resolver for the role field.
+func (r *invitationResolver) Role(ctx context.Context, obj *model.Invitation) (*model.Role, error) {
+	return resolvers.InvitationRole(ctx, r.InvitationService, obj)
+}
+
+// Organization is the resolver for the organization field.
+func (r *invitationResolver) Organization(ctx context.Context, obj *model.Invitation) (*model.Organization, error) {
+	return resolvers.InvitationOrganization(ctx, r.InvitationService, obj)
+}
+
+// InvitedBy is the resolver for the invitedBy field.
+func (r *invitationResolver) InvitedBy(ctx context.Context, obj *model.Invitation) (*model.User, error) {
+	return resolvers.InvitationInvitedBy(ctx, r.InvitationService, obj)
+}
+
+// User is the resolver for the user field.
+func (r *organizationMemberResolver) User(ctx context.Context, obj *model.OrganizationMember) (*model.User, error) {
+	return resolvers.OrgMemberUser(ctx, r.RBACService, obj)
+}
+
+// Role is the resolver for the role field.
+func (r *organizationMemberResolver) Role(ctx context.Context, obj *model.OrganizationMember) (*model.Role, error) {
+	return resolvers.OrgMemberRole(ctx, r.RBACService, obj)
+}
+
 // Boards is the resolver for the boards field.
 func (r *projectResolver) Boards(ctx context.Context, obj *model.Project) ([]*model.Board, error) {
 	return resolvers.ProjectBoards(ctx, r.BoardService, obj)
@@ -70,6 +95,26 @@ func (r *projectResolver) DefaultBoard(ctx context.Context, obj *model.Project) 
 // Tags is the resolver for the tags field.
 func (r *projectResolver) Tags(ctx context.Context, obj *model.Project) ([]*model.Tag, error) {
 	return resolvers.ProjectTags(ctx, r.TagService, obj)
+}
+
+// User is the resolver for the user field.
+func (r *projectMemberResolver) User(ctx context.Context, obj *model.ProjectMember) (*model.User, error) {
+	return resolvers.ProjectMemberUser(ctx, r.RBACService, obj)
+}
+
+// Role is the resolver for the role field.
+func (r *projectMemberResolver) Role(ctx context.Context, obj *model.ProjectMember) (*model.Role, error) {
+	return resolvers.ProjectMemberRole(ctx, r.RBACService, obj)
+}
+
+// Project is the resolver for the project field.
+func (r *projectMemberResolver) Project(ctx context.Context, obj *model.ProjectMember) (*model.Project, error) {
+	return resolvers.ProjectMemberProject(ctx, r.RBACService, obj)
+}
+
+// Permissions is the resolver for the permissions field.
+func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role) ([]*model.Permission, error) {
+	return resolvers.RolePermissions(ctx, r.RBACService, obj)
 }
 
 // Project is the resolver for the project field.
@@ -86,8 +131,22 @@ func (r *Resolver) BoardColumn() generated.BoardColumnResolver { return &boardCo
 // Card returns generated.CardResolver implementation.
 func (r *Resolver) Card() generated.CardResolver { return &cardResolver{r} }
 
+// Invitation returns generated.InvitationResolver implementation.
+func (r *Resolver) Invitation() generated.InvitationResolver { return &invitationResolver{r} }
+
+// OrganizationMember returns generated.OrganizationMemberResolver implementation.
+func (r *Resolver) OrganizationMember() generated.OrganizationMemberResolver {
+	return &organizationMemberResolver{r}
+}
+
 // Project returns generated.ProjectResolver implementation.
 func (r *Resolver) Project() generated.ProjectResolver { return &projectResolver{r} }
+
+// ProjectMember returns generated.ProjectMemberResolver implementation.
+func (r *Resolver) ProjectMember() generated.ProjectMemberResolver { return &projectMemberResolver{r} }
+
+// Role returns generated.RoleResolver implementation.
+func (r *Resolver) Role() generated.RoleResolver { return &roleResolver{r} }
 
 // Tag returns generated.TagResolver implementation.
 func (r *Resolver) Tag() generated.TagResolver { return &tagResolver{r} }
@@ -95,5 +154,9 @@ func (r *Resolver) Tag() generated.TagResolver { return &tagResolver{r} }
 type boardResolver struct{ *Resolver }
 type boardColumnResolver struct{ *Resolver }
 type cardResolver struct{ *Resolver }
+type invitationResolver struct{ *Resolver }
+type organizationMemberResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
+type projectMemberResolver struct{ *Resolver }
+type roleResolver struct{ *Resolver }
 type tagResolver struct{ *Resolver }

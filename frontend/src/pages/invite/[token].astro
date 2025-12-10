@@ -1,0 +1,21 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import AcceptInvitation from '../../components/AcceptInvitation.svelte';
+
+const { token } = Astro.params;
+---
+
+<Layout title="Accept Invitation - Pulse">
+  <div class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+      <h1 class="text-center text-3xl font-bold text-gray-900">Pulse</h1>
+      <h2 class="mt-6 text-center text-xl font-semibold text-gray-900">
+        Accept Invitation
+      </h2>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <AcceptInvitation client:load token={token || ''} />
+    </div>
+  </div>
+</Layout>

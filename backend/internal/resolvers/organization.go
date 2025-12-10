@@ -39,7 +39,7 @@ func CreateOrganization(ctx context.Context, svc orgService.Service, input model
 		return nil, err
 	}
 
-	return organizationToModelWithRelations(org, userToModel(owner), nil, nil), nil
+	return organizationToModelWithRelations(org, UserToModel(owner), nil, nil), nil
 }
 
 // Organizations returns all organizations for the current user
@@ -78,7 +78,7 @@ func Organizations(ctx context.Context, svc orgService.Service, projectSvc proje
 			projectModels[j] = projectToModelWithBoards(proj, boards)
 		}
 
-		result[i] = organizationToModelWithRelations(org, userToModel(owner), nil, projectModels)
+		result[i] = organizationToModelWithRelations(org, UserToModel(owner), nil, projectModels)
 	}
 	return result, nil
 }
@@ -126,7 +126,7 @@ func Organization(ctx context.Context, svc orgService.Service, projectSvc projec
 		projectModels[i] = projectToModel(proj)
 	}
 
-	return organizationToModelWithRelations(org, userToModel(owner), nil, projectModels), nil
+	return organizationToModelWithRelations(org, UserToModel(owner), nil, projectModels), nil
 }
 
 // OrganizationOwner resolves the owner field of an Organization
@@ -141,7 +141,7 @@ func OrganizationOwner(ctx context.Context, svc orgService.Service, org *model.O
 		return nil, err
 	}
 
-	return userToModel(owner), nil
+	return UserToModel(owner), nil
 }
 
 // OrganizationMembers resolves the members field of an Organization
@@ -228,7 +228,7 @@ func UpdateOrganization(ctx context.Context, svc orgService.Service, input model
 		return nil, err
 	}
 
-	return organizationToModelWithRelations(updated, userToModel(owner), nil, nil), nil
+	return organizationToModelWithRelations(updated, UserToModel(owner), nil, nil), nil
 }
 
 // DeleteOrganization deletes an organization by ID
@@ -309,18 +309,20 @@ func organizationToModelWithRelations(org *organization.Organization, owner *mod
 
 func organizationMemberToModel(member *organization_member.OrganizationMember) *model.OrganizationMember {
 	return &model.OrganizationMember{
-		ID:        member.ID.String(),
-		Role:      member.Role,
-		CreatedAt: member.CreatedAt,
-		User:      nil, // Needs to be populated separately
+		ID:         member.ID.String(),
+		LegacyRole: member.Role,
+		CreatedAt:  member.CreatedAt,
+		User:       nil, // Needs to be populated separately via field resolver
+		Role:       nil, // Needs to be populated separately via field resolver
 	}
 }
 
 func organizationMemberToModelWithUser(member *organization_member.OrganizationMember, user *model.User) *model.OrganizationMember {
 	return &model.OrganizationMember{
-		ID:        member.ID.String(),
-		User:      user,
-		Role:      member.Role,
-		CreatedAt: member.CreatedAt,
+		ID:         member.ID.String(),
+		User:       user,
+		LegacyRole: member.Role,
+		CreatedAt:  member.CreatedAt,
+		Role:       nil, // Needs to be populated separately via field resolver
 	}
 }

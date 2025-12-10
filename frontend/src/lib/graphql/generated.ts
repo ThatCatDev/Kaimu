@@ -18,6 +18,12 @@ export type Scalars = {
   _FieldSet: { input: any; output: any; }
 };
 
+export type AssignProjectRoleInput = {
+  projectId: Scalars['ID']['input'];
+  roleId?: InputMaybe<Scalars['ID']['input']>;
+  userId: Scalars['ID']['input'];
+};
+
 export type AuthPayload = {
   __typename?: 'AuthPayload';
   user: User;
@@ -75,6 +81,11 @@ export enum CardPriority {
   Urgent = 'URGENT'
 }
 
+export type ChangeMemberRoleInput = {
+  roleId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+};
+
 export type CreateBoardInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
@@ -109,11 +120,36 @@ export type CreateProjectInput = {
   organizationId: Scalars['ID']['input'];
 };
 
+export type CreateRoleInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  organizationId: Scalars['ID']['input'];
+  permissionCodes: Array<Scalars['String']['input']>;
+};
+
 export type CreateTagInput = {
   color: Scalars['String']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   projectId: Scalars['ID']['input'];
+};
+
+export type Invitation = {
+  __typename?: 'Invitation';
+  createdAt: Scalars['Time']['output'];
+  email: Scalars['String']['output'];
+  expiresAt: Scalars['Time']['output'];
+  id: Scalars['ID']['output'];
+  invitedBy: User;
+  organization: Organization;
+  role: Role;
+  token: Scalars['String']['output'];
+};
+
+export type InviteMemberInput = {
+  email: Scalars['String']['input'];
+  organizationId: Scalars['ID']['input'];
+  roleId: Scalars['ID']['input'];
 };
 
 export type LoginInput = {
@@ -129,6 +165,14 @@ export type MoveCardInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  /** Accept an invitation (for the invited user) */
+  acceptInvitation: Organization;
+  /** Assign/change a project-specific role */
+  assignProjectRole: ProjectMember;
+  /** Cancel a pending invitation */
+  cancelInvitation: Scalars['Boolean']['output'];
+  /** Change a member's role in an organization */
+  changeMemberRole: OrganizationMember;
   /** Create a new board */
   createBoard: Board;
   /** Create a new card */
@@ -139,6 +183,8 @@ export type Mutation = {
   createOrganization: Organization;
   /** Create a new project */
   createProject: Project;
+  /** Create a custom role */
+  createRole: Role;
   /** Create a new tag */
   createTag: Tag;
   /** Delete a board */
@@ -151,8 +197,12 @@ export type Mutation = {
   deleteOrganization: Scalars['Boolean']['output'];
   /** Delete a project */
   deleteProject: Scalars['Boolean']['output'];
+  /** Delete a custom role */
+  deleteRole: Scalars['Boolean']['output'];
   /** Delete a tag */
   deleteTag: Scalars['Boolean']['output'];
+  /** Invite a user to an organization */
+  inviteMember: Invitation;
   /** Login with username and password */
   login: AuthPayload;
   /** Logout current user */
@@ -161,8 +211,14 @@ export type Mutation = {
   moveCard: Card;
   /** Register a new user */
   register: AuthPayload;
+  /** Remove a member from an organization */
+  removeMember: Scalars['Boolean']['output'];
+  /** Remove a member from a project */
+  removeProjectMember: Scalars['Boolean']['output'];
   /** Reorder columns */
   reorderColumns: Array<BoardColumn>;
+  /** Resend an invitation */
+  resendInvitation: Invitation;
   /** Toggle column visibility */
   toggleColumnVisibility: BoardColumn;
   /** Update a board */
@@ -171,12 +227,37 @@ export type Mutation = {
   updateCard: Card;
   /** Update a column */
   updateColumn: BoardColumn;
+  /** Update current user's profile */
+  updateMe: User;
   /** Update an organization */
   updateOrganization: Organization;
   /** Update a project */
   updateProject: Project;
+  /** Update a custom role */
+  updateRole: Role;
   /** Update a tag */
   updateTag: Tag;
+};
+
+
+export type MutationAcceptInvitationArgs = {
+  token: Scalars['String']['input'];
+};
+
+
+export type MutationAssignProjectRoleArgs = {
+  input: AssignProjectRoleInput;
+};
+
+
+export type MutationCancelInvitationArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationChangeMemberRoleArgs = {
+  input: ChangeMemberRoleInput;
+  organizationId: Scalars['ID']['input'];
 };
 
 
@@ -202,6 +283,11 @@ export type MutationCreateOrganizationArgs = {
 
 export type MutationCreateProjectArgs = {
   input: CreateProjectInput;
+};
+
+
+export type MutationCreateRoleArgs = {
+  input: CreateRoleInput;
 };
 
 
@@ -235,8 +321,18 @@ export type MutationDeleteProjectArgs = {
 };
 
 
+export type MutationDeleteRoleArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteTagArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationInviteMemberArgs = {
+  input: InviteMemberInput;
 };
 
 
@@ -255,8 +351,25 @@ export type MutationRegisterArgs = {
 };
 
 
+export type MutationRemoveMemberArgs = {
+  organizationId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+};
+
+
+export type MutationRemoveProjectMemberArgs = {
+  projectId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+};
+
+
 export type MutationReorderColumnsArgs = {
   input: ReorderColumnsInput;
+};
+
+
+export type MutationResendInvitationArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -280,6 +393,11 @@ export type MutationUpdateColumnArgs = {
 };
 
 
+export type MutationUpdateMeArgs = {
+  input: UpdateMeInput;
+};
+
+
 export type MutationUpdateOrganizationArgs = {
   input: UpdateOrganizationInput;
 };
@@ -287,6 +405,11 @@ export type MutationUpdateOrganizationArgs = {
 
 export type MutationUpdateProjectArgs = {
   input: UpdateProjectInput;
+};
+
+
+export type MutationUpdateRoleArgs = {
+  input: UpdateRoleInput;
 };
 
 
@@ -317,8 +440,19 @@ export type OrganizationMember = {
   __typename?: 'OrganizationMember';
   createdAt: Scalars['Time']['output'];
   id: Scalars['ID']['output'];
-  role: Scalars['String']['output'];
+  /** @deprecated Use role field instead */
+  legacyRole: Scalars['String']['output'];
+  role: Role;
   user: User;
+};
+
+export type Permission = {
+  __typename?: 'Permission';
+  code: Scalars['String']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  resourceType: Scalars['String']['output'];
 };
 
 export type Project = {
@@ -335,6 +469,15 @@ export type Project = {
   updatedAt: Scalars['Time']['output'];
 };
 
+export type ProjectMember = {
+  __typename?: 'ProjectMember';
+  createdAt: Scalars['Time']['output'];
+  id: Scalars['ID']['output'];
+  project: Project;
+  role?: Maybe<Role>;
+  user: User;
+};
+
 export type Query = {
   __typename?: 'Query';
   _service: _Service;
@@ -344,20 +487,36 @@ export type Query = {
   boards: Array<Board>;
   /** Get a card by ID */
   card?: Maybe<Card>;
+  /** Check if current user has a specific permission */
+  hasPermission: Scalars['Boolean']['output'];
   /** Hello World query */
   helloWorld: Scalars['String']['output'];
+  /** Get pending invitations for an organization */
+  invitations: Array<Invitation>;
   /** Get current authenticated user */
   me?: Maybe<User>;
   /** Get all cards assigned to the current user */
   myCards: Array<Card>;
+  /** Get current user's permissions for a resource */
+  myPermissions: Array<Scalars['String']['output']>;
   /** Get available OIDC providers */
   oidcProviders: Array<OidcProvider>;
   /** Get a specific organization by ID */
   organization?: Maybe<Organization>;
+  /** Get organization members with roles */
+  organizationMembers: Array<OrganizationMember>;
   /** Get all organizations for the current user */
   organizations: Array<Organization>;
+  /** Get all available permissions */
+  permissions: Array<Permission>;
   /** Get a specific project by ID */
   project?: Maybe<Project>;
+  /** Get project members */
+  projectMembers: Array<ProjectMember>;
+  /** Get a specific role by ID */
+  role?: Maybe<Role>;
+  /** Get roles for an organization (includes system roles) */
+  roles: Array<Role>;
   /** Get all tags for a project */
   tags: Array<Tag>;
 };
@@ -378,13 +537,51 @@ export type QueryCardArgs = {
 };
 
 
+export type QueryHasPermissionArgs = {
+  permission: Scalars['String']['input'];
+  resourceId: Scalars['ID']['input'];
+  resourceType: Scalars['String']['input'];
+};
+
+
+export type QueryInvitationsArgs = {
+  organizationId: Scalars['ID']['input'];
+};
+
+
+export type QueryMyPermissionsArgs = {
+  resourceId: Scalars['ID']['input'];
+  resourceType: Scalars['String']['input'];
+};
+
+
 export type QueryOrganizationArgs = {
   id: Scalars['ID']['input'];
 };
 
 
+export type QueryOrganizationMembersArgs = {
+  organizationId: Scalars['ID']['input'];
+};
+
+
 export type QueryProjectArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryProjectMembersArgs = {
+  projectId: Scalars['ID']['input'];
+};
+
+
+export type QueryRoleArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QueryRolesArgs = {
+  organizationId: Scalars['ID']['input'];
 };
 
 
@@ -400,6 +597,18 @@ export type RegisterInput = {
 export type ReorderColumnsInput = {
   boardId: Scalars['ID']['input'];
   columnIds: Array<Scalars['ID']['input']>;
+};
+
+export type Role = {
+  __typename?: 'Role';
+  createdAt: Scalars['Time']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  isSystem: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  permissions: Array<Permission>;
+  scope: Scalars['String']['output'];
+  updatedAt: Scalars['Time']['output'];
 };
 
 export type Tag = {
@@ -435,6 +644,11 @@ export type UpdateColumnInput = {
   wipLimit?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type UpdateMeInput = {
+  displayName?: InputMaybe<Scalars['String']['input']>;
+  email?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateOrganizationInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
@@ -446,6 +660,13 @@ export type UpdateProjectInput = {
   id: Scalars['ID']['input'];
   key?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateRoleInput = {
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  permissionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
 };
 
 export type UpdateTagInput = {
@@ -488,6 +709,13 @@ export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
 
 export type LogoutMutation = { __typename?: 'Mutation', logout: boolean };
+
+export type UpdateMeMutationVariables = Exact<{
+  input: UpdateMeInput;
+}>;
+
+
+export type UpdateMeMutation = { __typename?: 'Mutation', updateMe: { __typename?: 'User', id: string, username: string, email?: string | null, displayName?: string | null, avatarUrl?: string | null, createdAt: string } };
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -697,3 +925,140 @@ export type DeleteProjectMutationVariables = Exact<{
 
 
 export type DeleteProjectMutation = { __typename?: 'Mutation', deleteProject: boolean };
+
+export type PermissionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type PermissionsQuery = { __typename?: 'Query', permissions: Array<{ __typename?: 'Permission', id: string, code: string, name: string, description?: string | null, resourceType: string }> };
+
+export type RolesQueryVariables = Exact<{
+  organizationId: Scalars['ID']['input'];
+}>;
+
+
+export type RolesQuery = { __typename?: 'Query', roles: Array<{ __typename?: 'Role', id: string, name: string, description?: string | null, isSystem: boolean, scope: string, createdAt: string, updatedAt: string, permissions: Array<{ __typename?: 'Permission', id: string, code: string, name: string }> }> };
+
+export type RoleQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RoleQuery = { __typename?: 'Query', role?: { __typename?: 'Role', id: string, name: string, description?: string | null, isSystem: boolean, scope: string, createdAt: string, updatedAt: string, permissions: Array<{ __typename?: 'Permission', id: string, code: string, name: string, description?: string | null, resourceType: string }> } | null };
+
+export type OrganizationMembersQueryVariables = Exact<{
+  organizationId: Scalars['ID']['input'];
+}>;
+
+
+export type OrganizationMembersQuery = { __typename?: 'Query', organizationMembers: Array<{ __typename?: 'OrganizationMember', id: string, legacyRole: string, createdAt: string, user: { __typename?: 'User', id: string, email?: string | null, displayName?: string | null }, role: { __typename?: 'Role', id: string, name: string, description?: string | null, isSystem: boolean } }> };
+
+export type ProjectMembersQueryVariables = Exact<{
+  projectId: Scalars['ID']['input'];
+}>;
+
+
+export type ProjectMembersQuery = { __typename?: 'Query', projectMembers: Array<{ __typename?: 'ProjectMember', id: string, createdAt: string, user: { __typename?: 'User', id: string, email?: string | null, displayName?: string | null }, role?: { __typename?: 'Role', id: string, name: string, description?: string | null, isSystem: boolean } | null, project: { __typename?: 'Project', id: string, name: string } }> };
+
+export type InvitationsQueryVariables = Exact<{
+  organizationId: Scalars['ID']['input'];
+}>;
+
+
+export type InvitationsQuery = { __typename?: 'Query', invitations: Array<{ __typename?: 'Invitation', id: string, email: string, expiresAt: string, createdAt: string, role: { __typename?: 'Role', id: string, name: string }, invitedBy: { __typename?: 'User', id: string, email?: string | null, displayName?: string | null } }> };
+
+export type HasPermissionQueryVariables = Exact<{
+  permission: Scalars['String']['input'];
+  resourceType: Scalars['String']['input'];
+  resourceId: Scalars['ID']['input'];
+}>;
+
+
+export type HasPermissionQuery = { __typename?: 'Query', hasPermission: boolean };
+
+export type MyPermissionsQueryVariables = Exact<{
+  resourceType: Scalars['String']['input'];
+  resourceId: Scalars['ID']['input'];
+}>;
+
+
+export type MyPermissionsQuery = { __typename?: 'Query', myPermissions: Array<string> };
+
+export type CreateRoleMutationVariables = Exact<{
+  input: CreateRoleInput;
+}>;
+
+
+export type CreateRoleMutation = { __typename?: 'Mutation', createRole: { __typename?: 'Role', id: string, name: string, description?: string | null, isSystem: boolean, scope: string, createdAt: string, updatedAt: string, permissions: Array<{ __typename?: 'Permission', id: string, code: string, name: string }> } };
+
+export type UpdateRoleMutationVariables = Exact<{
+  input: UpdateRoleInput;
+}>;
+
+
+export type UpdateRoleMutation = { __typename?: 'Mutation', updateRole: { __typename?: 'Role', id: string, name: string, description?: string | null, isSystem: boolean, scope: string, updatedAt: string, permissions: Array<{ __typename?: 'Permission', id: string, code: string, name: string }> } };
+
+export type DeleteRoleMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteRoleMutation = { __typename?: 'Mutation', deleteRole: boolean };
+
+export type InviteMemberMutationVariables = Exact<{
+  input: InviteMemberInput;
+}>;
+
+
+export type InviteMemberMutation = { __typename?: 'Mutation', inviteMember: { __typename?: 'Invitation', id: string, email: string, token: string, expiresAt: string, createdAt: string, role: { __typename?: 'Role', id: string, name: string } } };
+
+export type CancelInvitationMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type CancelInvitationMutation = { __typename?: 'Mutation', cancelInvitation: boolean };
+
+export type ResendInvitationMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type ResendInvitationMutation = { __typename?: 'Mutation', resendInvitation: { __typename?: 'Invitation', id: string, email: string, expiresAt: string, createdAt: string } };
+
+export type AcceptInvitationMutationVariables = Exact<{
+  token: Scalars['String']['input'];
+}>;
+
+
+export type AcceptInvitationMutation = { __typename?: 'Mutation', acceptInvitation: { __typename?: 'Organization', id: string, name: string, slug: string } };
+
+export type ChangeMemberRoleMutationVariables = Exact<{
+  organizationId: Scalars['ID']['input'];
+  input: ChangeMemberRoleInput;
+}>;
+
+
+export type ChangeMemberRoleMutation = { __typename?: 'Mutation', changeMemberRole: { __typename?: 'OrganizationMember', id: string, legacyRole: string, user: { __typename?: 'User', id: string, email?: string | null, displayName?: string | null }, role: { __typename?: 'Role', id: string, name: string } } };
+
+export type RemoveMemberMutationVariables = Exact<{
+  organizationId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveMemberMutation = { __typename?: 'Mutation', removeMember: boolean };
+
+export type AssignProjectRoleMutationVariables = Exact<{
+  input: AssignProjectRoleInput;
+}>;
+
+
+export type AssignProjectRoleMutation = { __typename?: 'Mutation', assignProjectRole: { __typename?: 'ProjectMember', id: string, user: { __typename?: 'User', id: string, email?: string | null, displayName?: string | null }, role?: { __typename?: 'Role', id: string, name: string } | null, project: { __typename?: 'Project', id: string, name: string } } };
+
+export type RemoveProjectMemberMutationVariables = Exact<{
+  projectId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveProjectMemberMutation = { __typename?: 'Mutation', removeProjectMember: boolean };

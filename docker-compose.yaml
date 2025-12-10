@@ -63,22 +63,6 @@ services:
     networks:
       - pulse-network
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "4321:4321"
-    environment:
-      PUBLIC_API_URL: http://localhost:3000/graphql
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-    depends_on:
-      - backend
-    networks:
-      - pulse-network
-
 networks:
   pulse-network:
 

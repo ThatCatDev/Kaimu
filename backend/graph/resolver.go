@@ -5,10 +5,13 @@ import (
 	"github.com/thatcatdev/pulse-backend/internal/services/auth"
 	"github.com/thatcatdev/pulse-backend/internal/services/board"
 	"github.com/thatcatdev/pulse-backend/internal/services/card"
+	"github.com/thatcatdev/pulse-backend/internal/services/invitation"
 	"github.com/thatcatdev/pulse-backend/internal/services/oidc"
 	"github.com/thatcatdev/pulse-backend/internal/services/organization"
 	"github.com/thatcatdev/pulse-backend/internal/services/project"
+	"github.com/thatcatdev/pulse-backend/internal/services/rbac"
 	"github.com/thatcatdev/pulse-backend/internal/services/tag"
+	"github.com/thatcatdev/pulse-backend/internal/services/user"
 )
 
 // This file will not be regenerated automatically.
@@ -26,4 +29,7 @@ type Resolver struct {
 	BoardService        board.Service
 	CardService         card.Service
 	TagService          tag.Service
+	RBACService         rbac.Service
+	InvitationService   invitation.Service
+	UserService         user.Service
 }

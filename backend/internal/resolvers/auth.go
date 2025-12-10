@@ -26,7 +26,7 @@ func Register(ctx context.Context, authService auth.Service, input model.Registe
 	}
 
 	return &model.AuthPayload{
-		User: userToModel(u),
+		User: UserToModel(u),
 	}, nil
 }
 
@@ -46,7 +46,7 @@ func Login(ctx context.Context, authService auth.Service, input model.LoginInput
 	}
 
 	return &model.AuthPayload{
-		User: userToModel(u),
+		User: UserToModel(u),
 	}, nil
 }
 
@@ -69,13 +69,16 @@ func Me(ctx context.Context, authService auth.Service) (*model.User, error) {
 		return nil, nil
 	}
 
-	return userToModel(u), nil
+	return UserToModel(u), nil
 }
 
-func userToModel(u *user.User) *model.User {
+func UserToModel(u *user.User) *model.User {
 	return &model.User{
-		ID:        u.ID.String(),
-		Username:  u.Username,
-		CreatedAt: u.CreatedAt,
+		ID:          u.ID.String(),
+		Username:    u.Username,
+		Email:       u.Email,
+		DisplayName: u.DisplayName,
+		AvatarURL:   u.AvatarURL,
+		CreatedAt:   u.CreatedAt,
 	}
 }

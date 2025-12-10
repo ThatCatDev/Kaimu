@@ -12,6 +12,14 @@
     { value: CardPriority.Urgent, label: 'Urgent' },
   ];
 
+  const priorityBadgeStyles: Record<CardPriority, { bg: string; text: string; label: string }> = {
+    [CardPriority.None]: { bg: 'bg-gray-100', text: 'text-gray-500', label: 'None' },
+    [CardPriority.Low]: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Low' },
+    [CardPriority.Medium]: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Medium' },
+    [CardPriority.High]: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'High' },
+    [CardPriority.Urgent]: { bg: 'bg-red-100', text: 'text-red-700', label: 'Urgent' },
+  };
+
   interface Props {
     title: string;
     description: string;
@@ -28,6 +36,7 @@
     onTagsChanged?: () => void;
     error?: string | null;
     disabled?: boolean;
+    readOnly?: boolean;
     descriptionRows?: number;
     idPrefix?: string;
   }
@@ -48,9 +57,11 @@
     onTagsChanged,
     error = null,
     disabled = false,
+    readOnly = false,
     descriptionRows = 3,
     idPrefix = ''
   }: Props = $props();
+
 
   // Local reactive bindings that call parent callbacks
   let localTitle = $state(title);
@@ -63,6 +74,15 @@
   $effect(() => { localDescription = description; });
   $effect(() => { localPriority = priority; });
   $effect(() => { localDueDate = dueDate; });
+
+  // Computed values for read-only display
+  const selectedTags = $derived(tags.filter(t => selectedTagIds.includes(t.id)));
+
+  function formatDisplayDate(dateStr: string): string {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
 
   // Notify parent on changes
   $effect(() => {
@@ -80,7 +100,7 @@
 </script>
 
 <div class="space-y-4">
-  {#if error}
+  {#if error && !readOnly}
     <div class="rounded-md bg-red-50 p-4">
       <p class="text-sm text-red-700">{error}</p>
     </div>
@@ -93,6 +113,7 @@
     placeholder="Enter card title"
     required
     {disabled}
+    {readOnly}
   />
 
   <Textarea
@@ -102,6 +123,7 @@
     rows={descriptionRows}
     placeholder="Add a description"
     {disabled}
+    {readOnly}
   />
 
   <div class="grid grid-cols-2 gap-4">
@@ -112,6 +134,7 @@
       bind:value={localPriority}
       placeholder="Select priority..."
       disabled={disabled}
+      {readOnly}
     />
 
     <DatePicker
@@ -119,6 +142,7 @@
       label="Due Date"
       bind:value={localDueDate}
       disabled={disabled}
+      {readOnly}
     />
   </div>
 
@@ -129,5 +153,6 @@
     onSelectionChange={onTagSelectionChange}
     {onTagsChanged}
     {disabled}
+    {readOnly}
   />
 </div>

@@ -29,6 +29,11 @@ func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
 	return resolvers.Logout(ctx)
 }
 
+// UpdateMe is the resolver for the updateMe field.
+func (r *mutationResolver) UpdateMe(ctx context.Context, input model.UpdateMeInput) (*model.User, error) {
+	return resolvers.UpdateMe(ctx, r.UserService, input)
+}
+
 // CreateOrganization is the resolver for the createOrganization field.
 func (r *mutationResolver) CreateOrganization(ctx context.Context, input model.CreateOrganizationInput) (*model.Organization, error) {
 	return resolvers.CreateOrganization(ctx, r.OrganizationService, input)
@@ -46,77 +51,77 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, id string) (b
 
 // CreateProject is the resolver for the createProject field.
 func (r *mutationResolver) CreateProject(ctx context.Context, input model.CreateProjectInput) (*model.Project, error) {
-	return resolvers.CreateProject(ctx, r.OrganizationService, r.ProjectService, r.BoardService, input)
+	return resolvers.CreateProject(ctx, r.RBACService, r.OrganizationService, r.ProjectService, r.BoardService, input)
 }
 
 // UpdateProject is the resolver for the updateProject field.
 func (r *mutationResolver) UpdateProject(ctx context.Context, input model.UpdateProjectInput) (*model.Project, error) {
-	return resolvers.UpdateProject(ctx, r.OrganizationService, r.ProjectService, input)
+	return resolvers.UpdateProject(ctx, r.RBACService, r.ProjectService, input)
 }
 
 // DeleteProject is the resolver for the deleteProject field.
 func (r *mutationResolver) DeleteProject(ctx context.Context, id string) (bool, error) {
-	return resolvers.DeleteProject(ctx, r.OrganizationService, r.ProjectService, id)
+	return resolvers.DeleteProject(ctx, r.RBACService, r.ProjectService, id)
 }
 
 // CreateBoard is the resolver for the createBoard field.
 func (r *mutationResolver) CreateBoard(ctx context.Context, input model.CreateBoardInput) (*model.Board, error) {
-	return resolvers.CreateBoard(ctx, r.OrganizationService, r.BoardService, r.ProjectService, input)
+	return resolvers.CreateBoard(ctx, r.RBACService, r.BoardService, r.ProjectService, input)
 }
 
 // UpdateBoard is the resolver for the updateBoard field.
 func (r *mutationResolver) UpdateBoard(ctx context.Context, input model.UpdateBoardInput) (*model.Board, error) {
-	return resolvers.UpdateBoard(ctx, r.OrganizationService, r.BoardService, input)
+	return resolvers.UpdateBoard(ctx, r.RBACService, r.BoardService, input)
 }
 
 // DeleteBoard is the resolver for the deleteBoard field.
 func (r *mutationResolver) DeleteBoard(ctx context.Context, id string) (bool, error) {
-	return resolvers.DeleteBoard(ctx, r.OrganizationService, r.BoardService, id)
+	return resolvers.DeleteBoard(ctx, r.RBACService, r.BoardService, id)
 }
 
 // CreateColumn is the resolver for the createColumn field.
 func (r *mutationResolver) CreateColumn(ctx context.Context, input model.CreateColumnInput) (*model.BoardColumn, error) {
-	return resolvers.CreateColumn(ctx, r.OrganizationService, r.BoardService, input)
+	return resolvers.CreateColumn(ctx, r.RBACService, r.BoardService, input)
 }
 
 // UpdateColumn is the resolver for the updateColumn field.
 func (r *mutationResolver) UpdateColumn(ctx context.Context, input model.UpdateColumnInput) (*model.BoardColumn, error) {
-	return resolvers.UpdateColumn(ctx, r.OrganizationService, r.BoardService, input)
+	return resolvers.UpdateColumn(ctx, r.RBACService, r.BoardService, input)
 }
 
 // ReorderColumns is the resolver for the reorderColumns field.
 func (r *mutationResolver) ReorderColumns(ctx context.Context, input model.ReorderColumnsInput) ([]*model.BoardColumn, error) {
-	return resolvers.ReorderColumns(ctx, r.OrganizationService, r.BoardService, input)
+	return resolvers.ReorderColumns(ctx, r.RBACService, r.BoardService, input)
 }
 
 // ToggleColumnVisibility is the resolver for the toggleColumnVisibility field.
 func (r *mutationResolver) ToggleColumnVisibility(ctx context.Context, id string) (*model.BoardColumn, error) {
-	return resolvers.ToggleColumnVisibility(ctx, r.OrganizationService, r.BoardService, id)
+	return resolvers.ToggleColumnVisibility(ctx, r.RBACService, r.BoardService, id)
 }
 
 // DeleteColumn is the resolver for the deleteColumn field.
 func (r *mutationResolver) DeleteColumn(ctx context.Context, id string) (bool, error) {
-	return resolvers.DeleteColumn(ctx, r.OrganizationService, r.BoardService, id)
+	return resolvers.DeleteColumn(ctx, r.RBACService, r.BoardService, id)
 }
 
 // CreateCard is the resolver for the createCard field.
 func (r *mutationResolver) CreateCard(ctx context.Context, input model.CreateCardInput) (*model.Card, error) {
-	return resolvers.CreateCard(ctx, r.OrganizationService, r.CardService, r.BoardService, input)
+	return resolvers.CreateCard(ctx, r.RBACService, r.CardService, r.BoardService, input)
 }
 
 // UpdateCard is the resolver for the updateCard field.
 func (r *mutationResolver) UpdateCard(ctx context.Context, input model.UpdateCardInput) (*model.Card, error) {
-	return resolvers.UpdateCard(ctx, r.OrganizationService, r.CardService, r.BoardService, input)
+	return resolvers.UpdateCard(ctx, r.RBACService, r.CardService, r.BoardService, input)
 }
 
 // MoveCard is the resolver for the moveCard field.
 func (r *mutationResolver) MoveCard(ctx context.Context, input model.MoveCardInput) (*model.Card, error) {
-	return resolvers.MoveCard(ctx, r.OrganizationService, r.CardService, r.BoardService, input)
+	return resolvers.MoveCard(ctx, r.RBACService, r.CardService, r.BoardService, input)
 }
 
 // DeleteCard is the resolver for the deleteCard field.
 func (r *mutationResolver) DeleteCard(ctx context.Context, id string) (bool, error) {
-	return resolvers.DeleteCard(ctx, r.OrganizationService, r.CardService, r.BoardService, id)
+	return resolvers.DeleteCard(ctx, r.RBACService, r.CardService, r.BoardService, id)
 }
 
 // CreateTag is the resolver for the createTag field.
@@ -132,6 +137,61 @@ func (r *mutationResolver) UpdateTag(ctx context.Context, input model.UpdateTagI
 // DeleteTag is the resolver for the deleteTag field.
 func (r *mutationResolver) DeleteTag(ctx context.Context, id string) (bool, error) {
 	return resolvers.DeleteTag(ctx, r.OrganizationService, r.TagService, id)
+}
+
+// CreateRole is the resolver for the createRole field.
+func (r *mutationResolver) CreateRole(ctx context.Context, input model.CreateRoleInput) (*model.Role, error) {
+	return resolvers.CreateRole(ctx, r.RBACService, input)
+}
+
+// UpdateRole is the resolver for the updateRole field.
+func (r *mutationResolver) UpdateRole(ctx context.Context, input model.UpdateRoleInput) (*model.Role, error) {
+	return resolvers.UpdateRole(ctx, r.RBACService, input)
+}
+
+// DeleteRole is the resolver for the deleteRole field.
+func (r *mutationResolver) DeleteRole(ctx context.Context, id string) (bool, error) {
+	return resolvers.DeleteRole(ctx, r.RBACService, id)
+}
+
+// InviteMember is the resolver for the inviteMember field.
+func (r *mutationResolver) InviteMember(ctx context.Context, input model.InviteMemberInput) (*model.Invitation, error) {
+	return resolvers.InviteMember(ctx, r.InvitationService, r.RBACService, input)
+}
+
+// CancelInvitation is the resolver for the cancelInvitation field.
+func (r *mutationResolver) CancelInvitation(ctx context.Context, id string) (bool, error) {
+	return resolvers.CancelInvitation(ctx, r.InvitationService, r.RBACService, id)
+}
+
+// ResendInvitation is the resolver for the resendInvitation field.
+func (r *mutationResolver) ResendInvitation(ctx context.Context, id string) (*model.Invitation, error) {
+	return resolvers.ResendInvitation(ctx, r.InvitationService, r.RBACService, id)
+}
+
+// AcceptInvitation is the resolver for the acceptInvitation field.
+func (r *mutationResolver) AcceptInvitation(ctx context.Context, token string) (*model.Organization, error) {
+	return resolvers.AcceptInvitation(ctx, r.InvitationService, token)
+}
+
+// ChangeMemberRole is the resolver for the changeMemberRole field.
+func (r *mutationResolver) ChangeMemberRole(ctx context.Context, organizationID string, input model.ChangeMemberRoleInput) (*model.OrganizationMember, error) {
+	return resolvers.ChangeMemberRole(ctx, r.RBACService, organizationID, input)
+}
+
+// RemoveMember is the resolver for the removeMember field.
+func (r *mutationResolver) RemoveMember(ctx context.Context, organizationID string, userID string) (bool, error) {
+	return resolvers.RemoveMember(ctx, r.RBACService, organizationID, userID)
+}
+
+// AssignProjectRole is the resolver for the assignProjectRole field.
+func (r *mutationResolver) AssignProjectRole(ctx context.Context, input model.AssignProjectRoleInput) (*model.ProjectMember, error) {
+	return resolvers.AssignProjectRole(ctx, r.RBACService, input)
+}
+
+// RemoveProjectMember is the resolver for the removeProjectMember field.
+func (r *mutationResolver) RemoveProjectMember(ctx context.Context, projectID string, userID string) (bool, error) {
+	return resolvers.RemoveProjectMember(ctx, r.RBACService, projectID, userID)
 }
 
 // HelloWorld is the resolver for the helloWorld field.
@@ -173,22 +233,22 @@ func (r *queryResolver) Organization(ctx context.Context, id string) (*model.Org
 
 // Project is the resolver for the project field.
 func (r *queryResolver) Project(ctx context.Context, id string) (*model.Project, error) {
-	return resolvers.Project(ctx, r.OrganizationService, r.ProjectService, id)
+	return resolvers.Project(ctx, r.RBACService, r.ProjectService, id)
 }
 
 // Board is the resolver for the board field.
 func (r *queryResolver) Board(ctx context.Context, id string) (*model.Board, error) {
-	return resolvers.Board(ctx, r.OrganizationService, r.BoardService, r.ProjectService, id)
+	return resolvers.Board(ctx, r.RBACService, r.BoardService, r.ProjectService, id)
 }
 
 // Boards is the resolver for the boards field.
 func (r *queryResolver) Boards(ctx context.Context, projectID string) ([]*model.Board, error) {
-	return resolvers.Boards(ctx, r.OrganizationService, r.BoardService, r.ProjectService, projectID)
+	return resolvers.Boards(ctx, r.RBACService, r.BoardService, r.ProjectService, projectID)
 }
 
 // Card is the resolver for the card field.
 func (r *queryResolver) Card(ctx context.Context, id string) (*model.Card, error) {
-	return resolvers.Card(ctx, r.OrganizationService, r.CardService, r.BoardService, id)
+	return resolvers.Card(ctx, r.RBACService, r.CardService, r.BoardService, id)
 }
 
 // MyCards is the resolver for the myCards field.
@@ -199,6 +259,46 @@ func (r *queryResolver) MyCards(ctx context.Context) ([]*model.Card, error) {
 // Tags is the resolver for the tags field.
 func (r *queryResolver) Tags(ctx context.Context, projectID string) ([]*model.Tag, error) {
 	return resolvers.Tags(ctx, r.OrganizationService, r.TagService, r.ProjectService, projectID)
+}
+
+// Permissions is the resolver for the permissions field.
+func (r *queryResolver) Permissions(ctx context.Context) ([]*model.Permission, error) {
+	return resolvers.Permissions(ctx, r.RBACService)
+}
+
+// Roles is the resolver for the roles field.
+func (r *queryResolver) Roles(ctx context.Context, organizationID string) ([]*model.Role, error) {
+	return resolvers.Roles(ctx, r.RBACService, organizationID)
+}
+
+// Role is the resolver for the role field.
+func (r *queryResolver) Role(ctx context.Context, id string) (*model.Role, error) {
+	return resolvers.Role(ctx, r.RBACService, id)
+}
+
+// OrganizationMembers is the resolver for the organizationMembers field.
+func (r *queryResolver) OrganizationMembers(ctx context.Context, organizationID string) ([]*model.OrganizationMember, error) {
+	return resolvers.GetOrganizationMembersRBAC(ctx, r.RBACService, organizationID)
+}
+
+// ProjectMembers is the resolver for the projectMembers field.
+func (r *queryResolver) ProjectMembers(ctx context.Context, projectID string) ([]*model.ProjectMember, error) {
+	return resolvers.ProjectMembers(ctx, r.RBACService, projectID)
+}
+
+// Invitations is the resolver for the invitations field.
+func (r *queryResolver) Invitations(ctx context.Context, organizationID string) ([]*model.Invitation, error) {
+	return resolvers.Invitations(ctx, r.InvitationService, r.RBACService, organizationID)
+}
+
+// HasPermission is the resolver for the hasPermission field.
+func (r *queryResolver) HasPermission(ctx context.Context, permission string, resourceType string, resourceID string) (bool, error) {
+	return resolvers.HasPermission(ctx, r.RBACService, permission, resourceType, resourceID)
+}
+
+// MyPermissions is the resolver for the myPermissions field.
+func (r *queryResolver) MyPermissions(ctx context.Context, resourceType string, resourceID string) ([]string, error) {
+	return resolvers.MyPermissions(ctx, r.RBACService, resourceType, resourceID)
 }
 
 // Mutation returns generated.MutationResolver implementation.

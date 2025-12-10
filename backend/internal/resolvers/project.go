@@ -11,10 +11,11 @@ import (
 	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
 	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
 	projectService "github.com/thatcatdev/pulse-backend/internal/services/project"
+	rbacService "github.com/thatcatdev/pulse-backend/internal/services/rbac"
 )
 
 // CreateProject creates a new project
-func CreateProject(ctx context.Context, orgSvc orgService.Service, projSvc projectService.Service, boardSvc boardService.Service, input model.CreateProjectInput) (*model.Project, error) {
+func CreateProject(ctx context.Context, rbacSvc rbacService.Service, orgSvc orgService.Service, projSvc projectService.Service, boardSvc boardService.Service, input model.CreateProjectInput) (*model.Project, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -25,12 +26,12 @@ func CreateProject(ctx context.Context, orgSvc orgService.Service, projSvc proje
 		return nil, err
 	}
 
-	// Check if user is a member of the organization
-	isMember, err := orgSvc.IsMember(ctx, orgID, *userID)
+	// Check if user has permission to create projects in this organization
+	hasPermission, err := rbacSvc.HasOrgPermission(ctx, *userID, orgID, "project:create")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -61,7 +62,7 @@ func CreateProject(ctx context.Context, orgSvc orgService.Service, projSvc proje
 }
 
 // Project returns a specific project by ID
-func Project(ctx context.Context, orgSvc orgService.Service, projSvc projectService.Service, id string) (*model.Project, error) {
+func Project(ctx context.Context, rbacSvc rbacService.Service, projSvc projectService.Service, id string) (*model.Project, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -77,12 +78,12 @@ func Project(ctx context.Context, orgSvc orgService.Service, projSvc projectServ
 		return nil, err
 	}
 
-	// Check if user is a member of the organization
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	// Check if user has permission to view the project
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, projID, "project:view")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -111,7 +112,7 @@ func ProjectOrganization(ctx context.Context, projSvc projectService.Service, pr
 }
 
 // UpdateProject updates a project
-func UpdateProject(ctx context.Context, orgSvc orgService.Service, projSvc projectService.Service, input model.UpdateProjectInput) (*model.Project, error) {
+func UpdateProject(ctx context.Context, rbacSvc rbacService.Service, projSvc projectService.Service, input model.UpdateProjectInput) (*model.Project, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -128,12 +129,12 @@ func UpdateProject(ctx context.Context, orgSvc orgService.Service, projSvc proje
 		return nil, err
 	}
 
-	// Check if user is a member of the organization
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	// Check if user has permission to manage the project
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, projID, "project:manage")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -163,7 +164,7 @@ func UpdateProject(ctx context.Context, orgSvc orgService.Service, projSvc proje
 }
 
 // DeleteProject deletes a project by ID
-func DeleteProject(ctx context.Context, orgSvc orgService.Service, projSvc projectService.Service, id string) (bool, error) {
+func DeleteProject(ctx context.Context, rbacSvc rbacService.Service, projSvc projectService.Service, id string) (bool, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return false, ErrUnauthorized
@@ -174,18 +175,12 @@ func DeleteProject(ctx context.Context, orgSvc orgService.Service, projSvc proje
 		return false, err
 	}
 
-	// Get project to check organization membership
-	proj, err := projSvc.GetProject(ctx, projID)
+	// Check if user has permission to delete the project
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, projID, "project:delete")
 	if err != nil {
 		return false, err
 	}
-
-	// Check if user is a member of the organization
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
-	if err != nil {
-		return false, err
-	}
-	if !isMember {
+	if !hasPermission {
 		return false, ErrUnauthorized
 	}
 

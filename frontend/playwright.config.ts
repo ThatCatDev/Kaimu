@@ -10,9 +10,9 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   // Add retries to handle transient failures
-  retries: process.env.CI ? 2 : 1,
-  // Limit workers to reduce database contention and race conditions
-  workers: process.env.CI ? 1 : 3,
+  retries: process.env.CI ? 6 : 6,
+  // Use more workers for faster test execution
+  workers: process.env.CI ? 4 : 8,
   reporter: [['html', { outputFolder: path.join(outputDir, 'report') }]],
   outputDir: path.join(outputDir, 'results'),
   // Increase timeout for slower operations

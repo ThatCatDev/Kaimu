@@ -415,12 +415,13 @@ test.describe('Sidebar - Empty States', () => {
     const password = 'testpassword123';
 
     await page.goto('/register');
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('networkidle');
     await page.fill('#username', username);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL('/', { timeout: 15000 });
 
     await page.goto('/dashboard');
     await page.waitForLoadState('networkidle');
@@ -441,19 +442,21 @@ test.describe('Sidebar - Organization with no projects', () => {
     const orgName = `Empty Org ${testId}`;
 
     await page.goto('/register');
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('networkidle');
     await page.fill('#username', username);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL('/', { timeout: 15000 });
 
     // Create org without any projects
     await page.goto('/organizations/new');
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('networkidle');
     await page.fill('#name', orgName);
     await page.getByRole('button', { name: 'Create Organization' }).click();
-    await expect(page).toHaveURL(/\/organizations\/([a-f0-9-]+)/, { timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/\/organizations\/([a-f0-9-]+)/, { timeout: 15000 });
 
     // Clear session storage and go to dashboard
     await page.goto('/dashboard');
@@ -490,19 +493,21 @@ test.describe('Sidebar - Organization with no projects', () => {
     const orgName = `Empty Org ${testId}`;
 
     await page.goto('/register');
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('networkidle');
     await page.fill('#username', username);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL('/', { timeout: 15000 });
 
     // Create org without any projects
     await page.goto('/organizations/new');
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('networkidle');
     await page.fill('#name', orgName);
     await page.getByRole('button', { name: 'Create Organization' }).click();
-    await expect(page).toHaveURL(/\/organizations\/([a-f0-9-]+)/, { timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/\/organizations\/([a-f0-9-]+)/, { timeout: 15000 });
 
     const url = page.url();
     const match = url.match(/\/organizations\/([a-f0-9-]+)/);

@@ -9,6 +9,12 @@ import (
 	"time"
 )
 
+type AssignProjectRoleInput struct {
+	ProjectID string  `json:"projectId"`
+	UserID    string  `json:"userId"`
+	RoleID    *string `json:"roleId,omitempty"`
+}
+
 type AuthPayload struct {
 	User *User `json:"user"`
 }
@@ -54,6 +60,11 @@ type Card struct {
 	CreatedBy   *User        `json:"createdBy,omitempty"`
 }
 
+type ChangeMemberRoleInput struct {
+	UserID string `json:"userId"`
+	RoleID string `json:"roleId"`
+}
+
 type CreateBoardInput struct {
 	ProjectID   string  `json:"projectId"`
 	Name        string  `json:"name"`
@@ -88,11 +99,35 @@ type CreateProjectInput struct {
 	Description    *string `json:"description,omitempty"`
 }
 
+type CreateRoleInput struct {
+	OrganizationID  string   `json:"organizationId"`
+	Name            string   `json:"name"`
+	Description     *string  `json:"description,omitempty"`
+	PermissionCodes []string `json:"permissionCodes"`
+}
+
 type CreateTagInput struct {
 	ProjectID   string  `json:"projectId"`
 	Name        string  `json:"name"`
 	Color       string  `json:"color"`
 	Description *string `json:"description,omitempty"`
+}
+
+type Invitation struct {
+	ID           string        `json:"id"`
+	Email        string        `json:"email"`
+	Token        string        `json:"token"`
+	Role         *Role         `json:"role"`
+	Organization *Organization `json:"organization"`
+	InvitedBy    *User         `json:"invitedBy"`
+	ExpiresAt    time.Time     `json:"expiresAt"`
+	CreatedAt    time.Time     `json:"createdAt"`
+}
+
+type InviteMemberInput struct {
+	OrganizationID string `json:"organizationId"`
+	Email          string `json:"email"`
+	RoleID         string `json:"roleId"`
 }
 
 type LoginInput struct {
@@ -124,10 +159,19 @@ type Organization struct {
 }
 
 type OrganizationMember struct {
-	ID        string    `json:"id"`
-	User      *User     `json:"user"`
-	Role      string    `json:"role"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID         string    `json:"id"`
+	User       *User     `json:"user"`
+	Role       *Role     `json:"role"`
+	LegacyRole string    `json:"legacyRole"`
+	CreatedAt  time.Time `json:"createdAt"`
+}
+
+type Permission struct {
+	ID           string  `json:"id"`
+	Code         string  `json:"code"`
+	Name         string  `json:"name"`
+	Description  *string `json:"description,omitempty"`
+	ResourceType string  `json:"resourceType"`
 }
 
 type Project struct {
@@ -143,6 +187,14 @@ type Project struct {
 	UpdatedAt    time.Time     `json:"updatedAt"`
 }
 
+type ProjectMember struct {
+	ID        string    `json:"id"`
+	User      *User     `json:"user"`
+	Role      *Role     `json:"role,omitempty"`
+	Project   *Project  `json:"project"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
 type RegisterInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -151,6 +203,17 @@ type RegisterInput struct {
 type ReorderColumnsInput struct {
 	BoardID   string   `json:"boardId"`
 	ColumnIds []string `json:"columnIds"`
+}
+
+type Role struct {
+	ID          string        `json:"id"`
+	Name        string        `json:"name"`
+	Description *string       `json:"description,omitempty"`
+	IsSystem    bool          `json:"isSystem"`
+	Scope       string        `json:"scope"`
+	Permissions []*Permission `json:"permissions"`
+	CreatedAt   time.Time     `json:"createdAt"`
+	UpdatedAt   time.Time     `json:"updatedAt"`
 }
 
 type Tag struct {
@@ -185,6 +248,11 @@ type UpdateColumnInput struct {
 	WipLimit *int    `json:"wipLimit,omitempty"`
 }
 
+type UpdateMeInput struct {
+	DisplayName *string `json:"displayName,omitempty"`
+	Email       *string `json:"email,omitempty"`
+}
+
 type UpdateOrganizationInput struct {
 	ID          string  `json:"id"`
 	Name        *string `json:"name,omitempty"`
@@ -196,6 +264,13 @@ type UpdateProjectInput struct {
 	Name        *string `json:"name,omitempty"`
 	Key         *string `json:"key,omitempty"`
 	Description *string `json:"description,omitempty"`
+}
+
+type UpdateRoleInput struct {
+	ID              string   `json:"id"`
+	Name            *string  `json:"name,omitempty"`
+	Description     *string  `json:"description,omitempty"`
+	PermissionCodes []string `json:"permissionCodes,omitempty"`
 }
 
 type UpdateTagInput struct {

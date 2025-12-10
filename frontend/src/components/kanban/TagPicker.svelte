@@ -8,9 +8,13 @@
     onSelectionChange: (ids: string[]) => void;
     onTagsChanged?: () => void;
     disabled?: boolean;
+    readOnly?: boolean;
   }
 
-  let { projectId, tags, selectedTagIds, onSelectionChange, onTagsChanged, disabled = false }: Props = $props();
+  let { projectId, tags, selectedTagIds, onSelectionChange, onTagsChanged, disabled = false, readOnly = false }: Props = $props();
+
+  // Computed selected tags for readOnly display
+  const selectedTags = $derived(tags.filter(t => selectedTagIds.includes(t.id)));
 
   const presetColors = [
     '#ef4444', '#f97316', '#f59e0b', '#eab308',
@@ -140,42 +144,59 @@
 </script>
 
 <div class="relative">
-  <label class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+  <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Tags</label>
 
-  {#if error}
-    <div class="rounded-md bg-red-50 p-2 mb-2">
-      <p class="text-xs text-red-700">{error}</p>
-    </div>
-  {/if}
-
-  <!-- Selected tags -->
-  {#if selectedTagIds.length > 0}
-    <div class="flex flex-wrap gap-1.5 mb-2">
-      {#each tags.filter(t => selectedTagIds.includes(t.id)) as tag}
-        <span
-          class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity"
-          style="background-color: {tag.color}25; color: {tag.color};"
-          onclick={(e) => openEditTagColor(tag, e)}
-          title="Click to change color"
-        >
-          {tag.name}
-          <button
-            type="button"
-            class="hover:bg-black/10 rounded-full p-0.5"
-            onclick={(e) => { e.stopPropagation(); toggleTag(tag.id); }}
-            {disabled}
+  {#if readOnly}
+    <!-- Read-only display: plain tags without X buttons -->
+    {#if selectedTags.length > 0}
+      <div class="flex flex-wrap gap-1.5">
+        {#each selectedTags as tag}
+          <span
+            class="inline-flex items-center px-2 py-0.5 rounded-full text-sm font-medium"
+            style="background-color: {tag.color}25; color: {tag.color};"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </span>
-      {/each}
-    </div>
-  {/if}
+            {tag.name}
+          </span>
+        {/each}
+      </div>
+    {:else}
+      <p class="text-sm text-gray-900">—</p>
+    {/if}
+  {:else}
+    {#if error}
+      <div class="rounded-md bg-red-50 p-2 mb-2">
+        <p class="text-xs text-red-700">{error}</p>
+      </div>
+    {/if}
 
-  <!-- Tag input with dropdown -->
-  <div class="relative">
+    <!-- Selected tags -->
+    {#if selectedTagIds.length > 0}
+      <div class="flex flex-wrap gap-1.5 mb-2">
+        {#each tags.filter(t => selectedTagIds.includes(t.id)) as tag}
+          <span
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-sm font-medium cursor-pointer hover:opacity-80 transition-opacity"
+            style="background-color: {tag.color}25; color: {tag.color};"
+            onclick={(e) => openEditTagColor(tag, e)}
+            title="Click to change color"
+          >
+            {tag.name}
+            <button
+              type="button"
+              class="hover:bg-black/10 rounded-full p-0.5"
+              onclick={(e) => { e.stopPropagation(); toggleTag(tag.id); }}
+              {disabled}
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </span>
+        {/each}
+      </div>
+    {/if}
+
+    <!-- Tag input with dropdown -->
+    <div class="relative">
     <input
       type="text"
       bind:value={tagSearch}
@@ -287,6 +308,7 @@
         </button>
       </div>
     </div>
+  {/if}
   {/if}
 </div>
 

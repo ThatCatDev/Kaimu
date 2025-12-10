@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { dndzone } from 'svelte-dnd-action';
+  import { toast } from 'svelte-sonner';
   import KanbanColumn from './KanbanColumn.svelte';
   import CreateCardModal from './CreateCardModal.svelte';
   import CreateColumnModal from './CreateColumnModal.svelte';
@@ -11,6 +12,8 @@
   import type { BoardWithColumns, BoardColumn, BoardCard, Tag } from '../../lib/api/boards';
   import { getBoard, moveCard, getTags, deleteCard, reorderColumns, toggleColumnVisibility, deleteColumn, updateBoard } from '../../lib/api/boards';
   import EditableTitle from '../EditableTitle.svelte';
+  import { Permissions } from '../../lib/stores/permissions.svelte';
+  import { getMyPermissions } from '../../lib/api/rbac';
 
   interface Props {
     boardId: string;
@@ -57,6 +60,17 @@
   let columnItems = $state<BoardColumn[]>([]);
   let isDraggingColumn = $state(false);
 
+  // Permission state - loaded client-side after board loads
+  let permissions = $state<string[]>([]);
+
+  // Permission checks
+  let canManageBoard = $derived(permissions.includes(Permissions.BOARD_MANAGE));
+  let canCreateCard = $derived(permissions.includes(Permissions.CARD_CREATE));
+  let canEditCard = $derived(permissions.includes(Permissions.CARD_EDIT));
+  let canMoveCard = $derived(permissions.includes(Permissions.CARD_MOVE));
+  let canDeleteCard = $derived(permissions.includes(Permissions.CARD_DELETE));
+
+
   let visibleColumns = $derived(
     board?.columns.filter(col => showHiddenColumns || !col.isHidden).sort((a, b) => a.position - b.position) ?? []
   );
@@ -100,7 +114,12 @@
       error = null;
       board = await getBoard(boardId);
       if (board) {
-        tags = await getTags(board.project.id);
+        const [projectTags, perms] = await Promise.all([
+          getTags(board.project.id),
+          getMyPermissions('project', board.project.id)
+        ]);
+        tags = projectTags;
+        permissions = perms;
       }
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load board';
@@ -137,7 +156,12 @@
       await moveCard(cardId, columnId, afterCardId ?? undefined);
       // Don't refresh - the UI is already updated optimistically by svelte-dnd-action
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to move card';
+      const message = e instanceof Error ? e.message : 'Failed to move card';
+      if (message.toLowerCase().includes('permission') || message.toLowerCase().includes('unauthorized')) {
+        toast.error('Permission denied: You cannot move cards');
+      } else {
+        toast.error(message);
+      }
       // Revert on error by refetching
       await refreshBoard();
     }
@@ -177,7 +201,8 @@
       await toggleColumnVisibility(column.id);
       await refreshBoard();
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to toggle column visibility';
+      const message = e instanceof Error ? e.message : 'Failed to toggle column visibility';
+      toast.error(message);
     }
   }
 
@@ -193,8 +218,10 @@
       showDeleteColumnConfirm = false;
       columnToDelete = null;
       await refreshBoard();
+      toast.success('Column deleted');
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to delete column';
+      const message = e instanceof Error ? e.message : 'Failed to delete column';
+      toast.error(message);
     }
   }
 
@@ -226,7 +253,8 @@
         await reorderColumns(board.id, newOrder);
         // No need to refresh - optimistic update is sufficient
       } catch (e) {
-        error = e instanceof Error ? e.message : 'Failed to reorder columns';
+        const message = e instanceof Error ? e.message : 'Failed to reorder columns';
+        toast.error(message);
         // Revert on error by refetching
         await refreshBoard();
       }
@@ -260,8 +288,10 @@
     try {
       await deleteCard(card.id);
       await refreshBoard();
+      toast.success('Card deleted');
     } catch (e) {
-      error = e instanceof Error ? e.message : 'Failed to delete card';
+      const message = e instanceof Error ? e.message : 'Failed to delete card';
+      toast.error(message);
     }
   }
 
@@ -297,7 +327,11 @@
     <div class="flex items-center justify-between mb-4">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">
-          <EditableTitle value={board.name} onSave={handleRenameBoard} />
+          {#if canManageBoard}
+            <EditableTitle value={board.name} onSave={handleRenameBoard} />
+          {:else}
+            {board.name}
+          {/if}
         </h1>
         {#if board.description}
           <p class="text-sm text-gray-500">{board.description}</p>
@@ -346,6 +380,7 @@
           flipDurationMs: 200,
           type: 'columns',
           dropTargetStyle: {},
+          dragDisabled: !canManageBoard,
         }}
         onconsider={handleColumnConsider}
         onfinalize={handleColumnFinalize}
@@ -354,30 +389,36 @@
           <KanbanColumn
             {column}
             cards={column.cards}
-            onCardMove={handleCardMove}
+            onCardMove={canMoveCard ? handleCardMove : () => {}}
             onCardClick={handleCardClick}
-            onAddCard={handleAddCard}
-            onRename={() => handleColumnRename(column)}
-            onEditColor={() => handleColumnEditColor(column)}
-            onEditWipLimit={() => handleColumnEditWipLimit(column)}
-            onToggleVisibility={() => handleColumnToggleVisibility(column)}
-            onDelete={() => handleColumnDelete(column)}
-            onQuickDelete={handleQuickDelete}
+            onAddCard={canCreateCard ? handleAddCard : undefined}
+            onRename={canManageBoard ? () => handleColumnRename(column) : undefined}
+            onEditColor={canManageBoard ? () => handleColumnEditColor(column) : undefined}
+            onEditWipLimit={canManageBoard ? () => handleColumnEditWipLimit(column) : undefined}
+            onToggleVisibility={canManageBoard ? () => handleColumnToggleVisibility(column) : undefined}
+            onDelete={canManageBoard ? () => handleColumnDelete(column) : undefined}
+            onQuickDelete={canDeleteCard ? handleQuickDelete : undefined}
             {priorityStyle}
+            {canManageBoard}
+            {canEditCard}
+            {canMoveCard}
+            {canDeleteCard}
           />
         {/each}
 
-        <!-- Add column button -->
-        <button
-          type="button"
-          class="flex-shrink-0 w-72 h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-100 transition-colors"
-          onclick={() => showCreateColumnModal = true}
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          Add Column
-        </button>
+        <!-- Add column button - only show if user can manage board -->
+        {#if canManageBoard}
+          <button
+            type="button"
+            class="flex-shrink-0 w-72 h-32 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500 hover:text-gray-700 hover:border-gray-400 hover:bg-gray-100 transition-colors"
+            onclick={() => showCreateColumnModal = true}
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Add Column
+          </button>
+        {/if}
       </div>
     </div>
   </div>
@@ -434,6 +475,8 @@
       onTagsChanged={reloadTags}
       viewMode={cardViewMode}
       onViewModeChange={setCardViewMode}
+      canEditCard={canEditCard}
+      canDeleteCard={canDeleteCard}
     />
   {/if}
 
@@ -450,6 +493,8 @@
       onTagsChanged={reloadTags}
       viewMode={cardViewMode}
       onViewModeChange={setCardViewMode}
+      canEditCard={canEditCard}
+      canDeleteCard={canDeleteCard}
     />
   {/if}
 {/if}

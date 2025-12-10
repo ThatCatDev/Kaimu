@@ -79,7 +79,9 @@ test.describe('Kanban Cards - Advanced Features', () => {
     const dialog = page.getByRole('dialog', { name: 'Card Details' });
     // Find the Priority label's sibling button (the dropdown trigger)
     await dialog.getByLabel('Priority').click();
-    await page.getByRole('option', { name: 'Urgent' }).click();
+    // Wait for dropdown to appear and click option (Bits UI portals options outside dialog)
+    await page.waitForTimeout(300);
+    await page.getByRole('option', { name: 'Urgent' }).first().click();
 
     // Wait for auto-save
     await expect(page.getByText('Saved')).toBeVisible({ timeout: 5000 });
@@ -108,7 +110,7 @@ test.describe('Kanban Cards - Advanced Features', () => {
 
     // Open the date picker calendar by clicking inside the Due Date field area
     const detailDialog = page.getByRole('dialog', { name: 'Card Details' });
-    const dueDateField = detailDialog.locator('#panel-dueDate');
+    const dueDateField = detailDialog.locator('#detail-dueDate');
     // Click on the calendar icon button inside the date picker
     await dueDateField.locator('button').last().click();
 
@@ -143,7 +145,7 @@ test.describe('Kanban Cards - Advanced Features', () => {
     await page.getByText(`No Desc Card ${ctx.testId}`).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
-    await page.fill('#description', 'Description added later');
+    await page.fill('#detail-description', 'Description added later');
     await expect(page.getByText('Saved')).toBeVisible({ timeout: 10000 });
     await page.getByRole('button', { name: 'Close' }).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).not.toBeVisible({ timeout: 5000 });
@@ -156,7 +158,7 @@ test.describe('Kanban Cards - Advanced Features', () => {
     // Verify description is saved
     await page.getByText(`No Desc Card ${ctx.testId}`).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('#description')).toHaveValue('Description added later', { timeout: 10000 });
+    await expect(page.locator('#detail-description')).toHaveValue('Description added later', { timeout: 10000 });
     await page.getByRole('button', { name: 'Close' }).click();
   });
 
@@ -210,7 +212,7 @@ test.describe('Kanban Cards - Advanced Features', () => {
     await page.getByText(`Auto Save Edit ${ctx.testId}`).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
-    await page.fill('#title', `Auto Updated Title ${ctx.testId}`);
+    await page.fill('#detail-title', `Auto Updated Title ${ctx.testId}`);
     // Wait for auto-save
     await expect(page.getByText('Saved', { exact: true })).toBeVisible({ timeout: 10000 });
     await page.getByRole('button', { name: 'Close' }).click();

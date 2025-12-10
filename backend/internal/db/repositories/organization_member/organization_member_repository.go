@@ -11,9 +11,11 @@ import (
 
 type Repository interface {
 	Create(ctx context.Context, member *OrganizationMember) error
+	GetByID(ctx context.Context, id uuid.UUID) (*OrganizationMember, error)
 	GetByOrgAndUser(ctx context.Context, orgID, userID uuid.UUID) (*OrganizationMember, error)
 	GetByOrgID(ctx context.Context, orgID uuid.UUID) ([]*OrganizationMember, error)
 	GetByUserID(ctx context.Context, userID uuid.UUID) ([]*OrganizationMember, error)
+	Update(ctx context.Context, member *OrganizationMember) error
 	Delete(ctx context.Context, orgID, userID uuid.UUID) error
 }
 
@@ -27,6 +29,15 @@ func NewRepository(db *gorm.DB) Repository {
 
 func (r *repository) Create(ctx context.Context, member *OrganizationMember) error {
 	return r.db.WithContext(ctx).Create(member).Error
+}
+
+func (r *repository) GetByID(ctx context.Context, id uuid.UUID) (*OrganizationMember, error) {
+	var member OrganizationMember
+	err := r.db.WithContext(ctx).First(&member, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &member, nil
 }
 
 func (r *repository) GetByOrgAndUser(ctx context.Context, orgID, userID uuid.UUID) (*OrganizationMember, error) {
@@ -56,6 +67,10 @@ func (r *repository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*Orga
 		return nil, err
 	}
 	return members, nil
+}
+
+func (r *repository) Update(ctx context.Context, member *OrganizationMember) error {
+	return r.db.WithContext(ctx).Save(member).Error
 }
 
 func (r *repository) Delete(ctx context.Context, orgID, userID uuid.UUID) error {

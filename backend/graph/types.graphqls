@@ -26,6 +26,11 @@ input LoginInput {
     password: String!
 }
 
+input UpdateMeInput {
+    displayName: String
+    email: String
+}
+
 type Organization {
     id: ID!
     name: String!
@@ -41,7 +46,46 @@ type Organization {
 type OrganizationMember {
     id: ID!
     user: User!
-    role: String!
+    role: Role!
+    legacyRole: String! @deprecated(reason: "Use role field instead")
+    createdAt: Time!
+}
+
+type Permission {
+    id: ID!
+    code: String!
+    name: String!
+    description: String
+    resourceType: String!
+}
+
+type Role {
+    id: ID!
+    name: String!
+    description: String
+    isSystem: Boolean!
+    scope: String!
+    permissions: [Permission!]!
+    createdAt: Time!
+    updatedAt: Time!
+}
+
+type ProjectMember {
+    id: ID!
+    user: User!
+    role: Role
+    project: Project!
+    createdAt: Time!
+}
+
+type Invitation {
+    id: ID!
+    email: String!
+    token: String!
+    role: Role!
+    organization: Organization!
+    invitedBy: User!
+    expiresAt: Time!
     createdAt: Time!
 }
 
@@ -209,4 +253,36 @@ input UpdateTagInput {
     name: String
     color: String
     description: String
+}
+
+# RBAC Inputs
+input CreateRoleInput {
+    organizationId: ID!
+    name: String!
+    description: String
+    permissionCodes: [String!]!
+}
+
+input UpdateRoleInput {
+    id: ID!
+    name: String
+    description: String
+    permissionCodes: [String!]
+}
+
+input InviteMemberInput {
+    organizationId: ID!
+    email: String!
+    roleId: ID!
+}
+
+input ChangeMemberRoleInput {
+    userId: ID!
+    roleId: ID!
+}
+
+input AssignProjectRoleInput {
+    projectId: ID!
+    userId: ID!
+    roleId: ID
 }

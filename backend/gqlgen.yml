@@ -99,3 +99,29 @@ models:
         resolver: true
       tags:
         resolver: true
+  OrganizationMember:
+    fields:
+      user:
+        resolver: true
+      role:
+        resolver: true
+  Role:
+    fields:
+      permissions:
+        resolver: true
+  ProjectMember:
+    fields:
+      user:
+        resolver: true
+      role:
+        resolver: true
+      project:
+        resolver: true
+  Invitation:
+    fields:
+      role:
+        resolver: true
+      organization:
+        resolver: true
+      invitedBy:
+        resolver: true

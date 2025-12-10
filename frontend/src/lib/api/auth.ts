@@ -5,8 +5,11 @@ import type {
   LoginMutation,
   LoginMutationVariables,
   LogoutMutation,
+  UpdateMeMutation,
+  UpdateMeMutationVariables,
   MeQuery,
   User,
+  UpdateMeInput,
 } from '../graphql/generated';
 
 const REGISTER_MUTATION = `
@@ -36,6 +39,19 @@ const LOGIN_MUTATION = `
 const LOGOUT_MUTATION = `
   mutation Logout {
     logout
+  }
+`;
+
+const UPDATE_ME_MUTATION = `
+  mutation UpdateMe($input: UpdateMeInput!) {
+    updateMe(input: $input) {
+      id
+      username
+      email
+      displayName
+      avatarUrl
+      createdAt
+    }
   }
 `;
 
@@ -74,4 +90,11 @@ export async function logout(): Promise<boolean> {
 export async function getMe(): Promise<User | null> {
   const data = await graphql<MeQuery>(ME_QUERY);
   return data.me ?? null;
+}
+
+export async function updateMe(input: UpdateMeInput): Promise<User> {
+  const data = await graphql<UpdateMeMutation>(UPDATE_ME_MUTATION, {
+    input,
+  } as UpdateMeMutationVariables);
+  return data.updateMe;
 }

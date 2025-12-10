@@ -22,6 +22,17 @@ mutation Logout {
   logout
 }
 
+mutation UpdateMe($input: UpdateMeInput!) {
+  updateMe(input: $input) {
+    id
+    username
+    email
+    displayName
+    avatarUrl
+    createdAt
+  }
+}
+
 query Me {
   me {
     id

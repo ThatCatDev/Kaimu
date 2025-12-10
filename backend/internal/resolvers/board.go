@@ -12,10 +12,11 @@ import (
 	cardService "github.com/thatcatdev/pulse-backend/internal/services/card"
 	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
 	projectService "github.com/thatcatdev/pulse-backend/internal/services/project"
+	rbacService "github.com/thatcatdev/pulse-backend/internal/services/rbac"
 )
 
 // Board returns a board by ID
-func Board(ctx context.Context, orgSvc orgService.Service, boardSvc boardService.Service, projSvc projectService.Service, id string) (*model.Board, error) {
+func Board(ctx context.Context, rbacSvc rbacService.Service, boardSvc boardService.Service, projSvc projectService.Service, id string) (*model.Board, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -31,17 +32,17 @@ func Board(ctx context.Context, orgSvc orgService.Service, boardSvc boardService
 		return nil, err
 	}
 
-	// Get project to check org membership
+	// Get project to check permission
 	proj, err := boardSvc.GetProject(ctx, boardID)
 	if err != nil {
 		return nil, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "board:view")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -49,7 +50,7 @@ func Board(ctx context.Context, orgSvc orgService.Service, boardSvc boardService
 }
 
 // Boards returns all boards for a project
-func Boards(ctx context.Context, orgSvc orgService.Service, boardSvc boardService.Service, projSvc projectService.Service, projectID string) ([]*model.Board, error) {
+func Boards(ctx context.Context, rbacSvc rbacService.Service, boardSvc boardService.Service, projSvc projectService.Service, projectID string) ([]*model.Board, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -60,17 +61,12 @@ func Boards(ctx context.Context, orgSvc orgService.Service, boardSvc boardServic
 		return nil, err
 	}
 
-	// Check membership
-	proj, err := projSvc.GetProject(ctx, projID)
+	// Check permission
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, projID, "board:view")
 	if err != nil {
 		return nil, err
 	}
-
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
-	if err != nil {
-		return nil, err
-	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -87,7 +83,7 @@ func Boards(ctx context.Context, orgSvc orgService.Service, boardSvc boardServic
 }
 
 // CreateBoard creates a new board
-func CreateBoard(ctx context.Context, orgSvc orgService.Service, boardSvc boardService.Service, projSvc projectService.Service, input model.CreateBoardInput) (*model.Board, error) {
+func CreateBoard(ctx context.Context, rbacSvc rbacService.Service, boardSvc boardService.Service, projSvc projectService.Service, input model.CreateBoardInput) (*model.Board, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -98,17 +94,12 @@ func CreateBoard(ctx context.Context, orgSvc orgService.Service, boardSvc boardS
 		return nil, err
 	}
 
-	// Check membership
-	proj, err := projSvc.GetProject(ctx, projID)
+	// Check permission
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, projID, "board:create")
 	if err != nil {
 		return nil, err
 	}
-
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
-	if err != nil {
-		return nil, err
-	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -126,7 +117,7 @@ func CreateBoard(ctx context.Context, orgSvc orgService.Service, boardSvc boardS
 }
 
 // UpdateBoard updates a board
-func UpdateBoard(ctx context.Context, orgSvc orgService.Service, boardSvc boardService.Service, input model.UpdateBoardInput) (*model.Board, error) {
+func UpdateBoard(ctx context.Context, rbacSvc rbacService.Service, boardSvc boardService.Service, input model.UpdateBoardInput) (*model.Board, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -142,17 +133,17 @@ func UpdateBoard(ctx context.Context, orgSvc orgService.Service, boardSvc boardS
 		return nil, err
 	}
 
-	// Check membership
+	// Check permission
 	proj, err := boardSvc.GetProject(ctx, boardID)
 	if err != nil {
 		return nil, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "board:manage")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -172,7 +163,7 @@ func UpdateBoard(ctx context.Context, orgSvc orgService.Service, boardSvc boardS
 }
 
 // DeleteBoard deletes a board
-func DeleteBoard(ctx context.Context, orgSvc orgService.Service, boardSvc boardService.Service, id string) (bool, error) {
+func DeleteBoard(ctx context.Context, rbacSvc rbacService.Service, boardSvc boardService.Service, id string) (bool, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return false, ErrUnauthorized
@@ -183,17 +174,17 @@ func DeleteBoard(ctx context.Context, orgSvc orgService.Service, boardSvc boardS
 		return false, err
 	}
 
-	// Check membership
+	// Check permission
 	proj, err := boardSvc.GetProject(ctx, boardID)
 	if err != nil {
 		return false, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "board:delete")
 	if err != nil {
 		return false, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return false, ErrUnauthorized
 	}
 
@@ -205,7 +196,7 @@ func DeleteBoard(ctx context.Context, orgSvc orgService.Service, boardSvc boardS
 }
 
 // CreateColumn creates a new board column
-func CreateColumn(ctx context.Context, orgSvc orgService.Service, boardSvc boardService.Service, input model.CreateColumnInput) (*model.BoardColumn, error) {
+func CreateColumn(ctx context.Context, rbacSvc rbacService.Service, boardSvc boardService.Service, input model.CreateColumnInput) (*model.BoardColumn, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -216,17 +207,17 @@ func CreateColumn(ctx context.Context, orgSvc orgService.Service, boardSvc board
 		return nil, err
 	}
 
-	// Check membership
+	// Check permission
 	proj, err := boardSvc.GetProject(ctx, boardID)
 	if err != nil {
 		return nil, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "board:manage")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -244,7 +235,7 @@ func CreateColumn(ctx context.Context, orgSvc orgService.Service, boardSvc board
 }
 
 // UpdateColumn updates a board column
-func UpdateColumn(ctx context.Context, orgSvc orgService.Service, boardSvc boardService.Service, input model.UpdateColumnInput) (*model.BoardColumn, error) {
+func UpdateColumn(ctx context.Context, rbacSvc rbacService.Service, boardSvc boardService.Service, input model.UpdateColumnInput) (*model.BoardColumn, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -260,7 +251,7 @@ func UpdateColumn(ctx context.Context, orgSvc orgService.Service, boardSvc board
 		return nil, err
 	}
 
-	// Check membership
+	// Check permission
 	b, err := boardSvc.GetBoardByColumnID(ctx, colID)
 	if err != nil {
 		return nil, err
@@ -271,11 +262,11 @@ func UpdateColumn(ctx context.Context, orgSvc orgService.Service, boardSvc board
 		return nil, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "board:manage")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -298,7 +289,7 @@ func UpdateColumn(ctx context.Context, orgSvc orgService.Service, boardSvc board
 }
 
 // ReorderColumns reorders columns in a board
-func ReorderColumns(ctx context.Context, orgSvc orgService.Service, boardSvc boardService.Service, input model.ReorderColumnsInput) ([]*model.BoardColumn, error) {
+func ReorderColumns(ctx context.Context, rbacSvc rbacService.Service, boardSvc boardService.Service, input model.ReorderColumnsInput) ([]*model.BoardColumn, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -309,17 +300,17 @@ func ReorderColumns(ctx context.Context, orgSvc orgService.Service, boardSvc boa
 		return nil, err
 	}
 
-	// Check membership
+	// Check permission
 	proj, err := boardSvc.GetProject(ctx, boardID)
 	if err != nil {
 		return nil, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "board:manage")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -345,7 +336,7 @@ func ReorderColumns(ctx context.Context, orgSvc orgService.Service, boardSvc boa
 }
 
 // ToggleColumnVisibility toggles column visibility
-func ToggleColumnVisibility(ctx context.Context, orgSvc orgService.Service, boardSvc boardService.Service, id string) (*model.BoardColumn, error) {
+func ToggleColumnVisibility(ctx context.Context, rbacSvc rbacService.Service, boardSvc boardService.Service, id string) (*model.BoardColumn, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -356,7 +347,7 @@ func ToggleColumnVisibility(ctx context.Context, orgSvc orgService.Service, boar
 		return nil, err
 	}
 
-	// Check membership
+	// Check permission
 	b, err := boardSvc.GetBoardByColumnID(ctx, colID)
 	if err != nil {
 		return nil, err
@@ -367,11 +358,11 @@ func ToggleColumnVisibility(ctx context.Context, orgSvc orgService.Service, boar
 		return nil, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "board:manage")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -384,7 +375,7 @@ func ToggleColumnVisibility(ctx context.Context, orgSvc orgService.Service, boar
 }
 
 // DeleteColumn deletes a column
-func DeleteColumn(ctx context.Context, orgSvc orgService.Service, boardSvc boardService.Service, id string) (bool, error) {
+func DeleteColumn(ctx context.Context, rbacSvc rbacService.Service, boardSvc boardService.Service, id string) (bool, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return false, ErrUnauthorized
@@ -395,7 +386,7 @@ func DeleteColumn(ctx context.Context, orgSvc orgService.Service, boardSvc board
 		return false, err
 	}
 
-	// Check membership
+	// Check permission
 	b, err := boardSvc.GetBoardByColumnID(ctx, colID)
 	if err != nil {
 		return false, err
@@ -406,11 +397,11 @@ func DeleteColumn(ctx context.Context, orgSvc orgService.Service, boardSvc board
 		return false, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "board:manage")
 	if err != nil {
 		return false, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return false, ErrUnauthorized
 	}
 

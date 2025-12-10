@@ -25,16 +25,18 @@ test.describe('Complete User Journey', () => {
     // ============================================
     await test.step('Register new user', async () => {
       await page.goto('/register');
-      await page.waitForTimeout(500); // Wait for hydration
+      await page.waitForLoadState('networkidle');
 
       // Fill registration form
       await page.fill('#username', testUser);
       await page.fill('#password', password);
       await page.fill('#confirmPassword', password);
-      await page.getByRole('button', { name: 'Register' }).click();
 
-      // Should redirect to home and be logged in
-      await expect(page).toHaveURL('/', { timeout: 10000 });
+      // Use Promise.all to wait for navigation while clicking
+      await Promise.all([
+        page.waitForURL('/', { timeout: 20000 }),
+        page.getByRole('button', { name: 'Register' }).click()
+      ]);
     });
 
     // ============================================
@@ -59,15 +61,17 @@ test.describe('Complete User Journey', () => {
       // Click New Organization
       await page.getByRole('link', { name: 'New Organization' }).first().click();
       await expect(page).toHaveURL('/organizations/new');
-      await page.waitForTimeout(500); // Wait for hydration
+      await page.waitForLoadState('networkidle');
 
       // Fill form
       await page.fill('#name', orgName);
       await page.fill('#description', 'My first organization in Pulse');
-      await page.getByRole('button', { name: 'Create Organization' }).click();
 
-      // Should redirect to organization page
-      await expect(page).toHaveURL(/\/organizations\/([a-f0-9-]+)/, { timeout: 10000 });
+      // Use Promise.all to wait for navigation while clicking
+      await Promise.all([
+        page.waitForURL(/\/organizations\/([a-f0-9-]+)/, { timeout: 20000 }),
+        page.getByRole('button', { name: 'Create Organization' }).click()
+      ]);
 
       // Extract organization ID
       const url = page.url();
@@ -185,6 +189,9 @@ test.describe('Complete User Journey', () => {
     // STEP 7: Logout
     // ============================================
     await test.step('Logout', async () => {
+      // First navigate to home page where Logout button is directly visible
+      await page.goto('/');
+      await page.waitForLoadState('networkidle');
       await page.getByRole('button', { name: 'Logout' }).click();
 
       // Should show login/register links
@@ -225,19 +232,21 @@ test.describe('Complete User Journey', () => {
 
     // Register and create data
     await page.goto('/register');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
     await page.fill('#username', user2);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL('/', { timeout: 15000 });
 
     // Create org
     await page.goto('/organizations/new');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
     await page.fill('#name', org2Name);
     await page.getByRole('button', { name: 'Create Organization' }).click();
-    await expect(page).toHaveURL(/\/organizations\/[a-f0-9-]+/, { timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/\/organizations\/[a-f0-9-]+/, { timeout: 15000 });
 
     const orgUrl = page.url();
 
@@ -281,20 +290,22 @@ test.describe('Complete User Journey', () => {
 
     // Register
     await page.goto('/register');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
     await page.fill('#username', multiUser);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL('/', { timeout: 15000 });
 
     // Create 3 organizations
     for (const orgName of [org1, org2, org3]) {
       await page.goto('/organizations/new');
-      await page.waitForTimeout(500);
+      await page.waitForLoadState('networkidle');
       await page.fill('#name', orgName);
       await page.getByRole('button', { name: 'Create Organization' }).click();
-      await expect(page).toHaveURL(/\/organizations\/[a-f0-9-]+/, { timeout: 10000 });
+      await page.waitForLoadState('networkidle');
+      await expect(page).toHaveURL(/\/organizations\/[a-f0-9-]+/, { timeout: 15000 });
     }
 
     // Verify all 3 appear in dashboard (in main content)

@@ -83,10 +83,10 @@ test.describe('Kanban Board', () => {
 
     // Card detail modal should open
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('#title')).toHaveValue(`View Card ${ctx.testId}`);
+    await expect(page.locator('#detail-title')).toHaveValue(`View Card ${ctx.testId}`);
 
     // Update the card (auto-saves)
-    await page.fill('#title', `Updated Card ${ctx.testId}`);
+    await page.fill('#detail-title', `Updated Card ${ctx.testId}`);
     await expect(page.getByText('Saved')).toBeVisible({ timeout: 10000 });
     await page.getByRole('button', { name: 'Close' }).click();
 

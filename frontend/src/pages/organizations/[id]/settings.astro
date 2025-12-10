@@ -1,0 +1,17 @@
+---
+import Layout from '../../../layouts/Layout.astro';
+import AppShell from '../../../components/AppShell.svelte';
+import OrganizationSettings from '../../../components/OrganizationSettings.svelte';
+
+export const prerender = false;
+
+const { id } = Astro.params;
+---
+
+<Layout title="Organization Settings - Pulse">
+  <AppShell client:load currentPath={`/organizations/${id}/settings`}>
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <OrganizationSettings client:load organizationId={id!} />
+    </div>
+  </AppShell>
+</Layout>

@@ -10,12 +10,12 @@ import (
 	"github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
 	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
 	cardService "github.com/thatcatdev/pulse-backend/internal/services/card"
-	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
+	rbacService "github.com/thatcatdev/pulse-backend/internal/services/rbac"
 	tagService "github.com/thatcatdev/pulse-backend/internal/services/tag"
 )
 
 // Card returns a card by ID
-func Card(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Service, boardSvc boardService.Service, id string) (*model.Card, error) {
+func Card(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardService.Service, boardSvc boardService.Service, id string) (*model.Card, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -31,7 +31,7 @@ func Card(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Se
 		return nil, err
 	}
 
-	// Check membership via board -> project -> org
+	// Check permission via board -> project
 	b, err := cardSvc.GetBoardByCardID(ctx, cardID)
 	if err != nil {
 		return nil, err
@@ -42,11 +42,11 @@ func Card(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Se
 		return nil, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "card:view")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -73,7 +73,7 @@ func MyCards(ctx context.Context, cardSvc cardService.Service) ([]*model.Card, e
 }
 
 // CreateCard creates a new card
-func CreateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.CreateCardInput) (*model.Card, error) {
+func CreateCard(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.CreateCardInput) (*model.Card, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -84,7 +84,7 @@ func CreateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServ
 		return nil, err
 	}
 
-	// Check membership via column -> board -> project -> org
+	// Check permission via column -> board -> project
 	b, err := boardSvc.GetBoardByColumnID(ctx, colID)
 	if err != nil {
 		return nil, err
@@ -95,11 +95,11 @@ func CreateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServ
 		return nil, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "card:create")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -147,7 +147,7 @@ func CreateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServ
 }
 
 // UpdateCard updates a card
-func UpdateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.UpdateCardInput) (*model.Card, error) {
+func UpdateCard(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.UpdateCardInput) (*model.Card, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -158,7 +158,7 @@ func UpdateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServ
 		return nil, err
 	}
 
-	// Check membership
+	// Check permission via card -> board -> project
 	b, err := cardSvc.GetBoardByCardID(ctx, cardID)
 	if err != nil {
 		return nil, err
@@ -169,11 +169,11 @@ func UpdateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServ
 		return nil, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "card:edit")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -222,7 +222,7 @@ func UpdateCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServ
 }
 
 // MoveCard moves a card to a different column
-func MoveCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.MoveCardInput) (*model.Card, error) {
+func MoveCard(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.MoveCardInput) (*model.Card, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return nil, ErrUnauthorized
@@ -238,7 +238,7 @@ func MoveCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServic
 		return nil, err
 	}
 
-	// Check membership
+	// Check permission via card -> board -> project
 	b, err := cardSvc.GetBoardByCardID(ctx, cardID)
 	if err != nil {
 		return nil, err
@@ -249,11 +249,11 @@ func MoveCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServic
 		return nil, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "card:move")
 	if err != nil {
 		return nil, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return nil, ErrUnauthorized
 	}
 
@@ -275,7 +275,7 @@ func MoveCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServic
 }
 
 // DeleteCard deletes a card
-func DeleteCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardService.Service, boardSvc boardService.Service, id string) (bool, error) {
+func DeleteCard(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardService.Service, boardSvc boardService.Service, id string) (bool, error) {
 	userID := middleware.GetUserIDFromContext(ctx)
 	if userID == nil {
 		return false, ErrUnauthorized
@@ -286,7 +286,7 @@ func DeleteCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServ
 		return false, err
 	}
 
-	// Check membership
+	// Check permission via card -> board -> project
 	b, err := cardSvc.GetBoardByCardID(ctx, cardID)
 	if err != nil {
 		return false, err
@@ -297,11 +297,11 @@ func DeleteCard(ctx context.Context, orgSvc orgService.Service, cardSvc cardServ
 		return false, err
 	}
 
-	isMember, err := orgSvc.IsMember(ctx, proj.OrganizationID, *userID)
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "card:delete")
 	if err != nil {
 		return false, err
 	}
-	if !isMember {
+	if !hasPermission {
 		return false, ErrUnauthorized
 	}
 

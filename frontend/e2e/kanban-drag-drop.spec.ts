@@ -120,8 +120,8 @@ test.describe('Kanban Drag and Drop', () => {
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
     // Verify description and priority - check textarea value and priority trigger text
-    await expect(page.locator('#panel-description')).toHaveValue('This description should persist');
-    await expect(page.locator('#panel-priority')).toContainText('High');
+    await expect(page.locator('#detail-description')).toHaveValue('This description should persist');
+    await expect(page.locator('#detail-priority')).toContainText('High');
 
     await page.getByRole('button', { name: 'Close' }).click();
   });

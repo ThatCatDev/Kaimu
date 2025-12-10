@@ -1,6 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { Toaster } from 'svelte-sonner';
   import Sidebar from './Sidebar.svelte';
+  import UserSettingsModal from './settings/UserSettingsModal.svelte';
   import { logout } from '../lib/stores/auth.svelte';
   import { getMe } from '../lib/api/auth';
   import type { User } from '../lib/graphql/generated';
@@ -17,6 +19,8 @@
   let isLoading = $state(true);
   let loggingOut = $state(false);
   let sidebarCollapsed = $state(false);
+  let userMenuOpen = $state(false);
+  let settingsModalOpen = $state(false);
 
   onMount(() => {
     // Load sidebar state from localStorage
@@ -55,7 +59,25 @@
       loggingOut = false;
     }
   }
+
+  function handleOpenSettings() {
+    userMenuOpen = false;
+    settingsModalOpen = true;
+  }
+
+  function handleUserUpdate(updatedUser: User) {
+    user = updatedUser;
+  }
+
+  function handleClickOutside(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('[data-user-menu]')) {
+      userMenuOpen = false;
+    }
+  }
 </script>
+
+<svelte:window onclick={handleClickOutside} />
 
 <div class="h-screen flex overflow-hidden bg-gray-50">
   <!-- Sidebar -->
@@ -83,23 +105,57 @@
         {#if isLoading}
           <span class="text-sm text-gray-400">Loading...</span>
         {:else if user}
-          <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                <span class="text-sm font-medium text-indigo-600">
-                  {user.username.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <span class="text-sm font-medium text-gray-700 hidden sm:block">{user.username}</span>
-            </div>
+          <div class="relative" data-user-menu>
             <button
               type="button"
-              onclick={handleLogout}
-              disabled={loggingOut}
-              class="px-3 py-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50"
+              onclick={() => userMenuOpen = !userMenuOpen}
+              class="flex items-center gap-2 p-1.5 rounded-md hover:bg-gray-100 transition-colors"
             >
-              {loggingOut ? 'Logging out...' : 'Logout'}
+              <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
+                <span class="text-sm font-medium text-indigo-600">
+                  {(user.displayName || user.username).charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <span class="text-sm font-medium text-gray-700 hidden sm:block">
+                {user.displayName || user.username}
+              </span>
+              <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
             </button>
+
+            {#if userMenuOpen}
+              <div class="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
+                <div class="px-4 py-3 border-b border-gray-100">
+                  <p class="text-sm font-medium text-gray-900">{user.displayName || user.username}</p>
+                  <p class="text-xs text-gray-500 truncate">{user.email || user.username}</p>
+                </div>
+                <div class="py-1">
+                  <button
+                    type="button"
+                    onclick={handleOpenSettings}
+                    class="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 text-left"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Account Settings
+                  </button>
+                  <button
+                    type="button"
+                    onclick={handleLogout}
+                    disabled={loggingOut}
+                    class="w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 text-left disabled:opacity-50"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    {loggingOut ? 'Logging out...' : 'Logout'}
+                  </button>
+                </div>
+              </div>
+            {/if}
           </div>
         {:else}
           <a
@@ -124,3 +180,13 @@
     </main>
   </div>
 </div>
+
+{#if user}
+  <UserSettingsModal
+    bind:open={settingsModalOpen}
+    {user}
+    onUpdate={handleUserUpdate}
+  />
+{/if}
+
+<Toaster position="bottom-right" richColors />

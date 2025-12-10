@@ -45,19 +45,27 @@ export async function setupTestEnvironment(page: Page, prefix: string = 'test'):
 
   // Register user
   await page.goto('/register');
-  await page.waitForTimeout(300);
+  await page.waitForLoadState('networkidle');
   await page.fill('#username', username);
   await page.fill('#password', password);
   await page.fill('#confirmPassword', password);
-  await page.getByRole('button', { name: 'Register' }).click();
-  await expect(page).toHaveURL('/', { timeout: 10000 });
+  const registerButton = page.getByRole('button', { name: 'Register' });
+  // Use Promise.all to wait for navigation while clicking
+  await Promise.all([
+    page.waitForURL('/', { timeout: 20000 }),
+    registerButton.click()
+  ]);
 
   // Create organization
   await page.goto('/organizations/new');
-  await page.waitForTimeout(300);
+  await page.waitForLoadState('networkidle');
   await page.fill('#name', orgName);
-  await page.getByRole('button', { name: 'Create Organization' }).click();
-  await expect(page).toHaveURL(/\/organizations\/([a-f0-9-]+)/, { timeout: 10000 });
+  const createOrgButton = page.getByRole('button', { name: 'Create Organization' });
+  // Use Promise.all to wait for navigation while clicking
+  await Promise.all([
+    page.waitForURL(/\/organizations\/([a-f0-9-]+)/, { timeout: 20000 }),
+    createOrgButton.click()
+  ]);
 
   const orgUrl = page.url();
   const orgMatch = orgUrl.match(/\/organizations\/([a-f0-9-]+)/);
@@ -65,11 +73,15 @@ export async function setupTestEnvironment(page: Page, prefix: string = 'test'):
 
   // Create project
   await page.goto(`/organizations/${orgId}/projects/new`);
-  await page.waitForTimeout(300);
+  await page.waitForLoadState('networkidle');
   await page.fill('#name', projectName);
   await page.fill('#key', projectKey);
-  await page.getByRole('button', { name: 'Create Project' }).click();
-  await expect(page).toHaveURL(/\/projects\/([a-f0-9-]+)/, { timeout: 10000 });
+  const createProjectButton = page.getByRole('button', { name: 'Create Project' });
+  // Use Promise.all to wait for navigation while clicking
+  await Promise.all([
+    page.waitForURL(/\/projects\/([a-f0-9-]+)/, { timeout: 20000 }),
+    createProjectButton.click()
+  ]);
 
   const projectUrl = page.url();
   const projectMatch = projectUrl.match(/\/projects\/([a-f0-9-]+)/);
@@ -92,11 +104,15 @@ export async function setupTestEnvironment(page: Page, prefix: string = 'test'):
  */
 export async function login(page: Page, username: string, password: string): Promise<void> {
   await page.goto('/login');
-  await page.waitForTimeout(300);
+  await page.waitForLoadState('networkidle');
   await page.fill('#username', username);
   await page.fill('#password', password);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/', { timeout: 10000 });
+  const signInButton = page.getByRole('button', { name: 'Sign in' });
+  // Use Promise.all to wait for navigation while clicking
+  await Promise.all([
+    page.waitForURL('/', { timeout: 20000 }),
+    signInButton.click()
+  ]);
 }
 
 /**

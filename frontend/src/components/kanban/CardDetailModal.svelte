@@ -15,9 +15,13 @@
     onTagsChanged?: () => void;
     viewMode: 'modal' | 'panel';
     onViewModeChange: (mode: 'modal' | 'panel') => void;
+    // Permission props
+    canEditCard?: boolean;
+    canDeleteCard?: boolean;
   }
 
-  let { open, card, projectId, tags, onClose, onUpdated, onAutoSaved, onTagsChanged, viewMode, onViewModeChange }: Props = $props();
+  let { open, card, projectId, tags, onClose, onUpdated, onAutoSaved, onTagsChanged, viewMode, onViewModeChange, canEditCard = true, canDeleteCard = true }: Props = $props();
+
 
   let title = $state('');
   let description = $state('');
@@ -71,7 +75,7 @@
   });
 
   async function autoSave() {
-    if (!card || !title.trim() || saving) return;
+    if (!card || !title.trim() || saving || !canEditCard) return;
 
     try {
       saving = true;
@@ -173,7 +177,9 @@
           {onTagsChanged}
           {error}
           disabled={saving || deleting}
+          readOnly={!canEditCard}
           descriptionRows={4}
+          idPrefix="detail-"
         />
 
         <div class="pt-4 mt-4 border-t border-gray-200 text-xs text-gray-500">
@@ -188,25 +194,37 @@
 
   {#snippet footer()}
     <div class="flex items-center justify-between">
-      <Button variant="danger" onclick={handleDeleteClick} disabled={deleting || saving}>
-        {deleting ? 'Deleting...' : 'Delete Card'}
-      </Button>
+      {#if canDeleteCard}
+        <Button variant="danger" onclick={handleDeleteClick} disabled={deleting || saving}>
+          {deleting ? 'Deleting...' : 'Delete Card'}
+        </Button>
+      {:else}
+        <div></div>
+      {/if}
       <div class="flex items-center gap-4">
-        {#if saving}
-          <span class="text-xs text-gray-400">Saving...</span>
-        {:else if getCurrentDataHash() === lastSavedData}
-          <span class="text-xs text-green-600">Saved</span>
+        {#if canEditCard}
+          {#if saving}
+            <span class="text-xs text-gray-400">Saving...</span>
+          {:else if getCurrentDataHash() === lastSavedData}
+            <span class="text-xs text-green-600">Saved</span>
+          {/if}
         {/if}
         <Button variant="secondary" onclick={handleClose} disabled={deleting}>
           Close
         </Button>
       </div>
     </div>
-    <div class="text-xs text-gray-400 text-center mt-3">
-      <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-gray-600">Esc</kbd> to close
-      <span class="mx-2">·</span>
-      Auto-saves as you type
-    </div>
+    {#if canEditCard}
+      <div class="text-xs text-gray-400 text-center mt-3">
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-gray-600">Esc</kbd> to close
+        <span class="mx-2">·</span>
+        Auto-saves as you type
+      </div>
+    {:else}
+      <div class="text-xs text-gray-400 text-center mt-3">
+        <kbd class="px-1.5 py-0.5 bg-gray-100 border border-gray-300 rounded text-gray-600">Esc</kbd> to close
+      </div>
+    {/if}
   {/snippet}
 </Modal>
 

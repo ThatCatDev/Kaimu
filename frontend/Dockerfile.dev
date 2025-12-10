@@ -1,0 +1,11 @@
+FROM oven/bun:1
+
+WORKDIR /app
+
+# For dev mode, we mount the local src directory but install deps in container
+# This handles platform-specific native modules (rollup, etc.)
+
+EXPOSE 4321
+
+# Install deps at container startup if node_modules doesn't exist or is stale
+CMD ["sh", "-c", "bun install && bun run dev --host 0.0.0.0"]
