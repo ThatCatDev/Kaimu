@@ -29,7 +29,7 @@ type Claims struct {
 }
 
 type Service interface {
-	Register(ctx context.Context, username, password string) (*user.User, string, error)
+	Register(ctx context.Context, username, email, password string) (*user.User, string, error)
 	Login(ctx context.Context, username, password string) (*user.User, string, error)
 	ValidateToken(tokenString string) (*Claims, error)
 	GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error)
@@ -63,7 +63,7 @@ func NewService(userRepo user.Repository, jwtSecret string, jwtExpirationHours i
 	}
 }
 
-func (s *service) Register(ctx context.Context, username, password string) (*user.User, string, error) {
+func (s *service) Register(ctx context.Context, username, email, password string) (*user.User, string, error) {
 	ctx, span := s.startServiceSpan(ctx, "Register")
 	span.SetAttributes(attribute.String("auth.username", username))
 	defer span.End()
@@ -84,10 +84,12 @@ func (s *service) Register(ctx context.Context, username, password string) (*use
 	}
 	hashedPasswordStr := string(hashedPassword)
 
-	// Create user
+	// Create user with email (unverified)
 	newUser := &user.User{
-		Username:     username,
-		PasswordHash: &hashedPasswordStr,
+		Username:      username,
+		Email:         &email,
+		EmailVerified: false,
+		PasswordHash:  &hashedPasswordStr,
 	}
 
 	if err := s.repository.Create(ctx, newUser); err != nil {

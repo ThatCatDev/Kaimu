@@ -30,6 +30,14 @@ services:
     networks:
       - app-network
 
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"   # SMTP port
+      - "8025:8025"   # Web UI
+    networks:
+      - app-network
+
   backend:
     build:
       context: ./backend
@@ -52,6 +60,13 @@ services:
       # For local development with Dex:
       OIDC_PROVIDERS: >
         [{"name":"Dex","slug":"dex","issuer_url":"http://localhost:5556/dex","discovery_url":"http://dex:5556/dex","client_id":"local-app","client_secret":"local-secret-key","scopes":"openid email profile"}]
+      # Email configuration for local development with MailHog
+      EMAIL_HOST: mailhog
+      EMAIL_PORT: 1025
+      EMAIL_FROM: noreply@kaimu.local
+      EMAIL_FROM_NAME: Kaimu
+      EMAIL_SSL_TYPE: none
+      EMAIL_VERIFICATION_URL: http://localhost:4321/verify
     volumes:
       - ./backend:/app
       - go_modules:/go/pkg/mod
@@ -59,6 +74,8 @@ services:
       postgres:
         condition: service_healthy
       dex:
+        condition: service_started
+      mailhog:
         condition: service_started
     networks:
       - app-network

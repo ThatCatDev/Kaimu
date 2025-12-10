@@ -14,6 +14,7 @@ import (
 	boardColumnRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/board_column"
 	cardRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/card"
 	cardTagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/card_tag"
+	emailVerificationTokenRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/email_verification_token"
 	invitationRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/invitation"
 	oidcIdentityRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/oidc_identity"
 	orgRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization"
@@ -29,7 +30,10 @@ import (
 	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
 	"github.com/thatcatdev/kaimu/backend/internal/services/board"
 	"github.com/thatcatdev/kaimu/backend/internal/services/card"
+	"github.com/thatcatdev/kaimu/backend/internal/services/email"
 	"github.com/thatcatdev/kaimu/backend/internal/services/invitation"
+	"github.com/thatcatdev/kaimu/backend/internal/services/mail"
+	"github.com/thatcatdev/kaimu/backend/internal/services/mjml"
 	"github.com/thatcatdev/kaimu/backend/internal/services/oidc"
 	"github.com/thatcatdev/kaimu/backend/internal/services/organization"
 	"github.com/thatcatdev/kaimu/backend/internal/services/project"
@@ -40,17 +44,18 @@ import (
 
 // Dependencies holds all initialized dependencies for the application
 type Dependencies struct {
-	AuthService         auth.Service
-	OIDCService         oidc.Service
-	OrganizationService organization.Service
-	ProjectService      project.Service
-	BoardService        board.Service
-	CardService         card.Service
-	TagService          tag.Service
-	RBACService         rbac.Service
-	InvitationService   invitation.Service
-	UserService         user.Service
-	OIDCHandler         *OIDCHandler
+	AuthService              auth.Service
+	OIDCService              oidc.Service
+	OrganizationService      organization.Service
+	ProjectService           project.Service
+	BoardService             board.Service
+	CardService              card.Service
+	TagService               tag.Service
+	RBACService              rbac.Service
+	InvitationService        invitation.Service
+	UserService              user.Service
+	EmailVerificationService email.EmailVerificationService
+	OIDCHandler              *OIDCHandler
 }
 
 // InitializeDependencies creates all application dependencies
@@ -132,6 +137,17 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 
 	userService := user.NewService(userRepository)
 
+	// Initialize email services
+	emailVerificationTokenRepository := emailVerificationTokenRepo.NewEmailVerificationTokenRepository(database.DB)
+	mjmlService := mjml.NewMJMLService()
+	mailService := mail.NewMailService(cfg.EmailConfig, mjmlService)
+	emailVerificationService := email.NewEmailVerificationService(
+		emailVerificationTokenRepository,
+		userRepository,
+		mailService,
+		cfg.EmailConfig,
+	)
+
 	// Initialize OIDC service and handler
 	stateManager := oidc.NewStateManager(cfg.OIDCConfig.StateExpirationMinutes)
 	oidcService := oidc.NewService(
@@ -149,17 +165,18 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 	oidcHandler := NewOIDCHandler(oidcService, cfg.OIDCConfig.FrontendURL, isSecure)
 
 	return &Dependencies{
-		AuthService:         authService,
-		OIDCService:         oidcService,
-		OrganizationService: organizationService,
-		ProjectService:      projectService,
-		BoardService:        boardService,
-		CardService:         cardService,
-		TagService:          tagService,
-		RBACService:         rbacService,
-		InvitationService:   invitationService,
-		UserService:         userService,
-		OIDCHandler:         oidcHandler,
+		AuthService:              authService,
+		OIDCService:              oidcService,
+		OrganizationService:      organizationService,
+		ProjectService:           projectService,
+		BoardService:             boardService,
+		CardService:              cardService,
+		TagService:               tagService,
+		RBACService:              rbacService,
+		InvitationService:        invitationService,
+		UserService:              userService,
+		EmailVerificationService: emailVerificationService,
+		OIDCHandler:              oidcHandler,
 	}
 }
 
@@ -180,17 +197,18 @@ func BuildRootHandler(conf config.Config) http.Handler {
 
 func BuildRootHandlerWithContext(ctx context.Context, conf config.Config, deps *Dependencies) http.Handler {
 	resolvers := &graph.Resolver{
-		Config:              conf,
-		AuthService:         deps.AuthService,
-		OIDCService:         deps.OIDCService,
-		OrganizationService: deps.OrganizationService,
-		ProjectService:      deps.ProjectService,
-		BoardService:        deps.BoardService,
-		CardService:         deps.CardService,
-		TagService:          deps.TagService,
-		RBACService:         deps.RBACService,
-		InvitationService:   deps.InvitationService,
-		UserService:         deps.UserService,
+		Config:                   conf,
+		AuthService:              deps.AuthService,
+		OIDCService:              deps.OIDCService,
+		OrganizationService:      deps.OrganizationService,
+		ProjectService:           deps.ProjectService,
+		BoardService:             deps.BoardService,
+		CardService:              deps.CardService,
+		TagService:               deps.TagService,
+		RBACService:              deps.RBACService,
+		InvitationService:        deps.InvitationService,
+		UserService:              deps.UserService,
+		EmailVerificationService: deps.EmailVerificationService,
 	}
 
 	cfg := generated.Config{Resolvers: resolvers, Directives: directives.GetDirectives()}

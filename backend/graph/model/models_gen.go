@@ -197,6 +197,7 @@ type ProjectMember struct {
 
 type RegisterInput struct {
 	Username string `json:"username"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -282,12 +283,13 @@ type UpdateTagInput struct {
 }
 
 type User struct {
-	ID          string    `json:"id"`
-	Username    string    `json:"username"`
-	Email       *string   `json:"email,omitempty"`
-	DisplayName *string   `json:"displayName,omitempty"`
-	AvatarURL   *string   `json:"avatarUrl,omitempty"`
-	CreatedAt   time.Time `json:"createdAt"`
+	ID            string    `json:"id"`
+	Username      string    `json:"username"`
+	Email         *string   `json:"email,omitempty"`
+	EmailVerified bool      `json:"emailVerified"`
+	DisplayName   *string   `json:"displayName,omitempty"`
+	AvatarURL     *string   `json:"avatarUrl,omitempty"`
+	CreatedAt     time.Time `json:"createdAt"`
 }
 
 type CardPriority string

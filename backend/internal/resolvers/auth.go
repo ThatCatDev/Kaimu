@@ -11,7 +11,7 @@ import (
 )
 
 func Register(ctx context.Context, authService auth.Service, input model.RegisterInput, isSecure bool) (*model.AuthPayload, error) {
-	u, token, err := authService.Register(ctx, input.Username, input.Password)
+	u, token, err := authService.Register(ctx, input.Username, input.Email, input.Password)
 	if err != nil {
 		if errors.Is(err, auth.ErrUserExists) {
 			return nil, errors.New("username already taken")
@@ -74,11 +74,12 @@ func Me(ctx context.Context, authService auth.Service) (*model.User, error) {
 
 func UserToModel(u *user.User) *model.User {
 	return &model.User{
-		ID:          u.ID.String(),
-		Username:    u.Username,
-		Email:       u.Email,
-		DisplayName: u.DisplayName,
-		AvatarURL:   u.AvatarURL,
-		CreatedAt:   u.CreatedAt,
+		ID:            u.ID.String(),
+		Username:      u.Username,
+		Email:         u.Email,
+		EmailVerified: u.EmailVerified,
+		DisplayName:   u.DisplayName,
+		AvatarURL:     u.AvatarURL,
+		CreatedAt:     u.CreatedAt,
 	}
 }

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { randomId } from './helpers';
+import { randomId, waitForEmail, extractVerificationToken, clearMailHog } from './helpers';
 
 test.describe('Authentication', () => {
   test('homepage shows login and register links when not authenticated', async ({ page }) => {
@@ -58,6 +58,7 @@ test.describe('Authentication', () => {
     await page.waitForTimeout(500);
 
     await page.fill('#username', 'testuser');
+    await page.fill('#email', 'testuser@test.local');
     await page.fill('#password', 'password123');
     await page.fill('#confirmPassword', 'differentpassword');
     await page.getByRole('button', { name: 'Register' }).click();
@@ -67,6 +68,7 @@ test.describe('Authentication', () => {
 
   test('can register a new user', async ({ page }) => {
     const uniqueUser = `e2e_${randomId()}`;
+    const email = `${uniqueUser}@test.local`;
     const password = 'testpassword123';
 
     await page.goto('/register');
@@ -74,6 +76,7 @@ test.describe('Authentication', () => {
     await page.waitForTimeout(500);
 
     await page.fill('#username', uniqueUser);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -85,12 +88,14 @@ test.describe('Authentication', () => {
 
   test('shows error when registering with existing username', async ({ page }) => {
     const uniqueUser = `e2e_${randomId()}`;
+    const email = `${uniqueUser}@test.local`;
     const password = 'testpassword123';
 
     // First, register the user
     await page.goto('/register');
     await page.waitForTimeout(500);
     await page.fill('#username', uniqueUser);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -100,6 +105,7 @@ test.describe('Authentication', () => {
     await page.goto('/register');
     await page.waitForTimeout(500);
     await page.fill('#username', uniqueUser);
+    await page.fill('#email', `${uniqueUser}2@test.local`);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -109,12 +115,14 @@ test.describe('Authentication', () => {
 
   test('can login with registered user', async ({ page }) => {
     const uniqueUser = `e2e_${randomId()}`;
+    const email = `${uniqueUser}@test.local`;
     const password = 'testpassword123';
 
     // First, register the user
     await page.goto('/register');
     await page.waitForTimeout(500);
     await page.fill('#username', uniqueUser);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -138,12 +146,14 @@ test.describe('Authentication', () => {
 
   test('shows error when login with wrong password', async ({ page }) => {
     const uniqueUser = `e2e_${randomId()}`;
+    const email = `${uniqueUser}@test.local`;
     const password = 'testpassword123';
 
     // First, register the user
     await page.goto('/register');
     await page.waitForTimeout(500);
     await page.fill('#username', uniqueUser);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -165,12 +175,14 @@ test.describe('Authentication', () => {
 
   test('can logout after login', async ({ page }) => {
     const uniqueUser = `e2e_${randomId()}`;
+    const email = `${uniqueUser}@test.local`;
     const password = 'testpassword123';
 
     // Register and login
     await page.goto('/register');
     await page.waitForTimeout(500);
     await page.fill('#username', uniqueUser);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -201,5 +213,43 @@ test.describe('Authentication', () => {
     await page.getByRole('link', { name: 'Sign in' }).click();
 
     await expect(page).toHaveURL('/login');
+  });
+
+  test('can verify email after registration', async ({ page }) => {
+    const uniqueUser = `e2e_${randomId()}`;
+    const email = `${uniqueUser}@test.local`;
+    const password = 'testpassword123';
+
+    // Clear any existing emails in MailHog
+    await clearMailHog();
+
+    // Register user
+    await page.goto('/register');
+    await page.waitForTimeout(500);
+    await page.fill('#username', uniqueUser);
+    await page.fill('#email', email);
+    await page.fill('#password', password);
+    await page.fill('#confirmPassword', password);
+    await page.getByRole('button', { name: 'Register' }).click();
+    await expect(page).toHaveURL('/', { timeout: 10000 });
+
+    // Wait for verification email to arrive
+    const emailMessage = await waitForEmail(email, 15000);
+    expect(emailMessage).toBeDefined();
+
+    // Extract verification token
+    const token = extractVerificationToken(emailMessage);
+    expect(token).toBeDefined();
+    expect(token.length).toBeGreaterThan(0);
+
+    // Visit verification page
+    await page.goto(`/verify?token=${token}`);
+    await page.waitForLoadState('networkidle');
+
+    // Should show success message
+    await expect(page.getByText('Email Verified!')).toBeVisible({ timeout: 10000 });
+
+    // Should redirect to home
+    await expect(page).toHaveURL('/', { timeout: 5000 });
   });
 });

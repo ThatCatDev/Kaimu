@@ -6,16 +6,33 @@ package graph
 
 import (
 	"context"
+	"errors"
 
+	"github.com/google/uuid"
 	"github.com/thatcatdev/kaimu/backend/graph/generated"
 	"github.com/thatcatdev/kaimu/backend/graph/model"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
 	"github.com/thatcatdev/kaimu/backend/internal/resolvers"
 )
 
 // Register is the resolver for the register field.
 func (r *mutationResolver) Register(ctx context.Context, input model.RegisterInput) (*model.AuthPayload, error) {
 	isSecure := r.Config.AppConfig.Env != "development"
-	return resolvers.Register(ctx, r.AuthService, input, isSecure)
+	payload, err := resolvers.Register(ctx, r.AuthService, input, isSecure)
+	if err != nil {
+		return nil, err
+	}
+
+	// Send verification email
+	if r.EmailVerificationService != nil {
+		userID, err := uuid.Parse(payload.User.ID)
+		if err == nil {
+			name := input.Username
+			go r.EmailVerificationService.SendVerificationEmail(context.Background(), userID, input.Email, name)
+		}
+	}
+
+	return payload, nil
 }
 
 // Login is the resolver for the login field.
@@ -27,6 +44,41 @@ func (r *mutationResolver) Login(ctx context.Context, input model.LoginInput) (*
 // Logout is the resolver for the logout field.
 func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
 	return resolvers.Logout(ctx)
+}
+
+// VerifyEmail is the resolver for the verifyEmail field.
+func (r *mutationResolver) VerifyEmail(ctx context.Context, token string) (*model.AuthPayload, error) {
+	if r.EmailVerificationService == nil {
+		return nil, errors.New("email verification is not configured")
+	}
+
+	u, err := r.EmailVerificationService.VerifyEmail(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.AuthPayload{
+		User: resolvers.UserToModel(u),
+	}, nil
+}
+
+// ResendVerificationEmail is the resolver for the resendVerificationEmail field.
+func (r *mutationResolver) ResendVerificationEmail(ctx context.Context) (bool, error) {
+	if r.EmailVerificationService == nil {
+		return false, errors.New("email verification is not configured")
+	}
+
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return false, errors.New("not authenticated")
+	}
+
+	err := r.EmailVerificationService.ResendVerificationEmail(ctx, *userID)
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // UpdateMe is the resolver for the updateMe field.

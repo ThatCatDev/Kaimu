@@ -23,8 +23,8 @@ export async function login(username: string, password: string): Promise<User> {
   return user;
 }
 
-export async function register(username: string, password: string): Promise<User> {
-  const user = await authApi.register(username, password);
+export async function register(username: string, email: string, password: string): Promise<User> {
+  const user = await authApi.register(username, email, password);
   mutate(ME_KEY, user);
   return user;
 }

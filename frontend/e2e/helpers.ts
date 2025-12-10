@@ -1,5 +1,116 @@
 import { expect, type Page } from '@playwright/test';
 
+// MailHog API URL - connects to Docker mailhog service
+const MAILHOG_API_URL = 'http://localhost:8025/api/v2';
+
+/**
+ * MailHog message structure
+ */
+interface MailHogMessage {
+  ID: string;
+  From: { Mailbox: string; Domain: string };
+  To: Array<{ Mailbox: string; Domain: string }>;
+  Content: {
+    Headers: {
+      Subject: string[];
+      From: string[];
+      To: string[];
+    };
+    Body: string;
+  };
+  Raw: {
+    From: string;
+    To: string[];
+    Data: string;
+  };
+  Created: string;
+}
+
+interface MailHogSearchResult {
+  total: number;
+  count: number;
+  start: number;
+  items: MailHogMessage[];
+}
+
+/**
+ * Fetches all emails from MailHog
+ */
+export async function getMailHogMessages(): Promise<MailHogMessage[]> {
+  const response = await fetch(`${MAILHOG_API_URL}/messages`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch MailHog messages: ${response.status}`);
+  }
+  const data: MailHogSearchResult = await response.json();
+  return data.items;
+}
+
+/**
+ * Searches for emails by recipient
+ */
+export async function searchMailHogByRecipient(email: string): Promise<MailHogMessage[]> {
+  const response = await fetch(`${MAILHOG_API_URL}/search?kind=to&query=${encodeURIComponent(email)}`);
+  if (!response.ok) {
+    throw new Error(`Failed to search MailHog: ${response.status}`);
+  }
+  const data: MailHogSearchResult = await response.json();
+  return data.items;
+}
+
+/**
+ * Waits for an email to arrive at MailHog for a specific recipient
+ */
+export async function waitForEmail(email: string, timeout: number = 10000): Promise<MailHogMessage> {
+  const startTime = Date.now();
+  while (Date.now() - startTime < timeout) {
+    const messages = await searchMailHogByRecipient(email);
+    if (messages.length > 0) {
+      // Return the most recent message
+      return messages[0];
+    }
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  throw new Error(`Timeout waiting for email to ${email}`);
+}
+
+/**
+ * Decodes quoted-printable encoded content
+ */
+function decodeQuotedPrintable(input: string): string {
+  // Replace soft line breaks (=\r\n or =\n)
+  let result = input.replace(/=\r?\n/g, '');
+  // Decode =XX sequences (like =3D for =)
+  result = result.replace(/=([0-9A-Fa-f]{2})/g, (_, hex) => {
+    return String.fromCharCode(parseInt(hex, 16));
+  });
+  return result;
+}
+
+/**
+ * Extracts the verification token from an email body
+ * Looks for the verification URL pattern and extracts the token
+ * Handles quoted-printable encoding
+ */
+export function extractVerificationToken(message: MailHogMessage): string {
+  // Decode the quoted-printable encoded body first
+  const body = decodeQuotedPrintable(message.Raw.Data);
+  // The verification URL pattern: /verify?token=<token>
+  const tokenMatch = body.match(/[?&]token=([a-f0-9]+)/i);
+  if (!tokenMatch) {
+    throw new Error('Could not find verification token in email');
+  }
+  return tokenMatch[1];
+}
+
+/**
+ * Deletes all messages from MailHog (useful for test cleanup)
+ */
+export async function clearMailHog(): Promise<void> {
+  await fetch(`${MAILHOG_API_URL.replace('/api/v2', '/api/v1')}/messages`, {
+    method: 'DELETE',
+  });
+}
+
 /**
  * Generates a random ID for unique test data
  */
@@ -22,6 +133,7 @@ export function randomLetters(length: number): string {
 export interface TestContext {
   testId: string;
   username: string;
+  email: string;
   password: string;
   orgName: string;
   orgId: string;
@@ -34,10 +146,12 @@ export interface TestContext {
 /**
  * Creates a fresh isolated test environment with a new user, organization, and project.
  * Each test gets its own unique data to ensure complete isolation.
+ * By default, email verification is skipped to keep tests fast. Set verifyEmail: true to enable.
  */
-export async function setupTestEnvironment(page: Page, prefix: string = 'test'): Promise<TestContext> {
+export async function setupTestEnvironment(page: Page, prefix: string = 'test', options?: { verifyEmail?: boolean }): Promise<TestContext> {
   const testId = randomId();
   const username = `${prefix}_${testId}`;
+  const email = `${username}@test.local`;
   const password = 'testpassword123';
   const orgName = `${prefix} Org ${testId}`;
   const projectName = `${prefix} Project ${testId}`;
@@ -47,6 +161,7 @@ export async function setupTestEnvironment(page: Page, prefix: string = 'test'):
   await page.goto('/register');
   await page.waitForLoadState('networkidle');
   await page.fill('#username', username);
+  await page.fill('#email', email);
   await page.fill('#password', password);
   await page.fill('#confirmPassword', password);
   const registerButton = page.getByRole('button', { name: 'Register' });
@@ -55,6 +170,11 @@ export async function setupTestEnvironment(page: Page, prefix: string = 'test'):
     page.waitForURL('/', { timeout: 20000 }),
     registerButton.click()
   ]);
+
+  // Verify email if requested
+  if (options?.verifyEmail) {
+    await verifyEmailWithMailHog(page, email);
+  }
 
   // Create organization
   await page.goto('/organizations/new');
@@ -90,6 +210,7 @@ export async function setupTestEnvironment(page: Page, prefix: string = 'test'):
   return {
     testId,
     username,
+    email,
     password,
     orgName,
     orgId,
@@ -97,6 +218,25 @@ export async function setupTestEnvironment(page: Page, prefix: string = 'test'):
     projectKey,
     projectId,
   };
+}
+
+/**
+ * Verifies a user's email by fetching the verification token from MailHog and visiting the verification URL
+ */
+export async function verifyEmailWithMailHog(page: Page, email: string): Promise<void> {
+  // Wait for the verification email to arrive
+  const message = await waitForEmail(email, 15000);
+
+  // Extract the verification token
+  const token = extractVerificationToken(message);
+
+  // Visit the verification page
+  await page.goto(`/verify?token=${token}`);
+  await page.waitForLoadState('networkidle');
+
+  // Wait for verification to complete (should redirect to home or show success)
+  // Give it a moment to process
+  await page.waitForTimeout(1000);
 }
 
 /**

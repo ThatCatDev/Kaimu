@@ -1,0 +1,10 @@
+---
+import Layout from '../layouts/Layout.astro';
+import EmailVerification from '../components/EmailVerification.svelte';
+
+const token = Astro.url.searchParams.get('token');
+---
+
+<Layout title="Verify Email - Kaimu">
+  <EmailVerification token={token} client:load />
+</Layout>

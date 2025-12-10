@@ -42,12 +42,16 @@ type Query {
 }
 
 type Mutation {
-    "Register a new user"
+    "Register a new user (sends verification email)"
     register(input: RegisterInput!): AuthPayload!
     "Login with username and password"
     login(input: LoginInput!): AuthPayload!
     "Logout current user"
     logout: Boolean!
+    "Verify email with token"
+    verifyEmail(token: String!): AuthPayload!
+    "Resend verification email"
+    resendVerificationEmail: Boolean!
     "Update current user's profile"
     updateMe(input: UpdateMeInput!): User!
     "Create a new organization"

@@ -9,9 +9,10 @@ import (
 )
 
 type Config struct {
-	AppConfig  AppConfig  `env:"APPCONFIG"`
-	DBConfig   DBConfig
-	OIDCConfig OIDCConfig `env:"OIDC"`
+	AppConfig   AppConfig   `env:"APPCONFIG"`
+	DBConfig    DBConfig
+	OIDCConfig  OIDCConfig  `env:"OIDC"`
+	EmailConfig EmailConfig `env:"EMAIL"`
 }
 
 type OIDCConfig struct {
@@ -43,11 +44,22 @@ type AppConfig struct {
 
 type DBConfig struct {
 	Host     string `default:"localhost" env:"DBHOST"`
-	DataBase string `default:"pulse" env:"DBNAME"`
-	User     string `default:"pulse" env:"DBUSERNAME"`
+	DataBase string `default:"app" env:"DBNAME"`
+	User     string `default:"app" env:"DBUSERNAME"`
 	Password string `required:"true" env:"DBPASSWORD" default:"mysecretpassword"`
 	Port     uint   `default:"5432" env:"DBPORT"`
 	SSLMode  string `default:"disable" env:"DBSSL"`
+}
+
+type EmailConfig struct {
+	Host            string `env:"EMAIL_HOST" default:"localhost"`
+	Port            int    `env:"EMAIL_PORT" default:"1025"`
+	Username        string `env:"EMAIL_USERNAME"`
+	Password        string `env:"EMAIL_PASSWORD"`
+	FromEmail       string `env:"EMAIL_FROM" default:"noreply@kaimu.local"`
+	FromName        string `env:"EMAIL_FROM_NAME" default:"Kaimu"`
+	SSLType         string `env:"EMAIL_SSL_TYPE" default:"none"` // none, tls, ssl
+	VerificationURL string `env:"EMAIL_VERIFICATION_URL" default:"http://localhost:4321/verify"`
 }
 
 func LoadConfigOrPanic() Config {

@@ -114,42 +114,44 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptInvitation       func(childComplexity int, token string) int
-		AssignProjectRole      func(childComplexity int, input model.AssignProjectRoleInput) int
-		CancelInvitation       func(childComplexity int, id string) int
-		ChangeMemberRole       func(childComplexity int, organizationID string, input model.ChangeMemberRoleInput) int
-		CreateBoard            func(childComplexity int, input model.CreateBoardInput) int
-		CreateCard             func(childComplexity int, input model.CreateCardInput) int
-		CreateColumn           func(childComplexity int, input model.CreateColumnInput) int
-		CreateOrganization     func(childComplexity int, input model.CreateOrganizationInput) int
-		CreateProject          func(childComplexity int, input model.CreateProjectInput) int
-		CreateRole             func(childComplexity int, input model.CreateRoleInput) int
-		CreateTag              func(childComplexity int, input model.CreateTagInput) int
-		DeleteBoard            func(childComplexity int, id string) int
-		DeleteCard             func(childComplexity int, id string) int
-		DeleteColumn           func(childComplexity int, id string) int
-		DeleteOrganization     func(childComplexity int, id string) int
-		DeleteProject          func(childComplexity int, id string) int
-		DeleteRole             func(childComplexity int, id string) int
-		DeleteTag              func(childComplexity int, id string) int
-		InviteMember           func(childComplexity int, input model.InviteMemberInput) int
-		Login                  func(childComplexity int, input model.LoginInput) int
-		Logout                 func(childComplexity int) int
-		MoveCard               func(childComplexity int, input model.MoveCardInput) int
-		Register               func(childComplexity int, input model.RegisterInput) int
-		RemoveMember           func(childComplexity int, organizationID string, userID string) int
-		RemoveProjectMember    func(childComplexity int, projectID string, userID string) int
-		ReorderColumns         func(childComplexity int, input model.ReorderColumnsInput) int
-		ResendInvitation       func(childComplexity int, id string) int
-		ToggleColumnVisibility func(childComplexity int, id string) int
-		UpdateBoard            func(childComplexity int, input model.UpdateBoardInput) int
-		UpdateCard             func(childComplexity int, input model.UpdateCardInput) int
-		UpdateColumn           func(childComplexity int, input model.UpdateColumnInput) int
-		UpdateMe               func(childComplexity int, input model.UpdateMeInput) int
-		UpdateOrganization     func(childComplexity int, input model.UpdateOrganizationInput) int
-		UpdateProject          func(childComplexity int, input model.UpdateProjectInput) int
-		UpdateRole             func(childComplexity int, input model.UpdateRoleInput) int
-		UpdateTag              func(childComplexity int, input model.UpdateTagInput) int
+		AcceptInvitation        func(childComplexity int, token string) int
+		AssignProjectRole       func(childComplexity int, input model.AssignProjectRoleInput) int
+		CancelInvitation        func(childComplexity int, id string) int
+		ChangeMemberRole        func(childComplexity int, organizationID string, input model.ChangeMemberRoleInput) int
+		CreateBoard             func(childComplexity int, input model.CreateBoardInput) int
+		CreateCard              func(childComplexity int, input model.CreateCardInput) int
+		CreateColumn            func(childComplexity int, input model.CreateColumnInput) int
+		CreateOrganization      func(childComplexity int, input model.CreateOrganizationInput) int
+		CreateProject           func(childComplexity int, input model.CreateProjectInput) int
+		CreateRole              func(childComplexity int, input model.CreateRoleInput) int
+		CreateTag               func(childComplexity int, input model.CreateTagInput) int
+		DeleteBoard             func(childComplexity int, id string) int
+		DeleteCard              func(childComplexity int, id string) int
+		DeleteColumn            func(childComplexity int, id string) int
+		DeleteOrganization      func(childComplexity int, id string) int
+		DeleteProject           func(childComplexity int, id string) int
+		DeleteRole              func(childComplexity int, id string) int
+		DeleteTag               func(childComplexity int, id string) int
+		InviteMember            func(childComplexity int, input model.InviteMemberInput) int
+		Login                   func(childComplexity int, input model.LoginInput) int
+		Logout                  func(childComplexity int) int
+		MoveCard                func(childComplexity int, input model.MoveCardInput) int
+		Register                func(childComplexity int, input model.RegisterInput) int
+		RemoveMember            func(childComplexity int, organizationID string, userID string) int
+		RemoveProjectMember     func(childComplexity int, projectID string, userID string) int
+		ReorderColumns          func(childComplexity int, input model.ReorderColumnsInput) int
+		ResendInvitation        func(childComplexity int, id string) int
+		ResendVerificationEmail func(childComplexity int) int
+		ToggleColumnVisibility  func(childComplexity int, id string) int
+		UpdateBoard             func(childComplexity int, input model.UpdateBoardInput) int
+		UpdateCard              func(childComplexity int, input model.UpdateCardInput) int
+		UpdateColumn            func(childComplexity int, input model.UpdateColumnInput) int
+		UpdateMe                func(childComplexity int, input model.UpdateMeInput) int
+		UpdateOrganization      func(childComplexity int, input model.UpdateOrganizationInput) int
+		UpdateProject           func(childComplexity int, input model.UpdateProjectInput) int
+		UpdateRole              func(childComplexity int, input model.UpdateRoleInput) int
+		UpdateTag               func(childComplexity int, input model.UpdateTagInput) int
+		VerifyEmail             func(childComplexity int, token string) int
 	}
 
 	OIDCProvider struct {
@@ -250,12 +252,13 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		AvatarURL   func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		DisplayName func(childComplexity int) int
-		Email       func(childComplexity int) int
-		ID          func(childComplexity int) int
-		Username    func(childComplexity int) int
+		AvatarURL     func(childComplexity int) int
+		CreatedAt     func(childComplexity int) int
+		DisplayName   func(childComplexity int) int
+		Email         func(childComplexity int) int
+		EmailVerified func(childComplexity int) int
+		ID            func(childComplexity int) int
+		Username      func(childComplexity int) int
 	}
 
 	_Service struct {
@@ -291,6 +294,8 @@ type MutationResolver interface {
 	Register(ctx context.Context, input model.RegisterInput) (*model.AuthPayload, error)
 	Login(ctx context.Context, input model.LoginInput) (*model.AuthPayload, error)
 	Logout(ctx context.Context) (bool, error)
+	VerifyEmail(ctx context.Context, token string) (*model.AuthPayload, error)
+	ResendVerificationEmail(ctx context.Context) (bool, error)
 	UpdateMe(ctx context.Context, input model.UpdateMeInput) (*model.User, error)
 	CreateOrganization(ctx context.Context, input model.CreateOrganizationInput) (*model.Organization, error)
 	UpdateOrganization(ctx context.Context, input model.UpdateOrganizationInput) (*model.Organization, error)
@@ -988,6 +993,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.ResendInvitation(childComplexity, args["id"].(string)), true
 
+	case "Mutation.resendVerificationEmail":
+		if e.complexity.Mutation.ResendVerificationEmail == nil {
+			break
+		}
+
+		return e.complexity.Mutation.ResendVerificationEmail(childComplexity), true
+
 	case "Mutation.toggleColumnVisibility":
 		if e.complexity.Mutation.ToggleColumnVisibility == nil {
 			break
@@ -1095,6 +1107,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateTag(childComplexity, args["input"].(model.UpdateTagInput)), true
+
+	case "Mutation.verifyEmail":
+		if e.complexity.Mutation.VerifyEmail == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_verifyEmail_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.VerifyEmail(childComplexity, args["token"].(string)), true
 
 	case "OIDCProvider.name":
 		if e.complexity.OIDCProvider.Name == nil {
@@ -1679,6 +1703,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Email(childComplexity), true
 
+	case "User.emailVerified":
+		if e.complexity.User.EmailVerified == nil {
+			break
+		}
+
+		return e.complexity.User.EmailVerified(childComplexity), true
+
 	case "User.id":
 		if e.complexity.User.ID == nil {
 			break
@@ -1906,12 +1937,16 @@ scalar Date
 }
 
 type Mutation {
-    "Register a new user"
+    "Register a new user (sends verification email)"
     register(input: RegisterInput!): AuthPayload!
     "Login with username and password"
     login(input: LoginInput!): AuthPayload!
     "Logout current user"
     logout: Boolean!
+    "Verify email with token"
+    verifyEmail(token: String!): AuthPayload!
+    "Resend verification email"
+    resendVerificationEmail: Boolean!
     "Update current user's profile"
     updateMe(input: UpdateMeInput!): User!
     "Create a new organization"
@@ -1990,6 +2025,7 @@ type Mutation {
     id: ID!
     username: String!
     email: String
+    emailVerified: Boolean!
     displayName: String
     avatarUrl: String
     createdAt: Time!
@@ -2006,6 +2042,7 @@ type AuthPayload {
 
 input RegisterInput {
     username: String!
+    email: String!
     password: String!
 }
 
@@ -2379,7 +2416,7 @@ func (ec *executionContext) field_Mutation_assignProjectRole_args(ctx context.Co
 	var arg0 model.AssignProjectRoleInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNAssignProjectRoleInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐAssignProjectRoleInput(ctx, tmp)
+		arg0, err = ec.unmarshalNAssignProjectRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐAssignProjectRoleInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2418,7 +2455,7 @@ func (ec *executionContext) field_Mutation_changeMemberRole_args(ctx context.Con
 	var arg1 model.ChangeMemberRoleInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalNChangeMemberRoleInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐChangeMemberRoleInput(ctx, tmp)
+		arg1, err = ec.unmarshalNChangeMemberRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐChangeMemberRoleInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2433,7 +2470,7 @@ func (ec *executionContext) field_Mutation_createBoard_args(ctx context.Context,
 	var arg0 model.CreateBoardInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateBoardInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateBoardInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateBoardInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateBoardInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2448,7 +2485,7 @@ func (ec *executionContext) field_Mutation_createCard_args(ctx context.Context, 
 	var arg0 model.CreateCardInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateCardInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateCardInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateCardInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateCardInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2463,7 +2500,7 @@ func (ec *executionContext) field_Mutation_createColumn_args(ctx context.Context
 	var arg0 model.CreateColumnInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateColumnInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateColumnInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateColumnInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateColumnInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2478,7 +2515,7 @@ func (ec *executionContext) field_Mutation_createOrganization_args(ctx context.C
 	var arg0 model.CreateOrganizationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateOrganizationInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateOrganizationInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateOrganizationInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateOrganizationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2493,7 +2530,7 @@ func (ec *executionContext) field_Mutation_createProject_args(ctx context.Contex
 	var arg0 model.CreateProjectInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateProjectInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateProjectInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateProjectInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateProjectInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2508,7 +2545,7 @@ func (ec *executionContext) field_Mutation_createRole_args(ctx context.Context, 
 	var arg0 model.CreateRoleInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateRoleInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateRoleInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateRoleInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2523,7 +2560,7 @@ func (ec *executionContext) field_Mutation_createTag_args(ctx context.Context, r
 	var arg0 model.CreateTagInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateTagInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateTagInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCreateTagInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateTagInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2643,7 +2680,7 @@ func (ec *executionContext) field_Mutation_inviteMember_args(ctx context.Context
 	var arg0 model.InviteMemberInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNInviteMemberInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐInviteMemberInput(ctx, tmp)
+		arg0, err = ec.unmarshalNInviteMemberInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐInviteMemberInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2658,7 +2695,7 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 	var arg0 model.LoginInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNLoginInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLoginInput(ctx, tmp)
+		arg0, err = ec.unmarshalNLoginInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐLoginInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2673,7 +2710,7 @@ func (ec *executionContext) field_Mutation_moveCard_args(ctx context.Context, ra
 	var arg0 model.MoveCardInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNMoveCardInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐMoveCardInput(ctx, tmp)
+		arg0, err = ec.unmarshalNMoveCardInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐMoveCardInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2688,7 +2725,7 @@ func (ec *executionContext) field_Mutation_register_args(ctx context.Context, ra
 	var arg0 model.RegisterInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNRegisterInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRegisterInput(ctx, tmp)
+		arg0, err = ec.unmarshalNRegisterInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRegisterInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2751,7 +2788,7 @@ func (ec *executionContext) field_Mutation_reorderColumns_args(ctx context.Conte
 	var arg0 model.ReorderColumnsInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNReorderColumnsInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐReorderColumnsInput(ctx, tmp)
+		arg0, err = ec.unmarshalNReorderColumnsInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐReorderColumnsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2796,7 +2833,7 @@ func (ec *executionContext) field_Mutation_updateBoard_args(ctx context.Context,
 	var arg0 model.UpdateBoardInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateBoardInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateBoardInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateBoardInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateBoardInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2811,7 +2848,7 @@ func (ec *executionContext) field_Mutation_updateCard_args(ctx context.Context, 
 	var arg0 model.UpdateCardInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateCardInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateCardInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateCardInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateCardInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2826,7 +2863,7 @@ func (ec *executionContext) field_Mutation_updateColumn_args(ctx context.Context
 	var arg0 model.UpdateColumnInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateColumnInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateColumnInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateColumnInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateColumnInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2841,7 +2878,7 @@ func (ec *executionContext) field_Mutation_updateMe_args(ctx context.Context, ra
 	var arg0 model.UpdateMeInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateMeInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateMeInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateMeInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateMeInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2856,7 +2893,7 @@ func (ec *executionContext) field_Mutation_updateOrganization_args(ctx context.C
 	var arg0 model.UpdateOrganizationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateOrganizationInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateOrganizationInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateOrganizationInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateOrganizationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2871,7 +2908,7 @@ func (ec *executionContext) field_Mutation_updateProject_args(ctx context.Contex
 	var arg0 model.UpdateProjectInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateProjectInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateProjectInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateProjectInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateProjectInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2886,7 +2923,7 @@ func (ec *executionContext) field_Mutation_updateRole_args(ctx context.Context, 
 	var arg0 model.UpdateRoleInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateRoleInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateRoleInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateRoleInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2901,12 +2938,27 @@ func (ec *executionContext) field_Mutation_updateTag_args(ctx context.Context, r
 	var arg0 model.UpdateTagInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNUpdateTagInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateTagInput(ctx, tmp)
+		arg0, err = ec.unmarshalNUpdateTagInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateTagInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_verifyEmail_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["token"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("token"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["token"] = arg0
 	return args, nil
 }
 
@@ -3213,7 +3265,7 @@ func (ec *executionContext) _AuthPayload_user(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AuthPayload_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3230,6 +3282,8 @@ func (ec *executionContext) fieldContext_AuthPayload_user(ctx context.Context, f
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "avatarUrl":
@@ -3315,7 +3369,7 @@ func (ec *executionContext) _Board_project(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.Project)
 	fc.Result = res
-	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Board_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3510,7 +3564,7 @@ func (ec *executionContext) _Board_columns(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.BoardColumn)
 	fc.Result = res
-	return ec.marshalNBoardColumn2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardColumnᚄ(ctx, field.Selections, res)
+	return ec.marshalNBoardColumn2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardColumnᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Board_columns(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3710,7 +3764,7 @@ func (ec *executionContext) _BoardColumn_board(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.Board)
 	fc.Result = res
-	return ec.marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
+	return ec.marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BoardColumn_board(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4030,7 +4084,7 @@ func (ec *executionContext) _BoardColumn_cards(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.Card)
 	fc.Result = res
-	return ec.marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCardᚄ(ctx, field.Selections, res)
+	return ec.marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BoardColumn_cards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4234,7 +4288,7 @@ func (ec *executionContext) _Card_column(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.BoardColumn)
 	fc.Result = res
-	return ec.marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardColumn(ctx, field.Selections, res)
+	return ec.marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardColumn(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Card_column(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4302,7 +4356,7 @@ func (ec *executionContext) _Card_board(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.Board)
 	fc.Result = res
-	return ec.marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
+	return ec.marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Card_board(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4493,7 +4547,7 @@ func (ec *executionContext) _Card_priority(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(model.CardPriority)
 	fc.Result = res
-	return ec.marshalNCardPriority2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCardPriority(ctx, field.Selections, res)
+	return ec.marshalNCardPriority2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardPriority(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Card_priority(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4534,7 +4588,7 @@ func (ec *executionContext) _Card_assignee(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Card_assignee(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4551,6 +4605,8 @@ func (ec *executionContext) fieldContext_Card_assignee(ctx context.Context, fiel
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "avatarUrl":
@@ -4592,7 +4648,7 @@ func (ec *executionContext) _Card_tags(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.([]*model.Tag)
 	fc.Result = res
-	return ec.marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTagᚄ(ctx, field.Selections, res)
+	return ec.marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTagᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Card_tags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4776,7 +4832,7 @@ func (ec *executionContext) _Card_createdBy(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Card_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4793,6 +4849,8 @@ func (ec *executionContext) fieldContext_Card_createdBy(ctx context.Context, fie
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "avatarUrl":
@@ -4966,7 +5024,7 @@ func (ec *executionContext) _Invitation_role(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.Role)
 	fc.Result = res
-	return ec.marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
+	return ec.marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Invitation_role(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5028,7 +5086,7 @@ func (ec *executionContext) _Invitation_organization(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Organization)
 	fc.Result = res
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Invitation_organization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5092,7 +5150,7 @@ func (ec *executionContext) _Invitation_invitedBy(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Invitation_invitedBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5109,6 +5167,8 @@ func (ec *executionContext) fieldContext_Invitation_invitedBy(ctx context.Contex
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "avatarUrl":
@@ -5238,7 +5298,7 @@ func (ec *executionContext) _Mutation_register(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.AuthPayload)
 	fc.Result = res
-	return ec.marshalNAuthPayload2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐAuthPayload(ctx, field.Selections, res)
+	return ec.marshalNAuthPayload2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐAuthPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_register(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5297,7 +5357,7 @@ func (ec *executionContext) _Mutation_login(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.AuthPayload)
 	fc.Result = res
-	return ec.marshalNAuthPayload2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐAuthPayload(ctx, field.Selections, res)
+	return ec.marshalNAuthPayload2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐAuthPayload(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_login(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5372,6 +5432,109 @@ func (ec *executionContext) fieldContext_Mutation_logout(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_verifyEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_verifyEmail(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().VerifyEmail(rctx, fc.Args["token"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.AuthPayload)
+	fc.Result = res
+	return ec.marshalNAuthPayload2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐAuthPayload(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_verifyEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "user":
+				return ec.fieldContext_AuthPayload_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AuthPayload", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_verifyEmail_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_resendVerificationEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_resendVerificationEmail(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ResendVerificationEmail(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_resendVerificationEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_updateMe(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_updateMe(ctx, field)
 	if err != nil {
@@ -5400,7 +5563,7 @@ func (ec *executionContext) _Mutation_updateMe(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateMe(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5417,6 +5580,8 @@ func (ec *executionContext) fieldContext_Mutation_updateMe(ctx context.Context, 
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "avatarUrl":
@@ -5469,7 +5634,7 @@ func (ec *executionContext) _Mutation_createOrganization(ctx context.Context, fi
 	}
 	res := resTmp.(*model.Organization)
 	fc.Result = res
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createOrganization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5544,7 +5709,7 @@ func (ec *executionContext) _Mutation_updateOrganization(ctx context.Context, fi
 	}
 	res := resTmp.(*model.Organization)
 	fc.Result = res
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateOrganization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5674,7 +5839,7 @@ func (ec *executionContext) _Mutation_createProject(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Project)
 	fc.Result = res
-	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createProject(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5751,7 +5916,7 @@ func (ec *executionContext) _Mutation_updateProject(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Project)
 	fc.Result = res
-	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateProject(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5883,7 +6048,7 @@ func (ec *executionContext) _Mutation_createBoard(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Board)
 	fc.Result = res
-	return ec.marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
+	return ec.marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createBoard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5956,7 +6121,7 @@ func (ec *executionContext) _Mutation_updateBoard(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Board)
 	fc.Result = res
-	return ec.marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
+	return ec.marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateBoard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6084,7 +6249,7 @@ func (ec *executionContext) _Mutation_createColumn(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.BoardColumn)
 	fc.Result = res
-	return ec.marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardColumn(ctx, field.Selections, res)
+	return ec.marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardColumn(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createColumn(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6163,7 +6328,7 @@ func (ec *executionContext) _Mutation_updateColumn(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.BoardColumn)
 	fc.Result = res
-	return ec.marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardColumn(ctx, field.Selections, res)
+	return ec.marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardColumn(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateColumn(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6242,7 +6407,7 @@ func (ec *executionContext) _Mutation_reorderColumns(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.BoardColumn)
 	fc.Result = res
-	return ec.marshalNBoardColumn2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardColumnᚄ(ctx, field.Selections, res)
+	return ec.marshalNBoardColumn2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardColumnᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_reorderColumns(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6321,7 +6486,7 @@ func (ec *executionContext) _Mutation_toggleColumnVisibility(ctx context.Context
 	}
 	res := resTmp.(*model.BoardColumn)
 	fc.Result = res
-	return ec.marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardColumn(ctx, field.Selections, res)
+	return ec.marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardColumn(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_toggleColumnVisibility(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6455,7 +6620,7 @@ func (ec *executionContext) _Mutation_createCard(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Card)
 	fc.Result = res
-	return ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
+	return ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createCard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6538,7 +6703,7 @@ func (ec *executionContext) _Mutation_updateCard(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Card)
 	fc.Result = res
-	return ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
+	return ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateCard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6621,7 +6786,7 @@ func (ec *executionContext) _Mutation_moveCard(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.Card)
 	fc.Result = res
-	return ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
+	return ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_moveCard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6759,7 +6924,7 @@ func (ec *executionContext) _Mutation_createTag(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Tag)
 	fc.Result = res
-	return ec.marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTag(ctx, field.Selections, res)
+	return ec.marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTag(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6828,7 +6993,7 @@ func (ec *executionContext) _Mutation_updateTag(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Tag)
 	fc.Result = res
-	return ec.marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTag(ctx, field.Selections, res)
+	return ec.marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateTag(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6952,7 +7117,7 @@ func (ec *executionContext) _Mutation_createRole(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Role)
 	fc.Result = res
-	return ec.marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
+	return ec.marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7025,7 +7190,7 @@ func (ec *executionContext) _Mutation_updateRole(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Role)
 	fc.Result = res
-	return ec.marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
+	return ec.marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7153,7 +7318,7 @@ func (ec *executionContext) _Mutation_inviteMember(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.Invitation)
 	fc.Result = res
-	return ec.marshalNInvitation2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐInvitation(ctx, field.Selections, res)
+	return ec.marshalNInvitation2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐInvitation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_inviteMember(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7281,7 +7446,7 @@ func (ec *executionContext) _Mutation_resendInvitation(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.Invitation)
 	fc.Result = res
-	return ec.marshalNInvitation2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐInvitation(ctx, field.Selections, res)
+	return ec.marshalNInvitation2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐInvitation(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_resendInvitation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7354,7 +7519,7 @@ func (ec *executionContext) _Mutation_acceptInvitation(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.Organization)
 	fc.Result = res
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_acceptInvitation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7429,7 +7594,7 @@ func (ec *executionContext) _Mutation_changeMemberRole(ctx context.Context, fiel
 	}
 	res := resTmp.(*model.OrganizationMember)
 	fc.Result = res
-	return ec.marshalNOrganizationMember2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganizationMember(ctx, field.Selections, res)
+	return ec.marshalNOrganizationMember2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganizationMember(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_changeMemberRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7551,7 +7716,7 @@ func (ec *executionContext) _Mutation_assignProjectRole(ctx context.Context, fie
 	}
 	res := resTmp.(*model.ProjectMember)
 	fc.Result = res
-	return ec.marshalNProjectMember2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProjectMember(ctx, field.Selections, res)
+	return ec.marshalNProjectMember2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProjectMember(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_assignProjectRole(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7934,7 +8099,7 @@ func (ec *executionContext) _Organization_owner(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Organization_owner(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7951,6 +8116,8 @@ func (ec *executionContext) fieldContext_Organization_owner(ctx context.Context,
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "avatarUrl":
@@ -7992,7 +8159,7 @@ func (ec *executionContext) _Organization_members(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.OrganizationMember)
 	fc.Result = res
-	return ec.marshalNOrganizationMember2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganizationMemberᚄ(ctx, field.Selections, res)
+	return ec.marshalNOrganizationMember2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganizationMemberᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Organization_members(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8048,7 +8215,7 @@ func (ec *executionContext) _Organization_projects(ctx context.Context, field gr
 	}
 	res := resTmp.([]*model.Project)
 	fc.Result = res
-	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProjectᚄ(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProjectᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Organization_projects(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8246,7 +8413,7 @@ func (ec *executionContext) _OrganizationMember_user(ctx context.Context, field 
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_OrganizationMember_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8263,6 +8430,8 @@ func (ec *executionContext) fieldContext_OrganizationMember_user(ctx context.Con
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "avatarUrl":
@@ -8304,7 +8473,7 @@ func (ec *executionContext) _OrganizationMember_role(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Role)
 	fc.Result = res
-	return ec.marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
+	return ec.marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_OrganizationMember_role(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8715,7 +8884,7 @@ func (ec *executionContext) _Project_organization(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Organization)
 	fc.Result = res
-	return ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Project_organization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8908,7 +9077,7 @@ func (ec *executionContext) _Project_boards(ctx context.Context, field graphql.C
 	}
 	res := resTmp.([]*model.Board)
 	fc.Result = res
-	return ec.marshalNBoard2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardᚄ(ctx, field.Selections, res)
+	return ec.marshalNBoard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Project_boards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8967,7 +9136,7 @@ func (ec *executionContext) _Project_defaultBoard(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Board)
 	fc.Result = res
-	return ec.marshalOBoard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
+	return ec.marshalOBoard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Project_defaultBoard(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9029,7 +9198,7 @@ func (ec *executionContext) _Project_tags(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.([]*model.Tag)
 	fc.Result = res
-	return ec.marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTagᚄ(ctx, field.Selections, res)
+	return ec.marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTagᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Project_tags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9219,7 +9388,7 @@ func (ec *executionContext) _ProjectMember_user(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ProjectMember_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9236,6 +9405,8 @@ func (ec *executionContext) fieldContext_ProjectMember_user(ctx context.Context,
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "avatarUrl":
@@ -9274,7 +9445,7 @@ func (ec *executionContext) _ProjectMember_role(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Role)
 	fc.Result = res
-	return ec.marshalORole2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
+	return ec.marshalORole2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ProjectMember_role(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9336,7 +9507,7 @@ func (ec *executionContext) _ProjectMember_project(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.Project)
 	fc.Result = res
-	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ProjectMember_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9487,7 +9658,7 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9504,6 +9675,8 @@ func (ec *executionContext) fieldContext_Query_me(ctx context.Context, field gra
 				return ec.fieldContext_User_username(ctx, field)
 			case "email":
 				return ec.fieldContext_User_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
 			case "displayName":
 				return ec.fieldContext_User_displayName(ctx, field)
 			case "avatarUrl":
@@ -9545,7 +9718,7 @@ func (ec *executionContext) _Query_oidcProviders(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.OIDCProvider)
 	fc.Result = res
-	return ec.marshalNOIDCProvider2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOIDCProviderᚄ(ctx, field.Selections, res)
+	return ec.marshalNOIDCProvider2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOIDCProviderᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_oidcProviders(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9595,7 +9768,7 @@ func (ec *executionContext) _Query_organizations(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.Organization)
 	fc.Result = res
-	return ec.marshalNOrganization2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganizationᚄ(ctx, field.Selections, res)
+	return ec.marshalNOrganization2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganizationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_organizations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9656,7 +9829,7 @@ func (ec *executionContext) _Query_organization(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Organization)
 	fc.Result = res
-	return ec.marshalOOrganization2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
+	return ec.marshalOOrganization2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganization(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_organization(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9728,7 +9901,7 @@ func (ec *executionContext) _Query_project(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.Project)
 	fc.Result = res
-	return ec.marshalOProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalOProject2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9802,7 +9975,7 @@ func (ec *executionContext) _Query_board(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.Board)
 	fc.Result = res
-	return ec.marshalOBoard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
+	return ec.marshalOBoard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_board(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9875,7 +10048,7 @@ func (ec *executionContext) _Query_boards(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.([]*model.Board)
 	fc.Result = res
-	return ec.marshalNBoard2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardᚄ(ctx, field.Selections, res)
+	return ec.marshalNBoard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_boards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9945,7 +10118,7 @@ func (ec *executionContext) _Query_card(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.Card)
 	fc.Result = res
-	return ec.marshalOCard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
+	return ec.marshalOCard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_card(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10028,7 +10201,7 @@ func (ec *executionContext) _Query_myCards(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.([]*model.Card)
 	fc.Result = res
-	return ec.marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCardᚄ(ctx, field.Selections, res)
+	return ec.marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_myCards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10100,7 +10273,7 @@ func (ec *executionContext) _Query_tags(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.([]*model.Tag)
 	fc.Result = res
-	return ec.marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTagᚄ(ctx, field.Selections, res)
+	return ec.marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTagᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_tags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10169,7 +10342,7 @@ func (ec *executionContext) _Query_permissions(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.Permission)
 	fc.Result = res
-	return ec.marshalNPermission2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐPermissionᚄ(ctx, field.Selections, res)
+	return ec.marshalNPermission2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐPermissionᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_permissions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10225,7 +10398,7 @@ func (ec *executionContext) _Query_roles(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Role)
 	fc.Result = res
-	return ec.marshalNRole2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRoleᚄ(ctx, field.Selections, res)
+	return ec.marshalNRole2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRoleᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_roles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10295,7 +10468,7 @@ func (ec *executionContext) _Query_role(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.Role)
 	fc.Result = res
-	return ec.marshalORole2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
+	return ec.marshalORole2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRole(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_role(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10368,7 +10541,7 @@ func (ec *executionContext) _Query_organizationMembers(ctx context.Context, fiel
 	}
 	res := resTmp.([]*model.OrganizationMember)
 	fc.Result = res
-	return ec.marshalNOrganizationMember2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganizationMemberᚄ(ctx, field.Selections, res)
+	return ec.marshalNOrganizationMember2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganizationMemberᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_organizationMembers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10435,7 +10608,7 @@ func (ec *executionContext) _Query_projectMembers(ctx context.Context, field gra
 	}
 	res := resTmp.([]*model.ProjectMember)
 	fc.Result = res
-	return ec.marshalNProjectMember2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProjectMemberᚄ(ctx, field.Selections, res)
+	return ec.marshalNProjectMember2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProjectMemberᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_projectMembers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10502,7 +10675,7 @@ func (ec *executionContext) _Query_invitations(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.Invitation)
 	fc.Result = res
-	return ec.marshalNInvitation2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐInvitationᚄ(ctx, field.Selections, res)
+	return ec.marshalNInvitation2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐInvitationᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_invitations(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11079,7 +11252,7 @@ func (ec *executionContext) _Role_permissions(ctx context.Context, field graphql
 	}
 	res := resTmp.([]*model.Permission)
 	fc.Result = res
-	return ec.marshalNPermission2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐPermissionᚄ(ctx, field.Selections, res)
+	return ec.marshalNPermission2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐPermissionᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Role_permissions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11267,7 +11440,7 @@ func (ec *executionContext) _Tag_project(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.Project)
 	fc.Result = res
-	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
+	return ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProject(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tag_project(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11602,6 +11775,50 @@ func (ec *executionContext) fieldContext_User_email(ctx context.Context, field g
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _User_emailVerified(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_emailVerified(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EmailVerified, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_emailVerified(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13724,7 +13941,7 @@ func (ec *executionContext) unmarshalInputCreateCardInput(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
-			data, err := ec.unmarshalOCardPriority2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCardPriority(ctx, v)
+			data, err := ec.unmarshalOCardPriority2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardPriority(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14154,7 +14371,7 @@ func (ec *executionContext) unmarshalInputRegisterInput(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"username", "password"}
+	fieldsInOrder := [...]string{"username", "email", "password"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14170,6 +14387,15 @@ func (ec *executionContext) unmarshalInputRegisterInput(ctx context.Context, obj
 				return it, err
 			}
 			it.Username = data
+		case "email":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Email = data
 		case "password":
 			var err error
 
@@ -14315,7 +14541,7 @@ func (ec *executionContext) unmarshalInputUpdateCardInput(ctx context.Context, o
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
-			data, err := ec.unmarshalOCardPriority2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCardPriority(ctx, v)
+			data, err := ec.unmarshalOCardPriority2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardPriority(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -15441,6 +15667,20 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "logout":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_logout(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "verifyEmail":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_verifyEmail(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "resendVerificationEmail":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_resendVerificationEmail(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -17005,6 +17245,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "email":
 			out.Values[i] = ec._User_email(ctx, field, obj)
+		case "emailVerified":
+			out.Values[i] = ec._User_emailVerified(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "displayName":
 			out.Values[i] = ec._User_displayName(ctx, field, obj)
 		case "avatarUrl":
@@ -17399,16 +17644,16 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) unmarshalNAssignProjectRoleInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐAssignProjectRoleInput(ctx context.Context, v interface{}) (model.AssignProjectRoleInput, error) {
+func (ec *executionContext) unmarshalNAssignProjectRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐAssignProjectRoleInput(ctx context.Context, v interface{}) (model.AssignProjectRoleInput, error) {
 	res, err := ec.unmarshalInputAssignProjectRoleInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNAuthPayload2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐAuthPayload(ctx context.Context, sel ast.SelectionSet, v model.AuthPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthPayload2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐAuthPayload(ctx context.Context, sel ast.SelectionSet, v model.AuthPayload) graphql.Marshaler {
 	return ec._AuthPayload(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNAuthPayload2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐAuthPayload(ctx context.Context, sel ast.SelectionSet, v *model.AuthPayload) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthPayload2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐAuthPayload(ctx context.Context, sel ast.SelectionSet, v *model.AuthPayload) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -17418,11 +17663,11 @@ func (ec *executionContext) marshalNAuthPayload2ᚖgithubᚗcomᚋthatcatdevᚋp
 	return ec._AuthPayload(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBoard2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoard(ctx context.Context, sel ast.SelectionSet, v model.Board) graphql.Marshaler {
+func (ec *executionContext) marshalNBoard2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoard(ctx context.Context, sel ast.SelectionSet, v model.Board) graphql.Marshaler {
 	return ec._Board(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBoard2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Board) graphql.Marshaler {
+func (ec *executionContext) marshalNBoard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Board) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -17446,7 +17691,7 @@ func (ec *executionContext) marshalNBoard2ᚕᚖgithubᚗcomᚋthatcatdevᚋpuls
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoard(ctx, sel, v[i])
+			ret[i] = ec.marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoard(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -17466,7 +17711,7 @@ func (ec *executionContext) marshalNBoard2ᚕᚖgithubᚗcomᚋthatcatdevᚋpuls
 	return ret
 }
 
-func (ec *executionContext) marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoard(ctx context.Context, sel ast.SelectionSet, v *model.Board) graphql.Marshaler {
+func (ec *executionContext) marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoard(ctx context.Context, sel ast.SelectionSet, v *model.Board) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -17476,11 +17721,11 @@ func (ec *executionContext) marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋpulse�
 	return ec._Board(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNBoardColumn2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardColumn(ctx context.Context, sel ast.SelectionSet, v model.BoardColumn) graphql.Marshaler {
+func (ec *executionContext) marshalNBoardColumn2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardColumn(ctx context.Context, sel ast.SelectionSet, v model.BoardColumn) graphql.Marshaler {
 	return ec._BoardColumn(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBoardColumn2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardColumnᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.BoardColumn) graphql.Marshaler {
+func (ec *executionContext) marshalNBoardColumn2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardColumnᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.BoardColumn) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -17504,7 +17749,7 @@ func (ec *executionContext) marshalNBoardColumn2ᚕᚖgithubᚗcomᚋthatcatdev�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardColumn(ctx, sel, v[i])
+			ret[i] = ec.marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardColumn(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -17524,7 +17769,7 @@ func (ec *executionContext) marshalNBoardColumn2ᚕᚖgithubᚗcomᚋthatcatdev�
 	return ret
 }
 
-func (ec *executionContext) marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoardColumn(ctx context.Context, sel ast.SelectionSet, v *model.BoardColumn) graphql.Marshaler {
+func (ec *executionContext) marshalNBoardColumn2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoardColumn(ctx context.Context, sel ast.SelectionSet, v *model.BoardColumn) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -17549,11 +17794,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) marshalNCard2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v model.Card) graphql.Marshaler {
+func (ec *executionContext) marshalNCard2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v model.Card) graphql.Marshaler {
 	return ec._Card(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCardᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Card) graphql.Marshaler {
+func (ec *executionContext) marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Card) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -17577,7 +17822,7 @@ func (ec *executionContext) marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulse
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCard(ctx, sel, v[i])
+			ret[i] = ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -17597,7 +17842,7 @@ func (ec *executionContext) marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulse
 	return ret
 }
 
-func (ec *executionContext) marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v *model.Card) graphql.Marshaler {
+func (ec *executionContext) marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v *model.Card) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -17607,52 +17852,52 @@ func (ec *executionContext) marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑ
 	return ec._Card(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCardPriority2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCardPriority(ctx context.Context, v interface{}) (model.CardPriority, error) {
+func (ec *executionContext) unmarshalNCardPriority2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardPriority(ctx context.Context, v interface{}) (model.CardPriority, error) {
 	var res model.CardPriority
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNCardPriority2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCardPriority(ctx context.Context, sel ast.SelectionSet, v model.CardPriority) graphql.Marshaler {
+func (ec *executionContext) marshalNCardPriority2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardPriority(ctx context.Context, sel ast.SelectionSet, v model.CardPriority) graphql.Marshaler {
 	return v
 }
 
-func (ec *executionContext) unmarshalNChangeMemberRoleInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐChangeMemberRoleInput(ctx context.Context, v interface{}) (model.ChangeMemberRoleInput, error) {
+func (ec *executionContext) unmarshalNChangeMemberRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐChangeMemberRoleInput(ctx context.Context, v interface{}) (model.ChangeMemberRoleInput, error) {
 	res, err := ec.unmarshalInputChangeMemberRoleInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateBoardInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateBoardInput(ctx context.Context, v interface{}) (model.CreateBoardInput, error) {
+func (ec *executionContext) unmarshalNCreateBoardInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateBoardInput(ctx context.Context, v interface{}) (model.CreateBoardInput, error) {
 	res, err := ec.unmarshalInputCreateBoardInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateCardInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateCardInput(ctx context.Context, v interface{}) (model.CreateCardInput, error) {
+func (ec *executionContext) unmarshalNCreateCardInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateCardInput(ctx context.Context, v interface{}) (model.CreateCardInput, error) {
 	res, err := ec.unmarshalInputCreateCardInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateColumnInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateColumnInput(ctx context.Context, v interface{}) (model.CreateColumnInput, error) {
+func (ec *executionContext) unmarshalNCreateColumnInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateColumnInput(ctx context.Context, v interface{}) (model.CreateColumnInput, error) {
 	res, err := ec.unmarshalInputCreateColumnInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateOrganizationInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateOrganizationInput(ctx context.Context, v interface{}) (model.CreateOrganizationInput, error) {
+func (ec *executionContext) unmarshalNCreateOrganizationInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateOrganizationInput(ctx context.Context, v interface{}) (model.CreateOrganizationInput, error) {
 	res, err := ec.unmarshalInputCreateOrganizationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateProjectInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateProjectInput(ctx context.Context, v interface{}) (model.CreateProjectInput, error) {
+func (ec *executionContext) unmarshalNCreateProjectInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateProjectInput(ctx context.Context, v interface{}) (model.CreateProjectInput, error) {
 	res, err := ec.unmarshalInputCreateProjectInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateRoleInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateRoleInput(ctx context.Context, v interface{}) (model.CreateRoleInput, error) {
+func (ec *executionContext) unmarshalNCreateRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateRoleInput(ctx context.Context, v interface{}) (model.CreateRoleInput, error) {
 	res, err := ec.unmarshalInputCreateRoleInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNCreateTagInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCreateTagInput(ctx context.Context, v interface{}) (model.CreateTagInput, error) {
+func (ec *executionContext) unmarshalNCreateTagInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateTagInput(ctx context.Context, v interface{}) (model.CreateTagInput, error) {
 	res, err := ec.unmarshalInputCreateTagInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -17734,11 +17979,11 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) marshalNInvitation2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐInvitation(ctx context.Context, sel ast.SelectionSet, v model.Invitation) graphql.Marshaler {
+func (ec *executionContext) marshalNInvitation2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐInvitation(ctx context.Context, sel ast.SelectionSet, v model.Invitation) graphql.Marshaler {
 	return ec._Invitation(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNInvitation2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐInvitationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Invitation) graphql.Marshaler {
+func (ec *executionContext) marshalNInvitation2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐInvitationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Invitation) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -17762,7 +18007,7 @@ func (ec *executionContext) marshalNInvitation2ᚕᚖgithubᚗcomᚋthatcatdev�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNInvitation2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐInvitation(ctx, sel, v[i])
+			ret[i] = ec.marshalNInvitation2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐInvitation(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -17782,7 +18027,7 @@ func (ec *executionContext) marshalNInvitation2ᚕᚖgithubᚗcomᚋthatcatdev�
 	return ret
 }
 
-func (ec *executionContext) marshalNInvitation2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐInvitation(ctx context.Context, sel ast.SelectionSet, v *model.Invitation) graphql.Marshaler {
+func (ec *executionContext) marshalNInvitation2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐInvitation(ctx context.Context, sel ast.SelectionSet, v *model.Invitation) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -17792,22 +18037,22 @@ func (ec *executionContext) marshalNInvitation2ᚖgithubᚗcomᚋthatcatdevᚋpu
 	return ec._Invitation(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNInviteMemberInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐInviteMemberInput(ctx context.Context, v interface{}) (model.InviteMemberInput, error) {
+func (ec *executionContext) unmarshalNInviteMemberInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐInviteMemberInput(ctx context.Context, v interface{}) (model.InviteMemberInput, error) {
 	res, err := ec.unmarshalInputInviteMemberInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐLoginInput(ctx context.Context, v interface{}) (model.LoginInput, error) {
+func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐLoginInput(ctx context.Context, v interface{}) (model.LoginInput, error) {
 	res, err := ec.unmarshalInputLoginInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNMoveCardInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐMoveCardInput(ctx context.Context, v interface{}) (model.MoveCardInput, error) {
+func (ec *executionContext) unmarshalNMoveCardInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐMoveCardInput(ctx context.Context, v interface{}) (model.MoveCardInput, error) {
 	res, err := ec.unmarshalInputMoveCardInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNOIDCProvider2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOIDCProviderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.OIDCProvider) graphql.Marshaler {
+func (ec *executionContext) marshalNOIDCProvider2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOIDCProviderᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.OIDCProvider) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -17831,7 +18076,7 @@ func (ec *executionContext) marshalNOIDCProvider2ᚕᚖgithubᚗcomᚋthatcatdev
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOIDCProvider2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOIDCProvider(ctx, sel, v[i])
+			ret[i] = ec.marshalNOIDCProvider2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOIDCProvider(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -17851,7 +18096,7 @@ func (ec *executionContext) marshalNOIDCProvider2ᚕᚖgithubᚗcomᚋthatcatdev
 	return ret
 }
 
-func (ec *executionContext) marshalNOIDCProvider2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOIDCProvider(ctx context.Context, sel ast.SelectionSet, v *model.OIDCProvider) graphql.Marshaler {
+func (ec *executionContext) marshalNOIDCProvider2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOIDCProvider(ctx context.Context, sel ast.SelectionSet, v *model.OIDCProvider) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -17861,11 +18106,11 @@ func (ec *executionContext) marshalNOIDCProvider2ᚖgithubᚗcomᚋthatcatdevᚋ
 	return ec._OIDCProvider(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOrganization2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganization(ctx context.Context, sel ast.SelectionSet, v model.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganization(ctx context.Context, sel ast.SelectionSet, v model.Organization) graphql.Marshaler {
 	return ec._Organization(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOrganization2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganizationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganizationᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Organization) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -17889,7 +18134,7 @@ func (ec *executionContext) marshalNOrganization2ᚕᚖgithubᚗcomᚋthatcatdev
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganization(ctx, sel, v[i])
+			ret[i] = ec.marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganization(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -17909,7 +18154,7 @@ func (ec *executionContext) marshalNOrganization2ᚕᚖgithubᚗcomᚋthatcatdev
 	return ret
 }
 
-func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *model.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *model.Organization) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -17919,11 +18164,11 @@ func (ec *executionContext) marshalNOrganization2ᚖgithubᚗcomᚋthatcatdevᚋ
 	return ec._Organization(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNOrganizationMember2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganizationMember(ctx context.Context, sel ast.SelectionSet, v model.OrganizationMember) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganizationMember2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganizationMember(ctx context.Context, sel ast.SelectionSet, v model.OrganizationMember) graphql.Marshaler {
 	return ec._OrganizationMember(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNOrganizationMember2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganizationMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.OrganizationMember) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganizationMember2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganizationMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.OrganizationMember) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -17947,7 +18192,7 @@ func (ec *executionContext) marshalNOrganizationMember2ᚕᚖgithubᚗcomᚋthat
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNOrganizationMember2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganizationMember(ctx, sel, v[i])
+			ret[i] = ec.marshalNOrganizationMember2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganizationMember(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -17967,7 +18212,7 @@ func (ec *executionContext) marshalNOrganizationMember2ᚕᚖgithubᚗcomᚋthat
 	return ret
 }
 
-func (ec *executionContext) marshalNOrganizationMember2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganizationMember(ctx context.Context, sel ast.SelectionSet, v *model.OrganizationMember) graphql.Marshaler {
+func (ec *executionContext) marshalNOrganizationMember2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganizationMember(ctx context.Context, sel ast.SelectionSet, v *model.OrganizationMember) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -17977,7 +18222,7 @@ func (ec *executionContext) marshalNOrganizationMember2ᚖgithubᚗcomᚋthatcat
 	return ec._OrganizationMember(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPermission2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐPermissionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Permission) graphql.Marshaler {
+func (ec *executionContext) marshalNPermission2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐPermissionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Permission) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -18001,7 +18246,7 @@ func (ec *executionContext) marshalNPermission2ᚕᚖgithubᚗcomᚋthatcatdev�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNPermission2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐPermission(ctx, sel, v[i])
+			ret[i] = ec.marshalNPermission2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐPermission(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -18021,7 +18266,7 @@ func (ec *executionContext) marshalNPermission2ᚕᚖgithubᚗcomᚋthatcatdev�
 	return ret
 }
 
-func (ec *executionContext) marshalNPermission2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐPermission(ctx context.Context, sel ast.SelectionSet, v *model.Permission) graphql.Marshaler {
+func (ec *executionContext) marshalNPermission2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐPermission(ctx context.Context, sel ast.SelectionSet, v *model.Permission) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -18031,11 +18276,11 @@ func (ec *executionContext) marshalNPermission2ᚖgithubᚗcomᚋthatcatdevᚋpu
 	return ec._Permission(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNProject2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v model.Project) graphql.Marshaler {
+func (ec *executionContext) marshalNProject2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v model.Project) graphql.Marshaler {
 	return ec._Project(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Project) graphql.Marshaler {
+func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProjectᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Project) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -18059,7 +18304,7 @@ func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋthatcatdevᚋpu
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx, sel, v[i])
+			ret[i] = ec.marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProject(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -18079,7 +18324,7 @@ func (ec *executionContext) marshalNProject2ᚕᚖgithubᚗcomᚋthatcatdevᚋpu
 	return ret
 }
 
-func (ec *executionContext) marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {
+func (ec *executionContext) marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -18089,11 +18334,11 @@ func (ec *executionContext) marshalNProject2ᚖgithubᚗcomᚋthatcatdevᚋpulse
 	return ec._Project(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNProjectMember2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProjectMember(ctx context.Context, sel ast.SelectionSet, v model.ProjectMember) graphql.Marshaler {
+func (ec *executionContext) marshalNProjectMember2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProjectMember(ctx context.Context, sel ast.SelectionSet, v model.ProjectMember) graphql.Marshaler {
 	return ec._ProjectMember(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNProjectMember2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProjectMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ProjectMember) graphql.Marshaler {
+func (ec *executionContext) marshalNProjectMember2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProjectMemberᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ProjectMember) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -18117,7 +18362,7 @@ func (ec *executionContext) marshalNProjectMember2ᚕᚖgithubᚗcomᚋthatcatde
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNProjectMember2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProjectMember(ctx, sel, v[i])
+			ret[i] = ec.marshalNProjectMember2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProjectMember(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -18137,7 +18382,7 @@ func (ec *executionContext) marshalNProjectMember2ᚕᚖgithubᚗcomᚋthatcatde
 	return ret
 }
 
-func (ec *executionContext) marshalNProjectMember2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProjectMember(ctx context.Context, sel ast.SelectionSet, v *model.ProjectMember) graphql.Marshaler {
+func (ec *executionContext) marshalNProjectMember2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProjectMember(ctx context.Context, sel ast.SelectionSet, v *model.ProjectMember) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -18147,21 +18392,21 @@ func (ec *executionContext) marshalNProjectMember2ᚖgithubᚗcomᚋthatcatdev�
 	return ec._ProjectMember(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNRegisterInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRegisterInput(ctx context.Context, v interface{}) (model.RegisterInput, error) {
+func (ec *executionContext) unmarshalNRegisterInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRegisterInput(ctx context.Context, v interface{}) (model.RegisterInput, error) {
 	res, err := ec.unmarshalInputRegisterInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNReorderColumnsInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐReorderColumnsInput(ctx context.Context, v interface{}) (model.ReorderColumnsInput, error) {
+func (ec *executionContext) unmarshalNReorderColumnsInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐReorderColumnsInput(ctx context.Context, v interface{}) (model.ReorderColumnsInput, error) {
 	res, err := ec.unmarshalInputReorderColumnsInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNRole2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRole(ctx context.Context, sel ast.SelectionSet, v model.Role) graphql.Marshaler {
+func (ec *executionContext) marshalNRole2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRole(ctx context.Context, sel ast.SelectionSet, v model.Role) graphql.Marshaler {
 	return ec._Role(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNRole2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRoleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Role) graphql.Marshaler {
+func (ec *executionContext) marshalNRole2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRoleᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Role) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -18185,7 +18430,7 @@ func (ec *executionContext) marshalNRole2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulse
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRole(ctx, sel, v[i])
+			ret[i] = ec.marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRole(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -18205,7 +18450,7 @@ func (ec *executionContext) marshalNRole2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulse
 	return ret
 }
 
-func (ec *executionContext) marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRole(ctx context.Context, sel ast.SelectionSet, v *model.Role) graphql.Marshaler {
+func (ec *executionContext) marshalNRole2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRole(ctx context.Context, sel ast.SelectionSet, v *model.Role) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -18262,11 +18507,11 @@ func (ec *executionContext) marshalNString2ᚕstringᚄ(ctx context.Context, sel
 	return ret
 }
 
-func (ec *executionContext) marshalNTag2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v model.Tag) graphql.Marshaler {
+func (ec *executionContext) marshalNTag2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v model.Tag) graphql.Marshaler {
 	return ec._Tag(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTagᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Tag) graphql.Marshaler {
+func (ec *executionContext) marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTagᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Tag) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -18290,7 +18535,7 @@ func (ec *executionContext) marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulse�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTag(ctx, sel, v[i])
+			ret[i] = ec.marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTag(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -18310,7 +18555,7 @@ func (ec *executionContext) marshalNTag2ᚕᚖgithubᚗcomᚋthatcatdevᚋpulse�
 	return ret
 }
 
-func (ec *executionContext) marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v *model.Tag) graphql.Marshaler {
+func (ec *executionContext) marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v *model.Tag) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -18335,51 +18580,51 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) unmarshalNUpdateBoardInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateBoardInput(ctx context.Context, v interface{}) (model.UpdateBoardInput, error) {
+func (ec *executionContext) unmarshalNUpdateBoardInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateBoardInput(ctx context.Context, v interface{}) (model.UpdateBoardInput, error) {
 	res, err := ec.unmarshalInputUpdateBoardInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateCardInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateCardInput(ctx context.Context, v interface{}) (model.UpdateCardInput, error) {
+func (ec *executionContext) unmarshalNUpdateCardInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateCardInput(ctx context.Context, v interface{}) (model.UpdateCardInput, error) {
 	res, err := ec.unmarshalInputUpdateCardInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateColumnInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateColumnInput(ctx context.Context, v interface{}) (model.UpdateColumnInput, error) {
+func (ec *executionContext) unmarshalNUpdateColumnInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateColumnInput(ctx context.Context, v interface{}) (model.UpdateColumnInput, error) {
 	res, err := ec.unmarshalInputUpdateColumnInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateMeInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateMeInput(ctx context.Context, v interface{}) (model.UpdateMeInput, error) {
+func (ec *executionContext) unmarshalNUpdateMeInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateMeInput(ctx context.Context, v interface{}) (model.UpdateMeInput, error) {
 	res, err := ec.unmarshalInputUpdateMeInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateOrganizationInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateOrganizationInput(ctx context.Context, v interface{}) (model.UpdateOrganizationInput, error) {
+func (ec *executionContext) unmarshalNUpdateOrganizationInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateOrganizationInput(ctx context.Context, v interface{}) (model.UpdateOrganizationInput, error) {
 	res, err := ec.unmarshalInputUpdateOrganizationInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateProjectInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateProjectInput(ctx context.Context, v interface{}) (model.UpdateProjectInput, error) {
+func (ec *executionContext) unmarshalNUpdateProjectInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateProjectInput(ctx context.Context, v interface{}) (model.UpdateProjectInput, error) {
 	res, err := ec.unmarshalInputUpdateProjectInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateRoleInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateRoleInput(ctx context.Context, v interface{}) (model.UpdateRoleInput, error) {
+func (ec *executionContext) unmarshalNUpdateRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateRoleInput(ctx context.Context, v interface{}) (model.UpdateRoleInput, error) {
 	res, err := ec.unmarshalInputUpdateRoleInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNUpdateTagInput2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUpdateTagInput(ctx context.Context, v interface{}) (model.UpdateTagInput, error) {
+func (ec *executionContext) unmarshalNUpdateTagInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateTagInput(ctx context.Context, v interface{}) (model.UpdateTagInput, error) {
 	res, err := ec.unmarshalInputUpdateTagInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -18661,7 +18906,7 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) marshalOBoard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐBoard(ctx context.Context, sel ast.SelectionSet, v *model.Board) graphql.Marshaler {
+func (ec *executionContext) marshalOBoard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoard(ctx context.Context, sel ast.SelectionSet, v *model.Board) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -18694,14 +18939,14 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOCard2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v *model.Card) graphql.Marshaler {
+func (ec *executionContext) marshalOCard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v *model.Card) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Card(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOCardPriority2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCardPriority(ctx context.Context, v interface{}) (*model.CardPriority, error) {
+func (ec *executionContext) unmarshalOCardPriority2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardPriority(ctx context.Context, v interface{}) (*model.CardPriority, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -18710,7 +18955,7 @@ func (ec *executionContext) unmarshalOCardPriority2ᚖgithubᚗcomᚋthatcatdev�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOCardPriority2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐCardPriority(ctx context.Context, sel ast.SelectionSet, v *model.CardPriority) graphql.Marshaler {
+func (ec *executionContext) marshalOCardPriority2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardPriority(ctx context.Context, sel ast.SelectionSet, v *model.CardPriority) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -18787,21 +19032,21 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return res
 }
 
-func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *model.Organization) graphql.Marshaler {
+func (ec *executionContext) marshalOOrganization2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐOrganization(ctx context.Context, sel ast.SelectionSet, v *model.Organization) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Organization(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOProject2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {
+func (ec *executionContext) marshalOProject2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐProject(ctx context.Context, sel ast.SelectionSet, v *model.Project) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Project(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐRole(ctx context.Context, sel ast.SelectionSet, v *model.Role) graphql.Marshaler {
+func (ec *executionContext) marshalORole2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRole(ctx context.Context, sel ast.SelectionSet, v *model.Role) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -18888,7 +19133,7 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋthatcatdevᚋpulseᚑbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -11,6 +11,7 @@
   let { mode }: Props = $props();
 
   let username = $state('');
+  let email = $state('');
   let password = $state('');
   let confirmPassword = $state('');
   let error = $state<string | null>(null);
@@ -44,6 +45,11 @@
       return;
     }
 
+    if (!isLogin && !email.trim()) {
+      error = 'Please enter your email address';
+      return;
+    }
+
     if (!isLogin && password !== confirmPassword) {
       error = 'Passwords do not match';
       return;
@@ -54,7 +60,7 @@
       if (isLogin) {
         await login(username, password);
       } else {
-        await register(username, password);
+        await register(username, email, password);
       }
       window.location.href = '/';
     } catch (e) {
@@ -118,6 +124,18 @@
           placeholder="Enter your username"
           required
         />
+
+        {#if !isLogin}
+          <Input
+            id="email"
+            label="Email"
+            type="email"
+            autocomplete="email"
+            bind:value={email}
+            placeholder="Enter your email address"
+            required
+          />
+        {/if}
 
         <Input
           id="password"

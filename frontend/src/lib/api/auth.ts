@@ -18,6 +18,8 @@ const REGISTER_MUTATION = `
       user {
         id
         username
+        email
+        emailVerified
         createdAt
       }
     }
@@ -61,6 +63,7 @@ const ME_QUERY = `
       id
       username
       email
+      emailVerified
       displayName
       avatarUrl
       createdAt
@@ -68,9 +71,29 @@ const ME_QUERY = `
   }
 `;
 
-export async function register(username: string, password: string): Promise<User> {
+const VERIFY_EMAIL_MUTATION = `
+  mutation VerifyEmail($token: String!) {
+    verifyEmail(token: $token) {
+      user {
+        id
+        username
+        email
+        emailVerified
+        createdAt
+      }
+    }
+  }
+`;
+
+const RESEND_VERIFICATION_EMAIL_MUTATION = `
+  mutation ResendVerificationEmail {
+    resendVerificationEmail
+  }
+`;
+
+export async function register(username: string, email: string, password: string): Promise<User> {
   const data = await graphql<RegisterMutation>(REGISTER_MUTATION, {
-    input: { username, password },
+    input: { username, email, password },
   } as RegisterMutationVariables);
   return data.register.user;
 }
@@ -97,4 +120,16 @@ export async function updateMe(input: UpdateMeInput): Promise<User> {
     input,
   } as UpdateMeMutationVariables);
   return data.updateMe;
+}
+
+export async function verifyEmail(token: string): Promise<User> {
+  const data = await graphql<{ verifyEmail: { user: User } }>(VERIFY_EMAIL_MUTATION, {
+    token,
+  });
+  return data.verifyEmail.user;
+}
+
+export async function resendVerificationEmail(): Promise<boolean> {
+  const data = await graphql<{ resendVerificationEmail: boolean }>(RESEND_VERIFICATION_EMAIL_MUTATION);
+  return data.resendVerificationEmail;
 }
