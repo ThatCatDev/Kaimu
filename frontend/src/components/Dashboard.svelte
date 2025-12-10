@@ -88,7 +88,7 @@
               name={org.name}
               slug={org.slug}
               description={org.description}
-              projectCount={0}
+              projectCount={org.projects?.length ?? 0}
             />
           {/each}
         </div>

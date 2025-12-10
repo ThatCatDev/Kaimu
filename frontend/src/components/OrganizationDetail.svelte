@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { toast } from 'svelte-sonner';
   import { getOrganization, deleteOrganization, updateOrganization } from '../lib/api/organizations';
+  import { deleteProject } from '../lib/api/projects';
   import { getMe } from '../lib/api/auth';
   import ProjectCard from './ProjectCard.svelte';
   import EditableTitle from './EditableTitle.svelte';
@@ -9,6 +10,7 @@
   import type { OrganizationQuery, User } from '../lib/graphql/generated';
   import { Permissions } from '../lib/stores/permissions.svelte';
   import { getMyPermissions } from '../lib/api/rbac';
+  import { sidebarStore } from '../lib/stores/sidebar.svelte';
 
   interface Props {
     organizationId: string;
@@ -22,6 +24,7 @@
   let canManageOrg = $derived(permissions.includes(Permissions.ORG_MANAGE));
   let canDeleteOrg = $derived(permissions.includes(Permissions.ORG_DELETE));
   let canCreateProject = $derived(permissions.includes(Permissions.PROJECT_CREATE));
+  let canDeleteProject = $derived(permissions.includes(Permissions.PROJECT_DELETE));
 
   type OrgWithProjects = NonNullable<OrganizationQuery['organization']>;
 
@@ -31,6 +34,12 @@
   let error = $state<string | null>(null);
   let showDeleteModal = $state(false);
   let deleting = $state(false);
+
+  // Project deletion state
+  type Project = OrgWithProjects['projects'][0];
+  let showDeleteProjectModal = $state(false);
+  let projectToDelete = $state<Project | null>(null);
+  let deletingProject = $state(false);
 
   onMount(async () => {
     try {
@@ -65,6 +74,7 @@
     try {
       deleting = true;
       await deleteOrganization(organizationId);
+      sidebarStore.refresh();
       toast.success('Organization deleted');
       window.location.href = '/dashboard';
     } catch (e) {
@@ -80,6 +90,34 @@
     if (!organization) return;
     const updated = await updateOrganization(organizationId, { name: newName });
     organization = { ...organization, name: updated.name, slug: updated.slug };
+    sidebarStore.refresh();
+  }
+
+  function openDeleteProjectModal(project: Project) {
+    projectToDelete = project;
+    showDeleteProjectModal = true;
+  }
+
+  async function handleDeleteProject() {
+    if (!projectToDelete || !organization) return;
+    try {
+      deletingProject = true;
+      await deleteProject(projectToDelete.id);
+      // Remove the project from the local list
+      organization = {
+        ...organization,
+        projects: organization.projects.filter(p => p.id !== projectToDelete!.id)
+      };
+      showDeleteProjectModal = false;
+      projectToDelete = null;
+      sidebarStore.refresh();
+      toast.success('Project deleted');
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to delete project';
+      toast.error(message);
+    } finally {
+      deletingProject = false;
+    }
   }
 </script>
 
@@ -179,6 +217,9 @@
               name={project.name}
               projectKey={project.key}
               description={project.description}
+              boardCount={project.boards?.length ?? 0}
+              canDelete={canDeleteProject}
+              onDelete={() => openDeleteProjectModal(project)}
             />
           {/each}
         </div>
@@ -195,5 +236,16 @@
     variant="danger"
     onConfirm={handleDelete}
     onCancel={() => showDeleteModal = false}
+  />
+
+  <ConfirmModal
+    isOpen={showDeleteProjectModal}
+    title="Delete Project"
+    message={`Are you sure you want to delete "${projectToDelete?.name}"? This will permanently delete all boards and cards in this project. This action cannot be undone.`}
+    confirmText={deletingProject ? 'Deleting...' : 'Delete Project'}
+    cancelText="Cancel"
+    variant="danger"
+    onConfirm={handleDeleteProject}
+    onCancel={() => { showDeleteProjectModal = false; projectToDelete = null; }}
   />
 {/if}

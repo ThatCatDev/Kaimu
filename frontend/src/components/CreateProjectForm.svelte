@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createProject } from '../lib/api/projects';
   import { Input, Textarea, Button } from './ui';
+  import { sidebarStore } from '../lib/stores/sidebar.svelte';
 
   interface Props {
     organizationId: string;
@@ -56,6 +57,7 @@
         key.trim().toUpperCase(),
         description.trim() || undefined
       );
+      sidebarStore.refresh();
       window.location.href = `/projects/${project.id}`;
     } catch (e) {
       error = e instanceof Error ? e.message : 'An error occurred';

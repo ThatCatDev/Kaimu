@@ -9,6 +9,7 @@
   import type { ProjectQuery, User, BoardsQuery } from '../lib/graphql/generated';
   import { Permissions } from '../lib/stores/permissions.svelte';
   import { getMyPermissions } from '../lib/api/rbac';
+  import { sidebarStore } from '../lib/stores/sidebar.svelte';
 
   interface Props {
     projectId: string;
@@ -48,8 +49,6 @@
   let boardToDelete = $state<Board | null>(null);
   let deletingBoard = $state(false);
 
-  let defaultBoard = $derived(boards.find(b => b.isDefault) ?? boards[0]);
-
   onMount(async () => {
     try {
       const [me, proj, perms] = await Promise.all([
@@ -85,6 +84,7 @@
     try {
       deletingProject = true;
       await deleteProject(projectId);
+      sidebarStore.refresh();
       toast.success('Project deleted');
       window.location.href = `/organizations/${project.organization.id}`;
     } catch (e) {
@@ -105,6 +105,7 @@
       showCreateBoardModal = false;
       newBoardName = '';
       newBoardDescription = '';
+      sidebarStore.refresh();
       toast.success('Board created');
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to create board';
@@ -122,6 +123,7 @@
       boards = await getBoards(projectId);
       showDeleteBoardModal = false;
       boardToDelete = null;
+      sidebarStore.refresh();
       toast.success('Board deleted');
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to delete board';
@@ -140,6 +142,7 @@
     if (!project) return;
     const updated = await updateProject(projectId, { name: newName });
     project = { ...project, name: updated.name };
+    sidebarStore.refresh();
   }
 </script>
 
@@ -206,56 +209,70 @@
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {#if defaultBoard}
-        <a
-          href={`/projects/${projectId}/board/${defaultBoard.id}`}
-          class="bg-white shadow rounded-lg p-6 hover:shadow-md transition-shadow group"
-        >
-          <div class="flex items-center gap-4 mb-2">
-            <div class="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors">
-              <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-              </svg>
+    <div>
+      <h2 class="text-lg font-medium text-gray-900 mb-4">Boards</h2>
+      {#if boards.length === 0}
+        <div class="text-center py-12 bg-white rounded-lg shadow">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No boards</h3>
+          {#if canCreateBoard}
+            <p class="mt-1 text-sm text-gray-500">Get started by creating a new board.</p>
+            <div class="mt-6">
+              <button
+                type="button"
+                onclick={() => showCreateBoardModal = true}
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                New Board
+              </button>
             </div>
-            <div>
-              <h3 class="text-lg font-medium text-gray-900">Kanban Board</h3>
-              <p class="text-sm text-gray-500">{defaultBoard.name}</p>
-            </div>
-          </div>
-          <p class="text-sm text-gray-600">
-            {defaultBoard.description ?? 'View and manage tasks with drag-and-drop'}
-          </p>
-        </a>
-      {/if}
-
-      {#if boards.length > 1}
-        <div class="bg-white shadow rounded-lg p-6">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Other Boards</h3>
-          <ul class="space-y-2">
-            {#each boards.filter(b => !b.isDefault) as board}
-              <li class="flex items-center justify-between group">
-                <a
-                  href={`/projects/${projectId}/board/${board.id}`}
-                  class="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-                >
-                  {board.name}
-                </a>
-                {#if canDeleteBoard}
-                  <button
-                    type="button"
-                    onclick={() => openDeleteBoardModal(board)}
-                    class="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-600 transition-opacity"
-                    title="Delete board"
-                  >
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+          {:else}
+            <p class="mt-1 text-sm text-gray-500">No boards have been created yet.</p>
+          {/if}
+        </div>
+      {:else}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {#each boards as board (board.id)}
+            <div class="bg-white shadow rounded-lg hover:shadow-md transition-shadow group relative">
+              <a
+                href={`/projects/${projectId}/board/${board.id}`}
+                class="block p-6"
+              >
+                <div class="flex items-start justify-between">
+                  <div class="flex items-center gap-3">
+                    <div class="p-2 bg-indigo-100 rounded-lg group-hover:bg-indigo-200 transition-colors flex-shrink-0">
+                      <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                      </svg>
+                    </div>
+                    <div class="min-w-0">
+                      <h3 class="text-base font-semibold text-gray-900 truncate">{board.name}</h3>
+                    </div>
+                  </div>
+                </div>
+                {#if board.description}
+                  <p class="mt-3 text-sm text-gray-600 line-clamp-2">{board.description}</p>
                 {/if}
-              </li>
-            {/each}
-          </ul>
+              </a>
+              {#if canDeleteBoard}
+                <button
+                  type="button"
+                  onclick={(e) => { e.preventDefault(); e.stopPropagation(); openDeleteBoardModal(board); }}
+                  class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-all"
+                  title="Delete board"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              {/if}
+            </div>
+          {/each}
         </div>
       {/if}
     </div>

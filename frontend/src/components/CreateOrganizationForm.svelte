@@ -1,6 +1,7 @@
 <script lang="ts">
   import { createOrganization } from '../lib/api/organizations';
   import { Input, Textarea, Button } from './ui';
+  import { sidebarStore } from '../lib/stores/sidebar.svelte';
 
   let name = $state('');
   let description = $state('');
@@ -19,6 +20,7 @@
     loading = true;
     try {
       const org = await createOrganization(name.trim(), description.trim() || undefined);
+      sidebarStore.refresh();
       window.location.href = `/organizations/${org.id}`;
     } catch (e) {
       error = e instanceof Error ? e.message : 'An error occurred';

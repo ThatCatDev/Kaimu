@@ -31,7 +31,10 @@
   function formatDisplayDate(dateStr: string): string {
     if (!dateStr) return '—';
     try {
-      const date = new Date(dateStr);
+      // Parse the date parts to avoid timezone conversion issues
+      // Input format is YYYY-MM-DD
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const date = new Date(year, month - 1, day); // month is 0-indexed
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     } catch {
       return dateStr;

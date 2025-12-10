@@ -2221,6 +2221,7 @@ input UpdateCardInput {
     assigneeId: ID
     tagIds: [ID!]
     dueDate: Time
+    clearDueDate: Boolean
 }
 
 input MoveCardInput {
@@ -14276,7 +14277,7 @@ func (ec *executionContext) unmarshalInputUpdateCardInput(ctx context.Context, o
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"id", "title", "description", "priority", "assigneeId", "tagIds", "dueDate"}
+	fieldsInOrder := [...]string{"id", "title", "description", "priority", "assigneeId", "tagIds", "dueDate", "clearDueDate"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -14346,6 +14347,15 @@ func (ec *executionContext) unmarshalInputUpdateCardInput(ctx context.Context, o
 				return it, err
 			}
 			it.DueDate = data
+		case "clearDueDate":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDueDate"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearDueDate = data
 		}
 	}
 

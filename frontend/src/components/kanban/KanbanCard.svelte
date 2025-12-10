@@ -41,22 +41,32 @@
   };
 
   function formatDueDate(dateStr: string): string {
-    const date = new Date(dateStr);
+    // Parse date string - extract just the date part to avoid timezone issues
+    const datePart = dateStr.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
+    const date = new Date(year, month - 1, day); // Create in local time
+
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    if (date.toDateString() === today.toDateString()) {
+    if (date.getTime() === today.getTime()) {
       return 'Today';
     }
-    if (date.toDateString() === tomorrow.toDateString()) {
+    if (date.getTime() === tomorrow.getTime()) {
       return 'Tomorrow';
     }
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 
   function isOverdue(dateStr: string): boolean {
-    const date = new Date(dateStr);
+    // Parse date string - extract just the date part to avoid timezone issues
+    const datePart = dateStr.split('T')[0];
+    const [year, month, day] = datePart.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    date.setHours(0, 0, 0, 0);
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return date < today;

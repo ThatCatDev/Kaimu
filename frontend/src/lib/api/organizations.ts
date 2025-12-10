@@ -68,6 +68,9 @@ const ORGANIZATION_QUERY = `
         description
         createdAt
         updatedAt
+        boards {
+          id
+        }
       }
     }
   }

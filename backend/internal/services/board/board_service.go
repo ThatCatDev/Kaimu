@@ -117,9 +117,9 @@ func (s *service) CreateDefaultBoard(ctx context.Context, projectID uuid.UUID, c
 
 	b := &board.Board{
 		ProjectID:   projectID,
-		Name:        "Default Board",
-		Description: "",
-		IsDefault:   true,
+		Name:        "Main Board",
+		Description: "Kanban board for tracking tasks",
+		IsDefault:   false,
 		CreatedBy:   createdBy,
 	}
 
@@ -220,17 +220,13 @@ func (s *service) DeleteBoard(ctx context.Context, id uuid.UUID) error {
 	span.SetAttributes(attribute.String("board.id", id.String()))
 	defer span.End()
 
-	// Check if it's the default board
-	b, err := s.boardRepo.GetByID(ctx, id)
+	// Verify board exists
+	_, err := s.boardRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrBoardNotFound
 		}
 		return err
-	}
-
-	if b.IsDefault {
-		return ErrCannotDeleteDefault
 	}
 
 	return s.boardRepo.Delete(ctx, id)

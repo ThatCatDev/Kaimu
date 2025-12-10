@@ -35,13 +35,14 @@ type CreateCardInput struct {
 }
 
 type UpdateCardInput struct {
-	ID          uuid.UUID
-	Title       *string
-	Description *string
-	Priority    *card.CardPriority
-	AssigneeID  *uuid.UUID
-	TagIDs      []uuid.UUID
-	DueDate     *time.Time
+	ID           uuid.UUID
+	Title        *string
+	Description  *string
+	Priority     *card.CardPriority
+	AssigneeID   *uuid.UUID
+	TagIDs       []uuid.UUID
+	DueDate      *time.Time
+	ClearDueDate bool
 }
 
 type Service interface {
@@ -212,7 +213,9 @@ func (s *service) UpdateCard(ctx context.Context, input UpdateCardInput) (*card.
 	if input.AssigneeID != nil {
 		c.AssigneeID = input.AssigneeID
 	}
-	if input.DueDate != nil {
+	if input.ClearDueDate {
+		c.DueDate = nil
+	} else if input.DueDate != nil {
 		c.DueDate = input.DueDate
 	}
 

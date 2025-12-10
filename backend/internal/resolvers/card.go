@@ -209,7 +209,9 @@ func UpdateCard(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardSe
 		}
 		updateInput.TagIDs = tagIDs
 	}
-	if input.DueDate != nil {
+	if input.ClearDueDate != nil && *input.ClearDueDate {
+		updateInput.ClearDueDate = true
+	} else if input.DueDate != nil {
 		updateInput.DueDate = input.DueDate
 	}
 

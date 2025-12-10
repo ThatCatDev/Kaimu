@@ -629,6 +629,7 @@ export type UpdateBoardInput = {
 
 export type UpdateCardInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  clearDueDate?: InputMaybe<Scalars['Boolean']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['Time']['input']>;
   id: Scalars['ID']['input'];
@@ -882,7 +883,7 @@ export type OrganizationQueryVariables = Exact<{
 }>;
 
 
-export type OrganizationQuery = { __typename?: 'Query', organization?: { __typename?: 'Organization', id: string, name: string, slug: string, description?: string | null, createdAt: string, updatedAt: string, projects: Array<{ __typename?: 'Project', id: string, name: string, key: string, description?: string | null, createdAt: string, updatedAt: string }> } | null };
+export type OrganizationQuery = { __typename?: 'Query', organization?: { __typename?: 'Organization', id: string, name: string, slug: string, description?: string | null, createdAt: string, updatedAt: string, projects: Array<{ __typename?: 'Project', id: string, name: string, key: string, description?: string | null, createdAt: string, updatedAt: string, boards: Array<{ __typename?: 'Board', id: string }> }> } | null };
 
 export type UpdateOrganizationMutationVariables = Exact<{
   input: UpdateOrganizationInput;

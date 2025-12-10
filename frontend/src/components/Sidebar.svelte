@@ -1,10 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { getOrganizations } from '../lib/api/organizations';
-  import type { OrganizationsQuery } from '../lib/graphql/generated';
+  import { sidebarStore, type SidebarOrganization } from '../lib/stores/sidebar.svelte';
 
-  type OrganizationListItem = OrganizationsQuery['organizations'][number];
-  type ProjectItem = OrganizationListItem['projects'][number];
+  type ProjectItem = SidebarOrganization['projects'][number];
 
   interface Props {
     collapsed?: boolean;
@@ -14,8 +12,10 @@
 
   let { collapsed = false, onToggle, currentPath = '' }: Props = $props();
 
-  let organizations = $state<OrganizationListItem[]>([]);
-  let loading = $state(true);
+  // Use store data
+  let organizations = $derived(sidebarStore.organizations);
+  let loading = $derived(sidebarStore.loading && !sidebarStore.initialized);
+
   let expandedOrgs = $state<Set<string>>(new Set());
   let expandedProjects = $state<Set<string>>(new Set());
 
@@ -36,75 +36,58 @@
     }
   }
 
-  // Load cached organizations to prevent flash on navigation
-  function loadCachedOrganizations(): OrganizationListItem[] | null {
-    try {
-      const cached = sessionStorage.getItem('sidebarOrganizations');
-      if (cached) return JSON.parse(cached);
-    } catch {
-      // Ignore parse errors
+  // Auto-expand based on current path
+  function autoExpandForPath() {
+    // Auto-expand org if we're viewing one of its pages
+    const orgMatch = currentPath.match(/\/organizations\/([^/]+)/);
+    if (orgMatch && orgMatch[1] !== 'new') {
+      const orgId = orgMatch[1];
+      if (!expandedOrgs.has(orgId)) {
+        expandedOrgs.add(orgId);
+        expandedOrgs = new Set(expandedOrgs);
+        saveExpandedState();
+      }
     }
-    return null;
+
+    // Auto-expand org and project if we're viewing a project or board
+    const projectMatch = currentPath.match(/\/projects\/([^/]+)/);
+    if (projectMatch) {
+      const projectId = projectMatch[1];
+      for (const org of organizations) {
+        const project = org.projects?.find(p => p.id === projectId);
+        if (project) {
+          if (!expandedOrgs.has(org.id)) {
+            expandedOrgs.add(org.id);
+            expandedOrgs = new Set(expandedOrgs);
+          }
+          // Always expand the project to show boards
+          if (project.boards && project.boards.length > 0 && !expandedProjects.has(project.id)) {
+            expandedProjects.add(project.id);
+            expandedProjects = new Set(expandedProjects);
+          }
+          saveExpandedState();
+          break;
+        }
+      }
+    }
   }
 
-  function cacheOrganizations(orgs: OrganizationListItem[]) {
-    try {
-      sessionStorage.setItem('sidebarOrganizations', JSON.stringify(orgs));
-    } catch {
-      // Ignore storage errors
+  // React to organizations changes for auto-expand
+  $effect(() => {
+    if (organizations.length > 0) {
+      autoExpandForPath();
     }
-  }
+  });
 
   onMount(async () => {
     // Load persisted expanded state first
     loadExpandedState();
 
-    // Use cached data to prevent flash on navigation
-    const cached = loadCachedOrganizations();
-    if (cached) {
-      organizations = cached;
-      loading = false;
-    }
+    // Initialize from cache for instant render
+    sidebarStore.initializeFromCache();
 
-    try {
-      const fresh = await getOrganizations();
-      organizations = fresh;
-      cacheOrganizations(fresh);
-
-      // Auto-expand org if we're viewing one of its pages
-      const orgMatch = currentPath.match(/\/organizations\/([^/]+)/);
-      if (orgMatch && orgMatch[1] !== 'new') {
-        const orgId = orgMatch[1];
-        expandedOrgs.add(orgId);
-        expandedOrgs = new Set(expandedOrgs);
-      }
-
-      // Auto-expand org and project if we're viewing a project or board
-      const projectMatch = currentPath.match(/\/projects\/([^/]+)/);
-      if (projectMatch) {
-        const projectId = projectMatch[1];
-        for (const org of organizations) {
-          const project = org.projects?.find(p => p.id === projectId);
-          if (project) {
-            expandedOrgs.add(org.id);
-            expandedOrgs = new Set(expandedOrgs);
-            // Always expand the project to show boards
-            if (project.boards && project.boards.length > 0) {
-              expandedProjects.add(project.id);
-              expandedProjects = new Set(expandedProjects);
-            }
-            break;
-          }
-        }
-      }
-
-      // Save the expanded state after auto-expand
-      saveExpandedState();
-    } catch {
-      // Silently fail - user might not be logged in
-    } finally {
-      loading = false;
-    }
+    // Then fetch fresh data
+    await sidebarStore.loadOrganizations();
   });
 
   function toggleOrg(orgId: string) {
@@ -131,9 +114,6 @@
     return currentPath === path || currentPath.startsWith(path + '/');
   }
 
-  function getDefaultBoard(project: ProjectItem) {
-    return project.boards?.find(b => b.isDefault) || project.boards?.[0];
-  }
 </script>
 
 <aside
@@ -311,9 +291,6 @@
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
                                 </svg>
                                 <span class="truncate">{board.name}</span>
-                                {#if board.isDefault}
-                                  <span class="text-[10px] text-indigo-400">default</span>
-                                {/if}
                               </a>
                             {/each}
                           </div>

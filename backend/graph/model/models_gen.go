@@ -232,13 +232,14 @@ type UpdateBoardInput struct {
 }
 
 type UpdateCardInput struct {
-	ID          string        `json:"id"`
-	Title       *string       `json:"title,omitempty"`
-	Description *string       `json:"description,omitempty"`
-	Priority    *CardPriority `json:"priority,omitempty"`
-	AssigneeID  *string       `json:"assigneeId,omitempty"`
-	TagIds      []string      `json:"tagIds,omitempty"`
-	DueDate     *time.Time    `json:"dueDate,omitempty"`
+	ID           string        `json:"id"`
+	Title        *string       `json:"title,omitempty"`
+	Description  *string       `json:"description,omitempty"`
+	Priority     *CardPriority `json:"priority,omitempty"`
+	AssigneeID   *string       `json:"assigneeId,omitempty"`
+	TagIds       []string      `json:"tagIds,omitempty"`
+	DueDate      *time.Time    `json:"dueDate,omitempty"`
+	ClearDueDate *bool         `json:"clearDueDate,omitempty"`
 }
 
 type UpdateColumnInput struct {

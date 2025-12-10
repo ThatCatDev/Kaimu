@@ -45,6 +45,9 @@ query Organization($id: ID!) {
       description
       createdAt
       updatedAt
+      boards {
+        id
+      }
     }
   }
 }

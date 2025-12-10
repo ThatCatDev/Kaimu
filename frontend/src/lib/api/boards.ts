@@ -406,8 +406,19 @@ export async function updateCard(
   tagIds?: string[],
   dueDate?: string | null
 ): Promise<UpdateCardMutation['updateCard']> {
+  // When dueDate is explicitly null, we want to clear it
+  const clearDueDate = dueDate === null;
   const data = await graphql<UpdateCardMutation>(UPDATE_CARD_MUTATION, {
-    input: { id, title, description, priority, assigneeId, tagIds, dueDate },
+    input: {
+      id,
+      title,
+      description,
+      priority,
+      assigneeId,
+      tagIds,
+      dueDate: clearDueDate ? undefined : dueDate,
+      clearDueDate: clearDueDate ? true : undefined,
+    },
   } as UpdateCardMutationVariables);
   return data.updateCard;
 }
