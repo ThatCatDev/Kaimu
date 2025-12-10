@@ -294,6 +294,12 @@ export type MutationUpdateTagArgs = {
   input: UpdateTagInput;
 };
 
+export type OidcProvider = {
+  __typename?: 'OIDCProvider';
+  name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+};
+
 export type Organization = {
   __typename?: 'Organization';
   createdAt: Scalars['Time']['output'];
@@ -344,6 +350,8 @@ export type Query = {
   me?: Maybe<User>;
   /** Get all cards assigned to the current user */
   myCards: Array<Card>;
+  /** Get available OIDC providers */
+  oidcProviders: Array<OidcProvider>;
   /** Get a specific organization by ID */
   organization?: Maybe<Organization>;
   /** Get all organizations for the current user */
@@ -449,7 +457,10 @@ export type UpdateTagInput = {
 
 export type User = {
   __typename?: 'User';
+  avatarUrl?: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['Time']['output'];
+  displayName?: Maybe<Scalars['String']['output']>;
+  email?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   username: Scalars['String']['output'];
 };
@@ -481,7 +492,12 @@ export type LogoutMutation = { __typename?: 'Mutation', logout: boolean };
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me?: { __typename?: 'User', id: string, username: string, createdAt: string } | null };
+export type MeQuery = { __typename?: 'Query', me?: { __typename?: 'User', id: string, username: string, email?: string | null, displayName?: string | null, avatarUrl?: string | null, createdAt: string } | null };
+
+export type OidcProvidersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type OidcProvidersQuery = { __typename?: 'Query', oidcProviders: Array<{ __typename?: 'OIDCProvider', slug: string, name: string }> };
 
 export type BoardQueryVariables = Exact<{
   id: Scalars['ID']['input'];

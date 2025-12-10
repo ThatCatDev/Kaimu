@@ -1,0 +1,57 @@
+---
+title: Pulse Documentation
+description: A modern project management tool for software teams
+template: splash
+hero:
+  tagline: A self-hosted project management tool built with modern technologies
+  image:
+    file: ../../assets/houston.webp
+  actions:
+    - text: Get Started
+      link: /getting-started/introduction/
+      icon: right-arrow
+    - text: View on GitHub
+      link: https://github.com/thatcatdev/pulse
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## Features
+
+<CardGrid stagger>
+	<Card title="Modern Stack" icon="rocket">
+		Built with Go, GraphQL, Astro, and Svelte 5 for a fast and responsive experience.
+	</Card>
+	<Card title="Self-Hosted" icon="server">
+		Full control over your data. Deploy on your own infrastructure with Docker.
+	</Card>
+	<Card title="OIDC Authentication" icon="seti:lock">
+		Integrate with any OpenID Connect provider: Google, Okta, Azure AD, and more.
+	</Card>
+	<Card title="Kanban Boards" icon="list-format">
+		Organize work with customizable Kanban boards, columns, and cards.
+	</Card>
+</CardGrid>
+
+## Quick Links
+
+<CardGrid>
+	<Card title="Quick Start" icon="rocket">
+		Get Pulse running in minutes with Docker Compose.
+		[Read the guide](/getting-started/quick-start/)
+	</Card>
+	<Card title="Authentication" icon="seti:lock">
+		Configure OIDC providers for secure authentication.
+		[Learn more](/configuration/authentication/)
+	</Card>
+	<Card title="Self-Hosting" icon="server">
+		Deploy Pulse on your own infrastructure.
+		[View guide](/guides/self-hosting/)
+	</Card>
+	<Card title="API Reference" icon="document">
+		Explore the GraphQL API.
+		[View reference](/api/graphql/)
+	</Card>
+</CardGrid>

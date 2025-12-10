@@ -26,6 +26,16 @@ query Me {
   me {
     id
     username
+    email
+    displayName
+    avatarUrl
     createdAt
+  }
+}
+
+query OidcProviders {
+  oidcProviders {
+    slug
+    name
   }
 }

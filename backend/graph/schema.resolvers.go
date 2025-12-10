@@ -144,6 +144,23 @@ func (r *queryResolver) Me(ctx context.Context) (*model.User, error) {
 	return resolvers.Me(ctx, r.AuthService)
 }
 
+// OidcProviders is the resolver for the oidcProviders field.
+func (r *queryResolver) OidcProviders(ctx context.Context) ([]*model.OIDCProvider, error) {
+	providers, err := r.OIDCService.GetProviders(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.OIDCProvider, len(providers))
+	for i, p := range providers {
+		result[i] = &model.OIDCProvider{
+			Slug: p.Slug,
+			Name: p.Name,
+		}
+	}
+	return result, nil
+}
+
 // Organizations is the resolver for the organizations field.
 func (r *queryResolver) Organizations(ctx context.Context) ([]*model.Organization, error) {
 	return resolvers.Organizations(ctx, r.OrganizationService, r.ProjectService, r.BoardService)

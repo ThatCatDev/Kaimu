@@ -1,7 +1,15 @@
 type User {
     id: ID!
     username: String!
+    email: String
+    displayName: String
+    avatarUrl: String
     createdAt: Time!
+}
+
+type OIDCProvider {
+    slug: String!
+    name: String!
 }
 
 type AuthPayload {

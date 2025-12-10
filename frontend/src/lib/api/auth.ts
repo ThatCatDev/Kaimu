@@ -44,6 +44,9 @@ const ME_QUERY = `
     me {
       id
       username
+      email
+      displayName
+      avatarUrl
       createdAt
     }
   }

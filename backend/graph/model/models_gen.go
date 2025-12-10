@@ -106,6 +106,11 @@ type MoveCardInput struct {
 	AfterCardID    *string `json:"afterCardId,omitempty"`
 }
 
+type OIDCProvider struct {
+	Slug string `json:"slug"`
+	Name string `json:"name"`
+}
+
 type Organization struct {
 	ID          string                `json:"id"`
 	Name        string                `json:"name"`
@@ -201,9 +206,12 @@ type UpdateTagInput struct {
 }
 
 type User struct {
-	ID        string    `json:"id"`
-	Username  string    `json:"username"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID          string    `json:"id"`
+	Username    string    `json:"username"`
+	Email       *string   `json:"email,omitempty"`
+	DisplayName *string   `json:"displayName,omitempty"`
+	AvatarURL   *string   `json:"avatarUrl,omitempty"`
+	CreatedAt   time.Time `json:"createdAt"`
 }
 
 type CardPriority string

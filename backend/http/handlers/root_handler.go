@@ -14,6 +14,7 @@ import (
 	boardColumnRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board_column"
 	cardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
 	cardTagRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_tag"
+	oidcIdentityRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/oidc_identity"
 	orgRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
 	orgMemberRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
 	projectRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/project"
@@ -23,6 +24,7 @@ import (
 	"github.com/thatcatdev/pulse-backend/internal/services/auth"
 	"github.com/thatcatdev/pulse-backend/internal/services/board"
 	"github.com/thatcatdev/pulse-backend/internal/services/card"
+	"github.com/thatcatdev/pulse-backend/internal/services/oidc"
 	"github.com/thatcatdev/pulse-backend/internal/services/organization"
 	"github.com/thatcatdev/pulse-backend/internal/services/project"
 	"github.com/thatcatdev/pulse-backend/internal/services/tag"
@@ -31,11 +33,13 @@ import (
 // Dependencies holds all initialized dependencies for the application
 type Dependencies struct {
 	AuthService         auth.Service
+	OIDCService         oidc.Service
 	OrganizationService organization.Service
 	ProjectService      project.Service
 	BoardService        board.Service
 	CardService         card.Service
 	TagService          tag.Service
+	OIDCHandler         *OIDCHandler
 }
 
 // InitializeDependencies creates all application dependencies
@@ -53,6 +57,7 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 	cardRepository := cardRepo.NewRepository(database.DB)
 	tagRepository := tagRepo.NewRepository(database.DB)
 	cardTagRepository := cardTagRepo.NewRepository(database.DB)
+	oidcIdentityRepository := oidcIdentityRepo.NewRepository(database.DB)
 
 	// Initialize services
 	authService := auth.NewService(
@@ -91,13 +96,31 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		projectRepository,
 	)
 
+	// Initialize OIDC service and handler
+	stateManager := oidc.NewStateManager(cfg.OIDCConfig.StateExpirationMinutes)
+	oidcService := oidc.NewService(
+		cfg.OIDCConfig.Providers, // Providers from config (env var)
+		oidcIdentityRepository,
+		userRepository,
+		stateManager,
+		cfg.OIDCConfig.BaseURL,
+		cfg.OIDCConfig.FrontendURL,
+		cfg.AppConfig.JWTSecret,
+		cfg.AppConfig.JWTExpirationHours,
+	)
+
+	isSecure := cfg.AppConfig.Env != "development"
+	oidcHandler := NewOIDCHandler(oidcService, cfg.OIDCConfig.FrontendURL, isSecure)
+
 	return &Dependencies{
 		AuthService:         authService,
+		OIDCService:         oidcService,
 		OrganizationService: organizationService,
 		ProjectService:      projectService,
 		BoardService:        boardService,
 		CardService:         cardService,
 		TagService:          tagService,
+		OIDCHandler:         oidcHandler,
 	}
 }
 
@@ -120,6 +143,7 @@ func BuildRootHandlerWithContext(ctx context.Context, conf config.Config, deps *
 	resolvers := &graph.Resolver{
 		Config:              conf,
 		AuthService:         deps.AuthService,
+		OIDCService:         deps.OIDCService,
 		OrganizationService: deps.OrganizationService,
 		ProjectService:      deps.ProjectService,
 		BoardService:        deps.BoardService,

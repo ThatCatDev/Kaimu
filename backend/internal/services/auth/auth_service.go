@@ -16,10 +16,11 @@ import (
 )
 
 var (
-	ErrInvalidCredentials = errors.New("invalid username or password")
-	ErrUserExists         = errors.New("username already exists")
-	ErrInvalidToken       = errors.New("invalid or expired token")
-	ErrUserNotFound       = errors.New("user not found")
+	ErrInvalidCredentials    = errors.New("invalid username or password")
+	ErrUserExists            = errors.New("username already exists")
+	ErrInvalidToken          = errors.New("invalid or expired token")
+	ErrUserNotFound          = errors.New("user not found")
+	ErrPasswordLoginDisabled = errors.New("password login is disabled for this user")
 )
 
 type Claims struct {
@@ -81,11 +82,12 @@ func (s *service) Register(ctx context.Context, username, password string) (*use
 	if err != nil {
 		return nil, "", err
 	}
+	hashedPasswordStr := string(hashedPassword)
 
 	// Create user
 	newUser := &user.User{
 		Username:     username,
-		PasswordHash: string(hashedPassword),
+		PasswordHash: &hashedPasswordStr,
 	}
 
 	if err := s.repository.Create(ctx, newUser); err != nil {
@@ -115,8 +117,13 @@ func (s *service) Login(ctx context.Context, username, password string) (*user.U
 		return nil, "", err
 	}
 
+	// Check if user has a password set (OIDC-only users don't)
+	if u.PasswordHash == nil || *u.PasswordHash == "" {
+		return nil, "", ErrPasswordLoginDisabled
+	}
+
 	// Verify password
-	if err := bcrypt.CompareHashAndPassword([]byte(u.PasswordHash), []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword([]byte(*u.PasswordHash), []byte(password)); err != nil {
 		return nil, "", ErrInvalidCredentials
 	}
 

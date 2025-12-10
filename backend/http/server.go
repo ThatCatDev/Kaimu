@@ -44,6 +44,11 @@ func SetupServerWithContext(ctx context.Context, cfg config.Config, deps *handle
 	router.Handle("/healthcheck", handlers.HealthCheckHandler()).Methods("GET")
 	router.Handle("/metrics", metrics.NewPrometheusInstance().Handler()).Methods("GET")
 
+	// OIDC authentication routes
+	router.HandleFunc("/auth/oidc/providers", deps.OIDCHandler.ListProviders).Methods("GET")
+	router.HandleFunc("/auth/oidc/{provider}/authorize", deps.OIDCHandler.Authorize).Methods("GET")
+	router.HandleFunc("/auth/oidc/{provider}/callback", deps.OIDCHandler.Callback).Methods("GET")
+
 	return router
 }
 

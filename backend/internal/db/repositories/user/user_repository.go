@@ -1,5 +1,7 @@
 package user
 
+//go:generate mockgen -source=user_repository.go -destination=mocks/user_repository_mock.go -package=mocks
+
 import (
 	"context"
 
@@ -11,6 +13,8 @@ type Repository interface {
 	Create(ctx context.Context, user *User) error
 	GetByUsername(ctx context.Context, username string) (*User, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	Update(ctx context.Context, user *User) error
 }
 
 type repository struct {
@@ -41,4 +45,17 @@ func (r *repository) GetByID(ctx context.Context, id uuid.UUID) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *repository) GetByEmail(ctx context.Context, email string) (*User, error) {
+	var user User
+	err := r.db.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *repository) Update(ctx context.Context, user *User) error {
+	return r.db.WithContext(ctx).Save(user).Error
 }

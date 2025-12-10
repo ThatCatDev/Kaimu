@@ -5,6 +5,7 @@ import (
 	"github.com/thatcatdev/pulse-backend/internal/services/auth"
 	"github.com/thatcatdev/pulse-backend/internal/services/board"
 	"github.com/thatcatdev/pulse-backend/internal/services/card"
+	"github.com/thatcatdev/pulse-backend/internal/services/oidc"
 	"github.com/thatcatdev/pulse-backend/internal/services/organization"
 	"github.com/thatcatdev/pulse-backend/internal/services/project"
 	"github.com/thatcatdev/pulse-backend/internal/services/tag"
@@ -19,6 +20,7 @@ import (
 type Resolver struct {
 	Config              config.Config
 	AuthService         auth.Service
+	OIDCService         oidc.Service
 	OrganizationService organization.Service
 	ProjectService      project.Service
 	BoardService        board.Service

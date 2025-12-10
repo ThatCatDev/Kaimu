@@ -3,6 +3,8 @@ type Query {
     helloWorld: String!
     "Get current authenticated user"
     me: User
+    "Get available OIDC providers"
+    oidcProviders: [OIDCProvider!]!
     "Get all organizations for the current user"
     organizations: [Organization!]!
     "Get a specific organization by ID"
