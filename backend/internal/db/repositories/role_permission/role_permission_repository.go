@@ -6,7 +6,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/permission"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/permission"
 	"gorm.io/gorm"
 )
 

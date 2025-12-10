@@ -14,7 +14,7 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	tag "github.com/thatcatdev/pulse-backend/internal/db/repositories/tag"
+	tag "github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
 	gomock "go.uber.org/mock/gomock"
 )
 

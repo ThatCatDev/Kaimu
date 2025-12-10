@@ -5,13 +5,13 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
-	"github.com/thatcatdev/pulse-backend/graph/model"
-	"github.com/thatcatdev/pulse-backend/http/middleware"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
-	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
-	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
-	projectService "github.com/thatcatdev/pulse-backend/internal/services/project"
+	"github.com/thatcatdev/kaimu/backend/graph/model"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization_member"
+	boardService "github.com/thatcatdev/kaimu/backend/internal/services/board"
+	orgService "github.com/thatcatdev/kaimu/backend/internal/services/organization"
+	projectService "github.com/thatcatdev/kaimu/backend/internal/services/project"
 )
 
 var ErrUnauthorized = errors.New("unauthorized")

@@ -8,7 +8,7 @@ export const prerender = false;
 const { id } = Astro.params;
 ---
 
-<Layout title="Organization Settings - Pulse">
+<Layout title="Organization Settings - Kaimu">
   <AppShell client:load currentPath={`/organizations/${id}/settings`}>
     <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <OrganizationSettings client:load organizationId={id!} />

@@ -7,8 +7,8 @@ storage:
   config:
     host: postgres
     port: 5432
-    database: pulse
-    user: pulse
+    database: app
+    user: app
     password: mysecretpassword
     ssl:
       mode: disable
@@ -18,7 +18,7 @@ web:
 
 # Frontend settings
 frontend:
-  issuer: Pulse Development
+  issuer: Kaimu Development
   logoURL: ""
   theme: light
 
@@ -26,11 +26,11 @@ frontend:
 oauth2:
   skipApprovalScreen: true
 
-# Static clients for Pulse
+# Static clients for local development
 staticClients:
-  - id: pulse-app
-    name: Pulse Application
-    secret: pulse-secret-key
+  - id: local-app
+    name: Local Application
+    secret: local-secret-key
     redirectURIs:
       - http://localhost:3000/auth/oidc/dex/callback
 
@@ -43,11 +43,11 @@ connectors:
 # Static test users (for development only)
 enablePasswordDB: true
 staticPasswords:
-  - email: admin@pulse.local
+  - email: admin@localhost
     hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"  # password
     username: admin
     userID: "08a8684b-db88-4b73-90a9-3cd1661f5466"
-  - email: user@pulse.local
+  - email: user@localhost
     hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"  # password
     username: user
     userID: "41331323-6f44-45e6-b3b9-2c4bb60e907d"

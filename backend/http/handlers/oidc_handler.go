@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/thatcatdev/pulse-backend/http/middleware"
-	"github.com/thatcatdev/pulse-backend/internal/logger"
-	"github.com/thatcatdev/pulse-backend/internal/services/oidc"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	"github.com/thatcatdev/kaimu/backend/internal/logger"
+	"github.com/thatcatdev/kaimu/backend/internal/services/oidc"
 )
 
 type OIDCHandler struct {

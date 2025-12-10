@@ -7,8 +7,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
-	"github.com/thatcatdev/pulse-backend/tracing"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
+	"github.com/thatcatdev/kaimu/backend/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/crypto/bcrypt"

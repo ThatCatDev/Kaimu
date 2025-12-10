@@ -14,8 +14,8 @@ import (
 	reflect "reflect"
 
 	uuid "github.com/google/uuid"
-	user "github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
-	auth "github.com/thatcatdev/pulse-backend/internal/services/auth"
+	user "github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
+	auth "github.com/thatcatdev/kaimu/backend/internal/services/auth"
 	gomock "go.uber.org/mock/gomock"
 )
 

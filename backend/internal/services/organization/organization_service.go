@@ -7,21 +7,21 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
-	"github.com/thatcatdev/pulse-backend/tracing"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization_member"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
+	"github.com/thatcatdev/kaimu/backend/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 )
 
 var (
-	ErrOrgNotFound     = errors.New("organization not found")
-	ErrSlugTaken       = errors.New("organization slug already taken")
-	ErrNotMember       = errors.New("user is not a member of this organization")
-	ErrNotOwner        = errors.New("user is not the owner of this organization")
-	ErrAlreadyMember   = errors.New("user is already a member of this organization")
+	ErrOrgNotFound      = errors.New("organization not found")
+	ErrSlugTaken        = errors.New("organization slug already taken")
+	ErrNotMember        = errors.New("user is not a member of this organization")
+	ErrNotOwner         = errors.New("user is not the owner of this organization")
+	ErrAlreadyMember    = errors.New("user is already a member of this organization")
 	ErrCannotRemoveSelf = errors.New("cannot remove yourself from organization")
 )
 

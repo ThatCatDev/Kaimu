@@ -4,18 +4,18 @@ services:
   postgres:
     image: postgres:16
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-pulse}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB:-pulse}
+      POSTGRES_DB: ${POSTGRES_DB:-app}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pulse"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app}"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
-      - pulse-network
+      - app-network
     restart: unless-stopped
 
   backend:
@@ -26,8 +26,8 @@ services:
       - "3000:3000"
     environment:
       DBHOST: postgres
-      DBNAME: ${POSTGRES_DB:-pulse}
-      DBUSERNAME: ${POSTGRES_USER:-pulse}
+      DBNAME: ${POSTGRES_DB:-app}
+      DBUSERNAME: ${POSTGRES_USER:-app}
       DBPASSWORD: ${POSTGRES_PASSWORD}
       DBPORT: 5432
       DBSSL: disable
@@ -37,7 +37,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - pulse-network
+      - app-network
     restart: unless-stopped
 
   frontend:
@@ -51,11 +51,11 @@ services:
     depends_on:
       - backend
     networks:
-      - pulse-network
+      - app-network
     restart: unless-stopped
 
 networks:
-  pulse-network:
+  app-network:
 
 volumes:
   postgres_data:

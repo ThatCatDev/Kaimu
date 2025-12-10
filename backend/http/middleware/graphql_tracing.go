@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/thatcatdev/pulse-backend/internal/logger"
-	"github.com/thatcatdev/pulse-backend/tracing"
+	"github.com/thatcatdev/kaimu/backend/internal/logger"
+	"github.com/thatcatdev/kaimu/backend/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

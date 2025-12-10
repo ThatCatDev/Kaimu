@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/invitation"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/role"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
-	"github.com/thatcatdev/pulse-backend/tracing"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/invitation"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization_member"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/role"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
+	"github.com/thatcatdev/kaimu/backend/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
@@ -29,13 +29,13 @@ const (
 )
 
 var (
-	ErrInvitationNotFound   = errors.New("invitation not found")
-	ErrInvitationExpired    = errors.New("invitation has expired")
-	ErrInvitationAccepted   = errors.New("invitation has already been accepted")
-	ErrAlreadyMember        = errors.New("user is already a member of this organization")
-	ErrPendingInvitation    = errors.New("there is already a pending invitation for this email")
-	ErrEmailMismatch        = errors.New("your email does not match the invitation")
-	ErrOrgNotFound          = errors.New("organization not found")
+	ErrInvitationNotFound = errors.New("invitation not found")
+	ErrInvitationExpired  = errors.New("invitation has expired")
+	ErrInvitationAccepted = errors.New("invitation has already been accepted")
+	ErrAlreadyMember      = errors.New("user is already a member of this organization")
+	ErrPendingInvitation  = errors.New("there is already a pending invitation for this email")
+	ErrEmailMismatch      = errors.New("your email does not match the invitation")
+	ErrOrgNotFound        = errors.New("organization not found")
 )
 
 type Service interface {

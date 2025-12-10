@@ -5,13 +5,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/thatcatdev/pulse-backend/graph/model"
-	"github.com/thatcatdev/pulse-backend/http/middleware"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
-	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
-	cardService "github.com/thatcatdev/pulse-backend/internal/services/card"
-	rbacService "github.com/thatcatdev/pulse-backend/internal/services/rbac"
-	tagService "github.com/thatcatdev/pulse-backend/internal/services/tag"
+	"github.com/thatcatdev/kaimu/backend/graph/model"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/card"
+	boardService "github.com/thatcatdev/kaimu/backend/internal/services/board"
+	cardService "github.com/thatcatdev/kaimu/backend/internal/services/card"
+	rbacService "github.com/thatcatdev/kaimu/backend/internal/services/rbac"
+	tagService "github.com/thatcatdev/kaimu/backend/internal/services/tag"
 )
 
 // Card returns a card by ID

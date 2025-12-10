@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/thatcatdev/pulse-backend/graph/model"
-	"github.com/thatcatdev/pulse-backend/http/middleware"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
-	"github.com/thatcatdev/pulse-backend/internal/services/auth"
+	"github.com/thatcatdev/kaimu/backend/graph/model"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
+	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
 )
 
 func Register(ctx context.Context, authService auth.Service, input model.RegisterInput, isSecure bool) (*model.AuthPayload, error) {

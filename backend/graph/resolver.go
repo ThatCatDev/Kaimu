@@ -1,17 +1,17 @@
 package graph
 
 import (
-	"github.com/thatcatdev/pulse-backend/config"
-	"github.com/thatcatdev/pulse-backend/internal/services/auth"
-	"github.com/thatcatdev/pulse-backend/internal/services/board"
-	"github.com/thatcatdev/pulse-backend/internal/services/card"
-	"github.com/thatcatdev/pulse-backend/internal/services/invitation"
-	"github.com/thatcatdev/pulse-backend/internal/services/oidc"
-	"github.com/thatcatdev/pulse-backend/internal/services/organization"
-	"github.com/thatcatdev/pulse-backend/internal/services/project"
-	"github.com/thatcatdev/pulse-backend/internal/services/rbac"
-	"github.com/thatcatdev/pulse-backend/internal/services/tag"
-	"github.com/thatcatdev/pulse-backend/internal/services/user"
+	"github.com/thatcatdev/kaimu/backend/config"
+	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
+	"github.com/thatcatdev/kaimu/backend/internal/services/board"
+	"github.com/thatcatdev/kaimu/backend/internal/services/card"
+	"github.com/thatcatdev/kaimu/backend/internal/services/invitation"
+	"github.com/thatcatdev/kaimu/backend/internal/services/oidc"
+	"github.com/thatcatdev/kaimu/backend/internal/services/organization"
+	"github.com/thatcatdev/kaimu/backend/internal/services/project"
+	"github.com/thatcatdev/kaimu/backend/internal/services/rbac"
+	"github.com/thatcatdev/kaimu/backend/internal/services/tag"
+	"github.com/thatcatdev/kaimu/backend/internal/services/user"
 )
 
 // This file will not be regenerated automatically.

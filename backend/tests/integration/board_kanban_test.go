@@ -12,26 +12,26 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/thatcatdev/pulse-backend/config"
-	"github.com/thatcatdev/pulse-backend/graph"
-	"github.com/thatcatdev/pulse-backend/graph/generated"
-	"github.com/thatcatdev/pulse-backend/http/middleware"
-	boardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board"
-	columnRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/board_column"
-	cardRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card"
-	cardTagRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/card_tag"
-	orgRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization"
-	memberRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
-	projectRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/project"
-	tagRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/tag"
-	userRepo "github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
-	"github.com/thatcatdev/pulse-backend/internal/directives"
-	"github.com/thatcatdev/pulse-backend/internal/services/auth"
-	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
-	cardService "github.com/thatcatdev/pulse-backend/internal/services/card"
-	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
-	projectService "github.com/thatcatdev/pulse-backend/internal/services/project"
-	tagService "github.com/thatcatdev/pulse-backend/internal/services/tag"
+	"github.com/thatcatdev/kaimu/backend/config"
+	"github.com/thatcatdev/kaimu/backend/graph"
+	"github.com/thatcatdev/kaimu/backend/graph/generated"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	boardRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/board"
+	columnRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/board_column"
+	cardRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/card"
+	cardTagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/card_tag"
+	orgRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization"
+	memberRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization_member"
+	projectRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/project"
+	tagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
+	userRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
+	"github.com/thatcatdev/kaimu/backend/internal/directives"
+	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
+	boardService "github.com/thatcatdev/kaimu/backend/internal/services/board"
+	cardService "github.com/thatcatdev/kaimu/backend/internal/services/card"
+	orgService "github.com/thatcatdev/kaimu/backend/internal/services/organization"
+	projectService "github.com/thatcatdev/kaimu/backend/internal/services/project"
+	tagService "github.com/thatcatdev/kaimu/backend/internal/services/tag"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -560,7 +560,9 @@ func TestMoveCard(t *testing.T) {
 	createOrgQuery := `mutation { createOrganization(input: { name: "Move Test Org" }) { id } }`
 	orgResp := server.executeQuery(createOrgQuery, token)
 	var orgData struct {
-		CreateOrganization struct{ ID string `json:"id"` } `json:"createOrganization"`
+		CreateOrganization struct {
+			ID string `json:"id"`
+		} `json:"createOrganization"`
 	}
 	json.Unmarshal(orgResp.Data, &orgData)
 
@@ -657,7 +659,9 @@ func TestTagCRUD(t *testing.T) {
 	createOrgQuery := `mutation { createOrganization(input: { name: "Tag Test Org" }) { id } }`
 	orgResp := server.executeQuery(createOrgQuery, token)
 	var orgData struct {
-		CreateOrganization struct{ ID string `json:"id"` } `json:"createOrganization"`
+		CreateOrganization struct {
+			ID string `json:"id"`
+		} `json:"createOrganization"`
 	}
 	json.Unmarshal(orgResp.Data, &orgData)
 
@@ -668,7 +672,9 @@ func TestTagCRUD(t *testing.T) {
 	}`, orgData.CreateOrganization.ID)
 	projResp := server.executeQuery(createProjectQuery, token)
 	var projData struct {
-		CreateProject struct{ ID string `json:"id"` } `json:"createProject"`
+		CreateProject struct {
+			ID string `json:"id"`
+		} `json:"createProject"`
 	}
 	json.Unmarshal(projResp.Data, &projData)
 	projectID := projData.CreateProject.ID
@@ -769,7 +775,9 @@ func TestCardWithTags(t *testing.T) {
 	createOrgQuery := `mutation { createOrganization(input: { name: "Card Tag Org" }) { id } }`
 	orgResp := server.executeQuery(createOrgQuery, token)
 	var orgData struct {
-		CreateOrganization struct{ ID string `json:"id"` } `json:"createOrganization"`
+		CreateOrganization struct {
+			ID string `json:"id"`
+		} `json:"createOrganization"`
 	}
 	json.Unmarshal(orgResp.Data, &orgData)
 
@@ -808,7 +816,9 @@ func TestCardWithTags(t *testing.T) {
 	}`, projectID)
 	tag1Resp := server.executeQuery(tag1Query, token)
 	var tag1Data struct {
-		CreateTag struct{ ID string `json:"id"` } `json:"createTag"`
+		CreateTag struct {
+			ID string `json:"id"`
+		} `json:"createTag"`
 	}
 	json.Unmarshal(tag1Resp.Data, &tag1Data)
 	tag1ID := tag1Data.CreateTag.ID
@@ -818,7 +828,9 @@ func TestCardWithTags(t *testing.T) {
 	}`, projectID)
 	tag2Resp := server.executeQuery(tag2Query, token)
 	var tag2Data struct {
-		CreateTag struct{ ID string `json:"id"` } `json:"createTag"`
+		CreateTag struct {
+			ID string `json:"id"`
+		} `json:"createTag"`
 	}
 	json.Unmarshal(tag2Resp.Data, &tag2Data)
 	tag2ID := tag2Data.CreateTag.ID
@@ -841,9 +853,9 @@ func TestCardWithTags(t *testing.T) {
 
 	var cardData struct {
 		CreateCard struct {
-			ID   string `json:"id"`
+			ID    string `json:"id"`
 			Title string `json:"title"`
-			Tags []struct {
+			Tags  []struct {
 				ID    string `json:"id"`
 				Name  string `json:"name"`
 				Color string `json:"color"`
@@ -891,7 +903,9 @@ func TestColumnOperations(t *testing.T) {
 	createOrgQuery := `mutation { createOrganization(input: { name: "Column Test Org" }) { id } }`
 	orgResp := server.executeQuery(createOrgQuery, token)
 	var orgData struct {
-		CreateOrganization struct{ ID string `json:"id"` } `json:"createOrganization"`
+		CreateOrganization struct {
+			ID string `json:"id"`
+		} `json:"createOrganization"`
 	}
 	json.Unmarshal(orgResp.Data, &orgData)
 

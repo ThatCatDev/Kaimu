@@ -4,18 +4,18 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: pulse
+      POSTGRES_USER: app
       POSTGRES_PASSWORD: mysecretpassword
-      POSTGRES_DB: pulse
+      POSTGRES_DB: app
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pulse"]
+      test: ["CMD-SHELL", "pg_isready -U app"]
       interval: 5s
       timeout: 5s
       retries: 5
     networks:
-      - pulse-network
+      - app-network
 
   dex:
     image: ghcr.io/dexidp/dex:v2.44.0
@@ -28,7 +28,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - pulse-network
+      - app-network
 
   backend:
     build:
@@ -38,8 +38,8 @@ services:
       - "3000:3000"
     environment:
       DBHOST: postgres
-      DBNAME: pulse
-      DBUSERNAME: pulse
+      DBNAME: app
+      DBUSERNAME: app
       DBPASSWORD: mysecretpassword
       DBPORT: 5432
       DBSSL: disable
@@ -51,7 +51,7 @@ services:
       # OIDC providers - JSON array of provider configs
       # For local development with Dex:
       OIDC_PROVIDERS: >
-        [{"name":"Dex","slug":"dex","issuer_url":"http://localhost:5556/dex","discovery_url":"http://dex:5556/dex","client_id":"pulse-app","client_secret":"pulse-secret-key","scopes":"openid email profile"}]
+        [{"name":"Dex","slug":"dex","issuer_url":"http://localhost:5556/dex","discovery_url":"http://dex:5556/dex","client_id":"local-app","client_secret":"local-secret-key","scopes":"openid email profile"}]
     volumes:
       - ./backend:/app
       - go_modules:/go/pkg/mod
@@ -61,10 +61,10 @@ services:
       dex:
         condition: service_started
     networks:
-      - pulse-network
+      - app-network
 
 networks:
-  pulse-network:
+  app-network:
 
 volumes:
   postgres_data:

@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/thatcatdev/pulse-backend/graph/model"
-	"github.com/thatcatdev/pulse-backend/http/middleware"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/board"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/project"
-	boardService "github.com/thatcatdev/pulse-backend/internal/services/board"
-	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
-	projectService "github.com/thatcatdev/pulse-backend/internal/services/project"
-	rbacService "github.com/thatcatdev/pulse-backend/internal/services/rbac"
+	"github.com/thatcatdev/kaimu/backend/graph/model"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/board"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/project"
+	boardService "github.com/thatcatdev/kaimu/backend/internal/services/board"
+	orgService "github.com/thatcatdev/kaimu/backend/internal/services/organization"
+	projectService "github.com/thatcatdev/kaimu/backend/internal/services/project"
+	rbacService "github.com/thatcatdev/kaimu/backend/internal/services/rbac"
 )
 
 // CreateProject creates a new project

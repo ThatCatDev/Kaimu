@@ -11,8 +11,8 @@ import (
 	"github.com/golang-migrate/migrate/v4/source/httpfs"
 	_ "github.com/golang-migrate/migrate/v4/source/httpfs"
 	_ "github.com/lib/pq"
-	"github.com/thatcatdev/pulse-backend/config"
-	"github.com/thatcatdev/pulse-backend/internal/db"
+	"github.com/thatcatdev/kaimu/backend/config"
+	"github.com/thatcatdev/kaimu/backend/internal/db"
 )
 
 var (

@@ -4,7 +4,7 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package commands
 
 import (
-	"github.com/thatcatdev/pulse-backend/db"
+	"github.com/thatcatdev/kaimu/backend/db"
 
 	"github.com/spf13/cobra"
 )

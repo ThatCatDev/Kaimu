@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/thatcatdev/pulse-backend/internal/logger"
+	"github.com/thatcatdev/kaimu/backend/internal/logger"
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"

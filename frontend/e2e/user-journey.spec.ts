@@ -65,7 +65,7 @@ test.describe('Complete User Journey', () => {
 
       // Fill form
       await page.fill('#name', orgName);
-      await page.fill('#description', 'My first organization in Pulse');
+      await page.fill('#description', 'My first organization in Kaimu');
 
       // Use Promise.all to wait for navigation while clicking
       await Promise.all([
@@ -82,7 +82,7 @@ test.describe('Complete User Journey', () => {
 
       // Verify organization details
       await expect(page.getByRole('heading', { name: orgName })).toBeVisible({ timeout: 10000 });
-      await expect(page.getByText('My first organization in Pulse')).toBeVisible();
+      await expect(page.getByText('My first organization in Kaimu')).toBeVisible();
     });
 
     // ============================================
@@ -103,7 +103,7 @@ test.describe('Complete User Journey', () => {
       // Fill form
       await page.fill('#name', projectName);
       await page.fill('#key', projectKey);
-      await page.fill('#description', 'My first project in Pulse');
+      await page.fill('#description', 'My first project in Kaimu');
       await page.getByRole('button', { name: 'Create Project' }).click();
 
       // Should redirect to project page

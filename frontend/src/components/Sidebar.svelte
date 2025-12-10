@@ -122,7 +122,7 @@
   <!-- Header -->
   <div class="h-16 flex items-center justify-between px-4 border-b border-gray-800">
     {#if !collapsed}
-      <a href="/dashboard" class="text-xl font-bold text-indigo-400">Pulse</a>
+      <a href="/dashboard" class="text-xl font-bold text-indigo-400">Kaimu</a>
     {/if}
     <button
       type="button"

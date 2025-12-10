@@ -8,7 +8,7 @@ export const prerender = false;
 const { id } = Astro.params;
 ---
 
-<Layout title="Project - Pulse">
+<Layout title="Project - Kaimu">
   <AppShell client:load currentPath={`/projects/${id}`}>
     <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
       <ProjectDetail client:load projectId={id!} />

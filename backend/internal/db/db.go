@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/thatcatdev/pulse-backend/config"
+	"github.com/thatcatdev/kaimu/backend/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

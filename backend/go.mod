@@ -1,4 +1,4 @@
-module github.com/thatcatdev/pulse-backend
+module github.com/thatcatdev/kaimu/backend
 
 go 1.25.0
 

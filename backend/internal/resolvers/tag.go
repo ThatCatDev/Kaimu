@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/thatcatdev/pulse-backend/graph/model"
-	"github.com/thatcatdev/pulse-backend/http/middleware"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/tag"
-	orgService "github.com/thatcatdev/pulse-backend/internal/services/organization"
-	projectService "github.com/thatcatdev/pulse-backend/internal/services/project"
-	tagService "github.com/thatcatdev/pulse-backend/internal/services/tag"
+	"github.com/thatcatdev/kaimu/backend/graph/model"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
+	orgService "github.com/thatcatdev/kaimu/backend/internal/services/organization"
+	projectService "github.com/thatcatdev/kaimu/backend/internal/services/project"
+	tagService "github.com/thatcatdev/kaimu/backend/internal/services/tag"
 )
 
 // Tags returns all tags for a project

@@ -7,9 +7,9 @@ package graph
 import (
 	"context"
 
-	"github.com/thatcatdev/pulse-backend/graph/generated"
-	"github.com/thatcatdev/pulse-backend/graph/model"
-	"github.com/thatcatdev/pulse-backend/internal/resolvers"
+	"github.com/thatcatdev/kaimu/backend/graph/generated"
+	"github.com/thatcatdev/kaimu/backend/graph/model"
+	"github.com/thatcatdev/kaimu/backend/internal/resolvers"
 )
 
 // Register is the resolver for the register field.

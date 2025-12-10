@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/thatcatdev/pulse-backend/tracing"
+	"github.com/thatcatdev/kaimu/backend/tracing"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -15,14 +15,14 @@ import (
 )
 
 const (
-	callbackBeforeCreate   = "tracing:before_create"
-	callbackAfterCreate    = "tracing:after_create"
-	callbackBeforeQuery    = "tracing:before_query"
-	callbackAfterQuery     = "tracing:after_query"
-	callbackBeforeUpdate   = "tracing:before_update"
-	callbackAfterUpdate    = "tracing:after_update"
-	callbackBeforeDelete   = "tracing:before_delete"
-	callbackAfterDelete    = "tracing:after_delete"
+	callbackBeforeCreate = "tracing:before_create"
+	callbackAfterCreate  = "tracing:after_create"
+	callbackBeforeQuery  = "tracing:before_query"
+	callbackAfterQuery   = "tracing:after_query"
+	callbackBeforeUpdate = "tracing:before_update"
+	callbackAfterUpdate  = "tracing:after_update"
+	callbackBeforeDelete = "tracing:before_delete"
+	callbackAfterDelete  = "tracing:after_delete"
 
 	spanKey                = "gorm:span"
 	connectionStartTimeKey = "gorm:connection_start_time"

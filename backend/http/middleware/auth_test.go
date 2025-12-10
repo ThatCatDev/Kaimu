@@ -10,8 +10,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/thatcatdev/pulse-backend/internal/services/auth"
-	"github.com/thatcatdev/pulse-backend/internal/services/auth/mocks"
+	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
+	"github.com/thatcatdev/kaimu/backend/internal/services/auth/mocks"
 	"go.uber.org/mock/gomock"
 )
 

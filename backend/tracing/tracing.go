@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/thatcatdev/pulse-backend/config"
+	"github.com/thatcatdev/kaimu/backend/config"
 	"github.com/weeb-vip/go-tracing-lib/providers"
 	"github.com/weeb-vip/go-tracing-lib/tracing"
 	"go.opentelemetry.io/otel/attribute"

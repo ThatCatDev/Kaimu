@@ -10,9 +10,9 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
-	"github.com/thatcatdev/pulse-backend/internal/services/oidc"
-	"github.com/thatcatdev/pulse-backend/internal/services/oidc/mocks"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
+	"github.com/thatcatdev/kaimu/backend/internal/services/oidc"
+	"github.com/thatcatdev/kaimu/backend/internal/services/oidc/mocks"
 	"go.uber.org/mock/gomock"
 )
 

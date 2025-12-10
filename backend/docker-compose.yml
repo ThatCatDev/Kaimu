@@ -5,15 +5,15 @@ services:
     ports:
       - '5432:5432'
     environment:
-      - POSTGRES_USER=pulse
+      - POSTGRES_USER=app
       - POSTGRES_PASSWORD=mysecretpassword
-      - POSTGRES_DB=pulse
+      - POSTGRES_DB=app
     volumes:
-      - 'pulse_db:/var/lib/postgresql/data'
+      - 'app_db:/var/lib/postgresql/data'
     networks:
-      - pulse-network
+      - app-network
 
 networks:
-  pulse-network:
+  app-network:
 volumes:
-  pulse_db:
+  app_db:

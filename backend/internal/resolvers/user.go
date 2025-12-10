@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/thatcatdev/pulse-backend/graph/model"
-	"github.com/thatcatdev/pulse-backend/http/middleware"
-	userService "github.com/thatcatdev/pulse-backend/internal/services/user"
+	"github.com/thatcatdev/kaimu/backend/graph/model"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	userService "github.com/thatcatdev/kaimu/backend/internal/services/user"
 )
 
 var (

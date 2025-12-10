@@ -5,14 +5,14 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/thatcatdev/pulse-backend/internal/services/auth"
+	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
 )
 
 type contextKey string
 
 const (
-	UserIDKey     contextKey = "userID"
-	ResponseKey   contextKey = "httpResponseWriter"
+	UserIDKey   contextKey = "userID"
+	ResponseKey contextKey = "httpResponseWriter"
 )
 
 func AuthMiddleware(authService auth.Service) func(http.Handler) http.Handler {

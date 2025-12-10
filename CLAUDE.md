@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Pulse** is a project management tool for software teams, similar to Jira or Linear.
+**Kaimu** is a project management tool for software teams, similar to Jira or Linear.
+
+_kai (change) + mu (nothing wasted)_
 
 ### Tech Stack
 - **Frontend**: Astro + Svelte 5, TypeScript, Vite (via Bun)

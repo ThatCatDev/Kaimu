@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/thatcatdev/pulse-backend/config"
-	"github.com/thatcatdev/pulse-backend/http/handlers"
-	"github.com/thatcatdev/pulse-backend/http/middleware"
-	"github.com/thatcatdev/pulse-backend/internal/logger"
-	"github.com/thatcatdev/pulse-backend/metrics"
+	"github.com/thatcatdev/kaimu/backend/config"
+	"github.com/thatcatdev/kaimu/backend/http/handlers"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	"github.com/thatcatdev/kaimu/backend/internal/logger"
+	"github.com/thatcatdev/kaimu/backend/metrics"
 	muxtrace "gopkg.in/DataDog/dd-trace-go.v1/contrib/gorilla/mux"
 )
 

@@ -6,11 +6,11 @@ package commands
 import (
 	"context"
 
-	"github.com/thatcatdev/pulse-backend/config"
-	"github.com/thatcatdev/pulse-backend/http"
-	"github.com/thatcatdev/pulse-backend/http/handlers"
-	"github.com/thatcatdev/pulse-backend/internal/logger"
-	"github.com/thatcatdev/pulse-backend/tracing"
+	"github.com/thatcatdev/kaimu/backend/config"
+	"github.com/thatcatdev/kaimu/backend/http"
+	"github.com/thatcatdev/kaimu/backend/http/handlers"
+	"github.com/thatcatdev/kaimu/backend/internal/logger"
+	"github.com/thatcatdev/kaimu/backend/tracing"
 
 	"github.com/spf13/cobra"
 )
@@ -19,14 +19,14 @@ import (
 var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Start the GraphQL API server",
-	Long:  `Starts the Pulse GraphQL API server with authentication support.`,
+	Long:  `Starts the Kaimu GraphQL API server with authentication support.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// Load config to get environment
 		cfg := config.LoadConfigOrPanic()
 
 		// Initialize logger with environment
 		logger.Logger(
-			logger.WithServerName("pulse-api"),
+			logger.WithServerName("kaimu-api"),
 			logger.WithVersion("1.0.0"),
 			logger.WithEnvironment(cfg.AppConfig.Env),
 		)

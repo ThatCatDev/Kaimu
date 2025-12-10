@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/thatcatdev/pulse-backend/graph/model"
-	"github.com/thatcatdev/pulse-backend/http/middleware"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/invitation"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/organization_member"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/permission"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/project_member"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/role"
-	invitationSvc "github.com/thatcatdev/pulse-backend/internal/services/invitation"
-	"github.com/thatcatdev/pulse-backend/internal/services/rbac"
+	"github.com/thatcatdev/kaimu/backend/graph/model"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/invitation"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization_member"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/permission"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/project_member"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/role"
+	invitationSvc "github.com/thatcatdev/kaimu/backend/internal/services/invitation"
+	"github.com/thatcatdev/kaimu/backend/internal/services/rbac"
 )
 
 // Permissions returns all available permissions

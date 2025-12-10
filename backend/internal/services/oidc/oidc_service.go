@@ -11,9 +11,9 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/thatcatdev/pulse-backend/config"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/oidc_identity"
-	"github.com/thatcatdev/pulse-backend/internal/db/repositories/user"
+	"github.com/thatcatdev/kaimu/backend/config"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/oidc_identity"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
 	"golang.org/x/oauth2"
 )
 
@@ -64,7 +64,7 @@ type Service interface {
 }
 
 type service struct {
-	providers    []config.OIDCProvider       // Providers from config
+	providers    []config.OIDCProvider          // Providers from config
 	providerMap  map[string]config.OIDCProvider // Lookup by slug
 	identityRepo oidc_identity.Repository
 	userRepo     user.Repository
