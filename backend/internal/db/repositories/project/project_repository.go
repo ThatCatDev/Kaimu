@@ -14,6 +14,7 @@ type Repository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*Project, error)
 	GetByOrgID(ctx context.Context, orgID uuid.UUID) ([]*Project, error)
 	GetByKey(ctx context.Context, orgID uuid.UUID, key string) (*Project, error)
+	GetAll(ctx context.Context) ([]*Project, error)
 	Update(ctx context.Context, project *Project) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
@@ -57,6 +58,15 @@ func (r *repository) GetByKey(ctx context.Context, orgID uuid.UUID, key string) 
 		return nil, err
 	}
 	return &project, nil
+}
+
+func (r *repository) GetAll(ctx context.Context) ([]*Project, error) {
+	var projects []*Project
+	err := r.db.WithContext(ctx).Find(&projects).Error
+	if err != nil {
+		return nil, err
+	}
+	return projects, nil
 }
 
 func (r *repository) Update(ctx context.Context, project *Project) error {

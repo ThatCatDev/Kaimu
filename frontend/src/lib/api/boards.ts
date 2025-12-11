@@ -347,10 +347,11 @@ export async function updateColumn(
   id: string,
   name?: string,
   color?: string,
-  wipLimit?: number | null
+  wipLimit?: number | null,
+  clearWipLimit?: boolean
 ): Promise<UpdateColumnMutation['updateColumn']> {
   const data = await graphql<UpdateColumnMutation>(UPDATE_COLUMN_MUTATION, {
-    input: { id, name, color, wipLimit },
+    input: { id, name, color, wipLimit, clearWipLimit },
   } as UpdateColumnMutationVariables);
   return data.updateColumn;
 }

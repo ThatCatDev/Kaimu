@@ -3,10 +3,12 @@
   import { Toaster } from 'svelte-sonner';
   import Sidebar from './Sidebar.svelte';
   import UserSettingsModal from './settings/UserSettingsModal.svelte';
+  import CommandPalette from './search/CommandPalette.svelte';
   import { logout } from '../lib/stores/auth.svelte';
   import { getMe } from '../lib/api/auth';
   import type { User } from '../lib/graphql/generated';
   import type { Snippet } from 'svelte';
+  import type { SearchScope } from '../lib/api/search';
 
   interface Props {
     currentPath?: string;
@@ -21,6 +23,20 @@
   let sidebarCollapsed = $state(false);
   let userMenuOpen = $state(false);
   let settingsModalOpen = $state(false);
+  let commandPaletteOpen = $state(false);
+
+  // Derive search scope from current path
+  const searchScope = $derived<SearchScope | undefined>(() => {
+    // Parse currentPath to extract org/project context
+    // Format: /org-slug/project-key/...
+    const parts = currentPath.split('/').filter(Boolean);
+    if (parts.length >= 2) {
+      // We have at least org/project - scope search to this context
+      // Note: We'd need the actual IDs from the page, for now we don't scope
+      return undefined;
+    }
+    return undefined;
+  });
 
   onMount(() => {
     // Load sidebar state from localStorage
@@ -75,9 +91,17 @@
       userMenuOpen = false;
     }
   }
+
+  function handleGlobalKeydown(event: KeyboardEvent) {
+    // ⌘K or Ctrl+K to open command palette
+    if ((event.metaKey || event.ctrlKey) && event.key === 'k') {
+      event.preventDefault();
+      commandPaletteOpen = true;
+    }
+  }
 </script>
 
-<svelte:window onclick={handleClickOutside} />
+<svelte:window onclick={handleClickOutside} onkeydown={handleGlobalKeydown} />
 
 <div class="h-screen flex overflow-hidden bg-gray-50">
   <!-- Sidebar -->
@@ -99,6 +123,21 @@
           </svg>
         </button>
       </div>
+
+      <!-- Search button -->
+      <button
+        type="button"
+        onclick={() => commandPaletteOpen = true}
+        class="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+        <span class="hidden sm:inline">Search</span>
+        <kbd class="hidden md:inline-flex items-center px-1.5 py-0.5 text-xs text-gray-400 bg-white rounded border border-gray-200">
+          ⌘K
+        </kbd>
+      </button>
 
       <!-- Right side: user menu -->
       <div class="flex items-center gap-4">
@@ -190,3 +229,5 @@
 {/if}
 
 <Toaster position="bottom-right" richColors />
+
+<CommandPalette bind:open={commandPaletteOpen} scope={searchScope()} />

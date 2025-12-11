@@ -38,6 +38,8 @@ import (
 	"github.com/thatcatdev/kaimu/backend/internal/services/organization"
 	"github.com/thatcatdev/kaimu/backend/internal/services/project"
 	"github.com/thatcatdev/kaimu/backend/internal/services/rbac"
+	"github.com/thatcatdev/kaimu/backend/internal/resolvers"
+	"github.com/thatcatdev/kaimu/backend/internal/services/search"
 	"github.com/thatcatdev/kaimu/backend/internal/services/tag"
 	"github.com/thatcatdev/kaimu/backend/internal/services/user"
 )
@@ -55,6 +57,8 @@ type Dependencies struct {
 	InvitationService        invitation.Service
 	UserService              user.Service
 	EmailVerificationService email.EmailVerificationService
+	SearchService            search.Service
+	SearchIndexer            *resolvers.SearchIndexer
 	OIDCHandler              *OIDCHandler
 }
 
@@ -168,6 +172,28 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 	isSecure := cfg.AppConfig.Env != "development"
 	oidcHandler := NewOIDCHandler(oidcService, cfg.OIDCConfig.FrontendURL, isSecure)
 
+	// Initialize search service (optional - nil if Typesense is not configured)
+	var searchService search.Service
+	var searchIndexer *resolvers.SearchIndexer
+	if cfg.TypesenseConfig.Host != "" && cfg.TypesenseConfig.APIKey != "" {
+		typesenseClient, err := search.NewTypesenseClient(cfg.TypesenseConfig)
+		if err == nil {
+			searchService = search.NewService(typesenseClient, orgMemberRepository)
+			// Initialize collections on startup (create if not exists)
+			_ = searchService.InitializeCollections(context.Background())
+
+			// Create search indexer
+			searchIndexer = resolvers.NewSearchIndexer(
+				searchService,
+				organizationService,
+				projectService,
+				boardService,
+				cardService,
+				userService,
+			)
+		}
+	}
+
 	return &Dependencies{
 		AuthService:              authService,
 		OIDCService:              oidcService,
@@ -180,6 +206,8 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		InvitationService:        invitationService,
 		UserService:              userService,
 		EmailVerificationService: emailVerificationService,
+		SearchService:            searchService,
+		SearchIndexer:            searchIndexer,
 		OIDCHandler:              oidcHandler,
 	}
 }
@@ -213,6 +241,8 @@ func BuildRootHandlerWithContext(ctx context.Context, conf config.Config, deps *
 		InvitationService:        deps.InvitationService,
 		UserService:              deps.UserService,
 		EmailVerificationService: deps.EmailVerificationService,
+		SearchService:            deps.SearchService,
+		SearchIndexer:            deps.SearchIndexer,
 	}
 
 	cfg := generated.Config{Resolvers: resolvers, Directives: directives.GetDirectives()}

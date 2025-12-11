@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	AppConfig   AppConfig   `env:"APPCONFIG"`
-	DBConfig    DBConfig
-	OIDCConfig  OIDCConfig  `env:"OIDC"`
-	EmailConfig EmailConfig `env:"EMAIL"`
+	AppConfig       AppConfig       `env:"APPCONFIG"`
+	DBConfig        DBConfig
+	OIDCConfig      OIDCConfig      `env:"OIDC"`
+	EmailConfig     EmailConfig     `env:"EMAIL"`
+	TypesenseConfig TypesenseConfig `env:"TYPESENSE"`
 }
 
 type OIDCConfig struct {
@@ -61,6 +62,12 @@ type EmailConfig struct {
 	SSLType         string `env:"EMAIL_SSL_TYPE" default:"none"` // none, tls, ssl
 	VerificationURL string `env:"EMAIL_VERIFICATION_URL" default:"http://localhost:4321/verify"`
 	InvitationURL   string `env:"EMAIL_INVITATION_URL" default:"http://localhost:4321/invite"`
+}
+
+type TypesenseConfig struct {
+	Host   string `env:"TYPESENSE_HOST" default:"127.0.0.1"`
+	Port   int    `env:"TYPESENSE_PORT" default:"8108"`
+	APIKey string `env:"TYPESENSE_API_KEY" default:"dev_api_key"`
 }
 
 func LoadConfigOrPanic() Config {

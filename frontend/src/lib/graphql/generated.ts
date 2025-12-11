@@ -209,7 +209,7 @@ export type Mutation = {
   logout: Scalars['Boolean']['output'];
   /** Move a card to a different column */
   moveCard: Card;
-  /** Register a new user */
+  /** Register a new user (sends verification email) */
   register: AuthPayload;
   /** Remove a member from an organization */
   removeMember: Scalars['Boolean']['output'];
@@ -219,6 +219,8 @@ export type Mutation = {
   reorderColumns: Array<BoardColumn>;
   /** Resend an invitation */
   resendInvitation: Invitation;
+  /** Resend verification email */
+  resendVerificationEmail: Scalars['Boolean']['output'];
   /** Toggle column visibility */
   toggleColumnVisibility: BoardColumn;
   /** Update a board */
@@ -237,6 +239,8 @@ export type Mutation = {
   updateRole: Role;
   /** Update a tag */
   updateTag: Tag;
+  /** Verify email with token */
+  verifyEmail: AuthPayload;
 };
 
 
@@ -417,6 +421,11 @@ export type MutationUpdateTagArgs = {
   input: UpdateTagInput;
 };
 
+
+export type MutationVerifyEmailArgs = {
+  token: Scalars['String']['input'];
+};
+
 export type OidcProvider = {
   __typename?: 'OIDCProvider';
   name: Scalars['String']['output'];
@@ -517,6 +526,8 @@ export type Query = {
   role?: Maybe<Role>;
   /** Get roles for an organization (includes system roles) */
   roles: Array<Role>;
+  /** Search across organizations, projects, boards, cards, and users */
+  search: SearchResults;
   /** Get all tags for a project */
   tags: Array<Tag>;
 };
@@ -585,11 +596,19 @@ export type QueryRolesArgs = {
 };
 
 
+export type QuerySearchArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  query: Scalars['String']['input'];
+  scope?: InputMaybe<SearchScope>;
+};
+
+
 export type QueryTagsArgs = {
   projectId: Scalars['ID']['input'];
 };
 
 export type RegisterInput = {
+  email: Scalars['String']['input'];
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
 };
@@ -609,6 +628,43 @@ export type Role = {
   permissions: Array<Permission>;
   scope: Scalars['String']['output'];
   updatedAt: Scalars['Time']['output'];
+};
+
+export enum SearchEntityType {
+  Board = 'BOARD',
+  Card = 'CARD',
+  Organization = 'ORGANIZATION',
+  Project = 'PROJECT',
+  User = 'USER'
+}
+
+export type SearchResult = {
+  __typename?: 'SearchResult';
+  boardId?: Maybe<Scalars['ID']['output']>;
+  boardName?: Maybe<Scalars['String']['output']>;
+  description?: Maybe<Scalars['String']['output']>;
+  highlight: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  organizationId: Scalars['ID']['output'];
+  organizationName: Scalars['String']['output'];
+  projectId?: Maybe<Scalars['ID']['output']>;
+  projectName?: Maybe<Scalars['String']['output']>;
+  score: Scalars['Float']['output'];
+  title: Scalars['String']['output'];
+  type: SearchEntityType;
+  url: Scalars['String']['output'];
+};
+
+export type SearchResults = {
+  __typename?: 'SearchResults';
+  query: Scalars['String']['output'];
+  results: Array<SearchResult>;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SearchScope = {
+  organizationId?: InputMaybe<Scalars['ID']['input']>;
+  projectId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type Tag = {
@@ -639,6 +695,7 @@ export type UpdateCardInput = {
 };
 
 export type UpdateColumnInput = {
+  clearWipLimit?: InputMaybe<Scalars['Boolean']['input']>;
   color?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
@@ -683,6 +740,7 @@ export type User = {
   createdAt: Scalars['Time']['output'];
   displayName?: Maybe<Scalars['String']['output']>;
   email?: Maybe<Scalars['String']['output']>;
+  emailVerified: Scalars['Boolean']['output'];
   id: Scalars['ID']['output'];
   username: Scalars['String']['output'];
 };

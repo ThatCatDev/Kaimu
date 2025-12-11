@@ -15,6 +15,7 @@ type Repository interface {
 	GetBySlug(ctx context.Context, slug string) (*Organization, error)
 	GetByOwnerID(ctx context.Context, ownerID uuid.UUID) ([]*Organization, error)
 	GetByUserID(ctx context.Context, userID uuid.UUID) ([]*Organization, error)
+	GetAll(ctx context.Context) ([]*Organization, error)
 	Update(ctx context.Context, org *Organization) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
@@ -66,6 +67,15 @@ func (r *repository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*Orga
 		Where("organizations.owner_id = ? OR organization_members.user_id = ?", userID, userID).
 		Distinct().
 		Find(&orgs).Error
+	if err != nil {
+		return nil, err
+	}
+	return orgs, nil
+}
+
+func (r *repository) GetAll(ctx context.Context) ([]*Organization, error) {
+	var orgs []*Organization
+	err := r.db.WithContext(ctx).Find(&orgs).Error
 	if err != nil {
 		return nil, err
 	}

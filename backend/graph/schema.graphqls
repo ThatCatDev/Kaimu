@@ -39,6 +39,8 @@ type Query {
     hasPermission(permission: String!, resourceType: String!, resourceId: ID!): Boolean!
     "Get current user's permissions for a resource"
     myPermissions(resourceType: String!, resourceId: ID!): [String!]!
+    "Search across organizations, projects, boards, cards, and users"
+    search(query: String!, scope: SearchScope, limit: Int = 20): SearchResults!
 }
 
 type Mutation {

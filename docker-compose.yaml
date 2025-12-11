@@ -38,6 +38,18 @@ services:
     networks:
       - app-network
 
+  typesense:
+    image: typesense/typesense:27.0
+    ports:
+      - "8108:8108"
+    environment:
+      TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:-dev_api_key}
+      TYPESENSE_DATA_DIR: /data
+    volumes:
+      - typesense_data:/data
+    networks:
+      - app-network
+
   backend:
     build:
       context: ./backend
@@ -68,6 +80,10 @@ services:
       EMAIL_SSL_TYPE: none
       EMAIL_VERIFICATION_URL: http://localhost:4321/verify
       EMAIL_INVITATION_URL: http://localhost:4321/invite
+      # Typesense configuration
+      TYPESENSE_HOST: typesense
+      TYPESENSE_PORT: 8108
+      TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:-dev_api_key}
     volumes:
       - ./backend:/app
       - go_modules:/go/pkg/mod
@@ -78,6 +94,8 @@ services:
         condition: service_started
       mailhog:
         condition: service_started
+      typesense:
+        condition: service_started
     networks:
       - app-network
 
@@ -87,3 +105,4 @@ networks:
 volumes:
   postgres_data:
   go_modules:
+  typesense_data:

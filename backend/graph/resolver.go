@@ -2,6 +2,7 @@ package graph
 
 import (
 	"github.com/thatcatdev/kaimu/backend/config"
+	"github.com/thatcatdev/kaimu/backend/internal/resolvers"
 	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
 	"github.com/thatcatdev/kaimu/backend/internal/services/board"
 	"github.com/thatcatdev/kaimu/backend/internal/services/card"
@@ -11,6 +12,7 @@ import (
 	"github.com/thatcatdev/kaimu/backend/internal/services/organization"
 	"github.com/thatcatdev/kaimu/backend/internal/services/project"
 	"github.com/thatcatdev/kaimu/backend/internal/services/rbac"
+	"github.com/thatcatdev/kaimu/backend/internal/services/search"
 	"github.com/thatcatdev/kaimu/backend/internal/services/tag"
 	"github.com/thatcatdev/kaimu/backend/internal/services/user"
 )
@@ -34,4 +36,6 @@ type Resolver struct {
 	InvitationService        invitation.Service
 	UserService              user.Service
 	EmailVerificationService email.EmailVerificationService
+	SearchService            search.Service
+	SearchIndexer            *resolvers.SearchIndexer
 }

@@ -18,9 +18,10 @@
 
   interface Props {
     boardId: string;
+    initialCardId?: string | null;
   }
 
-  let { boardId }: Props = $props();
+  let { boardId, initialCardId }: Props = $props();
 
   let board = $state<BoardWithColumns | null>(null);
   let tags = $state<Tag[]>([]);
@@ -123,12 +124,30 @@
         ]);
         tags = projectTags;
         permissions = perms;
+
+        // If initialCardId is provided, find and open the card
+        if (initialCardId) {
+          const card = findCardById(initialCardId);
+          if (card) {
+            handleCardClick(card);
+          }
+        }
       }
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to load board';
     } finally {
       loading = false;
     }
+  }
+
+  // Helper to find a card by ID across all columns
+  function findCardById(cardId: string): BoardCard | null {
+    if (!board) return null;
+    for (const column of board.columns) {
+      const card = column.cards.find(c => c.id === cardId);
+      if (card) return card;
+    }
+    return null;
   }
 
   async function handleUpdateBoardName(newName: string) {
@@ -177,9 +196,35 @@
   }
 
   async function handleCardMove(cardId: string, columnId: string, afterCardId: string | null) {
+    // Optimistically update board state so column reordering doesn't lose card positions
+    if (board) {
+      const card = findCardById(cardId);
+      if (card) {
+        board = {
+          ...board,
+          columns: board.columns.map(col => {
+            // Remove card from its current column
+            const filteredCards = col.cards.filter(c => c.id !== cardId);
+
+            if (col.id === columnId) {
+              // Add card to destination column at the right position
+              const insertIndex = afterCardId
+                ? filteredCards.findIndex(c => c.id === afterCardId) + 1
+                : 0;
+              const newCards = [...filteredCards];
+              newCards.splice(insertIndex, 0, card);
+              return { ...col, cards: newCards };
+            }
+
+            return { ...col, cards: filteredCards };
+          })
+        };
+      }
+    }
+
     try {
       await moveCard(cardId, columnId, afterCardId ?? undefined);
-      // Don't refresh - the UI is already updated optimistically by svelte-dnd-action
+      // Don't refresh - the UI is already updated optimistically
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to move card';
       if (message.toLowerCase().includes('permission') || message.toLowerCase().includes('unauthorized')) {
@@ -200,6 +245,20 @@
     }
     selectedProjectId = board?.project?.id ?? '';
     showCardDetailModal = true;
+
+    // Update URL with card parameter for sharing
+    updateUrlWithCard(card.id);
+  }
+
+  // Update URL to include/exclude card parameter
+  function updateUrlWithCard(cardId: string | null) {
+    const url = new URL(window.location.href);
+    if (cardId) {
+      url.searchParams.set('card', cardId);
+    } else {
+      url.searchParams.delete('card');
+    }
+    window.history.replaceState({}, '', url.toString());
   }
 
   function handleAddCard(columnId: string) {
@@ -300,6 +359,7 @@
   async function handleCardUpdated() {
     showCardDetailModal = false;
     editingCard = null;
+    updateUrlWithCard(null);
     await refreshBoard();
   }
 
@@ -333,6 +393,7 @@
   function closeCardDetailModal() {
     showCardDetailModal = false;
     editingCard = null;
+    updateUrlWithCard(null);
   }
 </script>
 

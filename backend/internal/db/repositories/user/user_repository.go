@@ -15,6 +15,7 @@ type Repository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	Update(ctx context.Context, user *User) error
+	GetAll(ctx context.Context) ([]*User, error)
 }
 
 type repository struct {
@@ -58,4 +59,13 @@ func (r *repository) GetByEmail(ctx context.Context, email string) (*User, error
 
 func (r *repository) Update(ctx context.Context, user *User) error {
 	return r.db.WithContext(ctx).Save(user).Error
+}
+
+func (r *repository) GetAll(ctx context.Context) ([]*User, error) {
+	var users []*User
+	err := r.db.WithContext(ctx).Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }

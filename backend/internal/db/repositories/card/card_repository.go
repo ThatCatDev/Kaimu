@@ -15,6 +15,7 @@ type Repository interface {
 	GetByColumnID(ctx context.Context, columnID uuid.UUID) ([]*Card, error)
 	GetByBoardID(ctx context.Context, boardID uuid.UUID) ([]*Card, error)
 	GetByAssigneeID(ctx context.Context, assigneeID uuid.UUID) ([]*Card, error)
+	GetAll(ctx context.Context) ([]*Card, error)
 	GetMaxPosition(ctx context.Context, columnID uuid.UUID) (float64, error)
 	GetPositionBetween(ctx context.Context, columnID uuid.UUID, afterCardID *uuid.UUID) (float64, error)
 	Update(ctx context.Context, card *Card) error
@@ -72,6 +73,15 @@ func (r *repository) GetByAssigneeID(ctx context.Context, assigneeID uuid.UUID) 
 		Where("assignee_id = ?", assigneeID).
 		Order("due_date ASC NULLS LAST, created_at DESC").
 		Find(&cards).Error
+	if err != nil {
+		return nil, err
+	}
+	return cards, nil
+}
+
+func (r *repository) GetAll(ctx context.Context) ([]*Card, error) {
+	var cards []*Card
+	err := r.db.WithContext(ctx).Find(&cards).Error
 	if err != nil {
 		return nil, err
 	}

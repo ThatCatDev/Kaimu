@@ -14,6 +14,7 @@ type Repository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*Board, error)
 	GetByProjectID(ctx context.Context, projectID uuid.UUID) ([]*Board, error)
 	GetDefaultByProjectID(ctx context.Context, projectID uuid.UUID) (*Board, error)
+	GetAll(ctx context.Context) ([]*Board, error)
 	Update(ctx context.Context, board *Board) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
@@ -60,6 +61,15 @@ func (r *repository) GetDefaultByProjectID(ctx context.Context, projectID uuid.U
 		return nil, err
 	}
 	return &board, nil
+}
+
+func (r *repository) GetAll(ctx context.Context) ([]*Board, error) {
+	var boards []*Board
+	err := r.db.WithContext(ctx).Find(&boards).Error
+	if err != nil {
+		return nil, err
+	}
+	return boards, nil
 }
 
 func (r *repository) Update(ctx context.Context, board *Board) error {

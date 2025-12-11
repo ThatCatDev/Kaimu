@@ -217,6 +217,33 @@ type Role struct {
 	UpdatedAt   time.Time     `json:"updatedAt"`
 }
 
+type SearchResult struct {
+	Type             SearchEntityType `json:"type"`
+	ID               string           `json:"id"`
+	Title            string           `json:"title"`
+	Description      *string          `json:"description,omitempty"`
+	Highlight        string           `json:"highlight"`
+	OrganizationID   string           `json:"organizationId"`
+	OrganizationName string           `json:"organizationName"`
+	ProjectID        *string          `json:"projectId,omitempty"`
+	ProjectName      *string          `json:"projectName,omitempty"`
+	BoardID          *string          `json:"boardId,omitempty"`
+	BoardName        *string          `json:"boardName,omitempty"`
+	URL              string           `json:"url"`
+	Score            float64          `json:"score"`
+}
+
+type SearchResults struct {
+	Results    []*SearchResult `json:"results"`
+	TotalCount int             `json:"totalCount"`
+	Query      string          `json:"query"`
+}
+
+type SearchScope struct {
+	OrganizationID *string `json:"organizationId,omitempty"`
+	ProjectID      *string `json:"projectId,omitempty"`
+}
+
 type Tag struct {
 	ID          string    `json:"id"`
 	Project     *Project  `json:"project"`
@@ -244,10 +271,11 @@ type UpdateCardInput struct {
 }
 
 type UpdateColumnInput struct {
-	ID       string  `json:"id"`
-	Name     *string `json:"name,omitempty"`
-	Color    *string `json:"color,omitempty"`
-	WipLimit *int    `json:"wipLimit,omitempty"`
+	ID            string  `json:"id"`
+	Name          *string `json:"name,omitempty"`
+	Color         *string `json:"color,omitempty"`
+	WipLimit      *int    `json:"wipLimit,omitempty"`
+	ClearWipLimit *bool   `json:"clearWipLimit,omitempty"`
 }
 
 type UpdateMeInput struct {
@@ -336,5 +364,52 @@ func (e *CardPriority) UnmarshalGQL(v interface{}) error {
 }
 
 func (e CardPriority) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type SearchEntityType string
+
+const (
+	SearchEntityTypeCard         SearchEntityType = "CARD"
+	SearchEntityTypeProject      SearchEntityType = "PROJECT"
+	SearchEntityTypeBoard        SearchEntityType = "BOARD"
+	SearchEntityTypeOrganization SearchEntityType = "ORGANIZATION"
+	SearchEntityTypeUser         SearchEntityType = "USER"
+)
+
+var AllSearchEntityType = []SearchEntityType{
+	SearchEntityTypeCard,
+	SearchEntityTypeProject,
+	SearchEntityTypeBoard,
+	SearchEntityTypeOrganization,
+	SearchEntityTypeUser,
+}
+
+func (e SearchEntityType) IsValid() bool {
+	switch e {
+	case SearchEntityTypeCard, SearchEntityTypeProject, SearchEntityTypeBoard, SearchEntityTypeOrganization, SearchEntityTypeUser:
+		return true
+	}
+	return false
+}
+
+func (e SearchEntityType) String() string {
+	return string(e)
+}
+
+func (e *SearchEntityType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SearchEntityType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SearchEntityType", str)
+	}
+	return nil
+}
+
+func (e SearchEntityType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

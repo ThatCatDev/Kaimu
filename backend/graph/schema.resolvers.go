@@ -103,32 +103,96 @@ func (r *mutationResolver) DeleteOrganization(ctx context.Context, id string) (b
 
 // CreateProject is the resolver for the createProject field.
 func (r *mutationResolver) CreateProject(ctx context.Context, input model.CreateProjectInput) (*model.Project, error) {
-	return resolvers.CreateProject(ctx, r.RBACService, r.OrganizationService, r.ProjectService, r.BoardService, input)
+	project, err := resolvers.CreateProject(ctx, r.RBACService, r.OrganizationService, r.ProjectService, r.BoardService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Index for search
+	if r.SearchIndexer != nil {
+		projectID, _ := uuid.Parse(project.ID)
+		r.SearchIndexer.IndexProjectAsync(ctx, projectID)
+	}
+
+	return project, nil
 }
 
 // UpdateProject is the resolver for the updateProject field.
 func (r *mutationResolver) UpdateProject(ctx context.Context, input model.UpdateProjectInput) (*model.Project, error) {
-	return resolvers.UpdateProject(ctx, r.RBACService, r.ProjectService, input)
+	project, err := resolvers.UpdateProject(ctx, r.RBACService, r.ProjectService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Index for search
+	if r.SearchIndexer != nil {
+		projectID, _ := uuid.Parse(project.ID)
+		r.SearchIndexer.IndexProjectAsync(ctx, projectID)
+	}
+
+	return project, nil
 }
 
 // DeleteProject is the resolver for the deleteProject field.
 func (r *mutationResolver) DeleteProject(ctx context.Context, id string) (bool, error) {
-	return resolvers.DeleteProject(ctx, r.RBACService, r.ProjectService, id)
+	result, err := resolvers.DeleteProject(ctx, r.RBACService, r.ProjectService, id)
+	if err != nil {
+		return false, err
+	}
+
+	// Remove from search index
+	if r.SearchIndexer != nil {
+		r.SearchIndexer.DeleteProjectAsync(ctx, id)
+	}
+
+	return result, nil
 }
 
 // CreateBoard is the resolver for the createBoard field.
 func (r *mutationResolver) CreateBoard(ctx context.Context, input model.CreateBoardInput) (*model.Board, error) {
-	return resolvers.CreateBoard(ctx, r.RBACService, r.BoardService, r.ProjectService, input)
+	board, err := resolvers.CreateBoard(ctx, r.RBACService, r.BoardService, r.ProjectService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Index for search
+	if r.SearchIndexer != nil {
+		boardID, _ := uuid.Parse(board.ID)
+		r.SearchIndexer.IndexBoardAsync(ctx, boardID)
+	}
+
+	return board, nil
 }
 
 // UpdateBoard is the resolver for the updateBoard field.
 func (r *mutationResolver) UpdateBoard(ctx context.Context, input model.UpdateBoardInput) (*model.Board, error) {
-	return resolvers.UpdateBoard(ctx, r.RBACService, r.BoardService, input)
+	board, err := resolvers.UpdateBoard(ctx, r.RBACService, r.BoardService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Index for search
+	if r.SearchIndexer != nil {
+		boardID, _ := uuid.Parse(board.ID)
+		r.SearchIndexer.IndexBoardAsync(ctx, boardID)
+	}
+
+	return board, nil
 }
 
 // DeleteBoard is the resolver for the deleteBoard field.
 func (r *mutationResolver) DeleteBoard(ctx context.Context, id string) (bool, error) {
-	return resolvers.DeleteBoard(ctx, r.RBACService, r.BoardService, id)
+	result, err := resolvers.DeleteBoard(ctx, r.RBACService, r.BoardService, id)
+	if err != nil {
+		return false, err
+	}
+
+	// Remove from search index
+	if r.SearchIndexer != nil {
+		r.SearchIndexer.DeleteBoardAsync(ctx, id)
+	}
+
+	return result, nil
 }
 
 // CreateColumn is the resolver for the createColumn field.
@@ -158,22 +222,65 @@ func (r *mutationResolver) DeleteColumn(ctx context.Context, id string) (bool, e
 
 // CreateCard is the resolver for the createCard field.
 func (r *mutationResolver) CreateCard(ctx context.Context, input model.CreateCardInput) (*model.Card, error) {
-	return resolvers.CreateCard(ctx, r.RBACService, r.CardService, r.BoardService, input)
+	card, err := resolvers.CreateCard(ctx, r.RBACService, r.CardService, r.BoardService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Index for search
+	if r.SearchIndexer != nil {
+		cardID, _ := uuid.Parse(card.ID)
+		r.SearchIndexer.IndexCardAsync(ctx, cardID)
+	}
+
+	return card, nil
 }
 
 // UpdateCard is the resolver for the updateCard field.
 func (r *mutationResolver) UpdateCard(ctx context.Context, input model.UpdateCardInput) (*model.Card, error) {
-	return resolvers.UpdateCard(ctx, r.RBACService, r.CardService, r.BoardService, input)
+	card, err := resolvers.UpdateCard(ctx, r.RBACService, r.CardService, r.BoardService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Index for search
+	if r.SearchIndexer != nil {
+		cardID, _ := uuid.Parse(card.ID)
+		r.SearchIndexer.IndexCardAsync(ctx, cardID)
+	}
+
+	return card, nil
 }
 
 // MoveCard is the resolver for the moveCard field.
 func (r *mutationResolver) MoveCard(ctx context.Context, input model.MoveCardInput) (*model.Card, error) {
-	return resolvers.MoveCard(ctx, r.RBACService, r.CardService, r.BoardService, input)
+	card, err := resolvers.MoveCard(ctx, r.RBACService, r.CardService, r.BoardService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Index for search
+	if r.SearchIndexer != nil {
+		cardID, _ := uuid.Parse(card.ID)
+		r.SearchIndexer.IndexCardAsync(ctx, cardID)
+	}
+
+	return card, nil
 }
 
 // DeleteCard is the resolver for the deleteCard field.
 func (r *mutationResolver) DeleteCard(ctx context.Context, id string) (bool, error) {
-	return resolvers.DeleteCard(ctx, r.RBACService, r.CardService, r.BoardService, id)
+	result, err := resolvers.DeleteCard(ctx, r.RBACService, r.CardService, r.BoardService, id)
+	if err != nil {
+		return false, err
+	}
+
+	// Remove from search index
+	if r.SearchIndexer != nil {
+		r.SearchIndexer.DeleteCardAsync(ctx, id)
+	}
+
+	return result, nil
 }
 
 // CreateTag is the resolver for the createTag field.
@@ -351,6 +458,14 @@ func (r *queryResolver) HasPermission(ctx context.Context, permission string, re
 // MyPermissions is the resolver for the myPermissions field.
 func (r *queryResolver) MyPermissions(ctx context.Context, resourceType string, resourceID string) ([]string, error) {
 	return resolvers.MyPermissions(ctx, r.RBACService, resourceType, resourceID)
+}
+
+// Search is the resolver for the search field.
+func (r *queryResolver) Search(ctx context.Context, query string, scope *model.SearchScope, limit *int) (*model.SearchResults, error) {
+	if r.SearchService == nil {
+		return nil, errors.New("search service is not configured")
+	}
+	return resolvers.Search(ctx, r.SearchService, query, scope, limit)
 }
 
 // Mutation returns generated.MutationResolver implementation.

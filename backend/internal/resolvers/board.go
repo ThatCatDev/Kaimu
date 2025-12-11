@@ -276,7 +276,9 @@ func UpdateColumn(ctx context.Context, rbacSvc rbacService.Service, boardSvc boa
 	if input.Color != nil {
 		col.Color = *input.Color
 	}
-	if input.WipLimit != nil {
+	if input.ClearWipLimit != nil && *input.ClearWipLimit {
+		col.WipLimit = nil
+	} else if input.WipLimit != nil {
 		col.WipLimit = input.WipLimit
 	}
 

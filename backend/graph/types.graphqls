@@ -210,6 +210,7 @@ input UpdateColumnInput {
     name: String
     color: String
     wipLimit: Int
+    clearWipLimit: Boolean
 }
 
 input ReorderColumnsInput {
@@ -288,4 +289,40 @@ input AssignProjectRoleInput {
     projectId: ID!
     userId: ID!
     roleId: ID
+}
+
+# Search Types
+enum SearchEntityType {
+    CARD
+    PROJECT
+    BOARD
+    ORGANIZATION
+    USER
+}
+
+type SearchResult {
+    type: SearchEntityType!
+    id: ID!
+    title: String!
+    description: String
+    highlight: String!
+    organizationId: ID!
+    organizationName: String!
+    projectId: ID
+    projectName: String
+    boardId: ID
+    boardName: String
+    url: String!
+    score: Float!
+}
+
+type SearchResults {
+    results: [SearchResult!]!
+    totalCount: Int!
+    query: String!
+}
+
+input SearchScope {
+    organizationId: ID
+    projectId: ID
 }
