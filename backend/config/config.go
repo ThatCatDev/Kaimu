@@ -60,6 +60,7 @@ type EmailConfig struct {
 	FromName        string `env:"EMAIL_FROM_NAME" default:"Kaimu"`
 	SSLType         string `env:"EMAIL_SSL_TYPE" default:"none"` // none, tls, ssl
 	VerificationURL string `env:"EMAIL_VERIFICATION_URL" default:"http://localhost:4321/verify"`
+	InvitationURL   string `env:"EMAIL_INVITATION_URL" default:"http://localhost:4321/invite"`
 }
 
 func LoadConfigOrPanic() Config {

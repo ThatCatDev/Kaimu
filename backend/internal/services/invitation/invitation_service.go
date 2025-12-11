@@ -7,14 +7,17 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/thatcatdev/kaimu/backend/config"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/invitation"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization_member"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/role"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
+	"github.com/thatcatdev/kaimu/backend/internal/services/mail"
 	"github.com/thatcatdev/kaimu/backend/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -76,6 +79,8 @@ type service struct {
 	orgMemberRepo  organization_member.Repository
 	userRepo       user.Repository
 	roleRepo       role.Repository
+	mailService    mail.MailService
+	emailConfig    config.EmailConfig
 }
 
 func NewService(
@@ -84,6 +89,8 @@ func NewService(
 	orgMemberRepo organization_member.Repository,
 	userRepo user.Repository,
 	roleRepo role.Repository,
+	mailService mail.MailService,
+	emailConfig config.EmailConfig,
 ) Service {
 	return &service{
 		invitationRepo: invitationRepo,
@@ -91,6 +98,8 @@ func NewService(
 		orgMemberRepo:  orgMemberRepo,
 		userRepo:       userRepo,
 		roleRepo:       roleRepo,
+		mailService:    mailService,
+		emailConfig:    emailConfig,
 	}
 }
 
@@ -173,7 +182,8 @@ func (s *service) CreateInvitation(ctx context.Context, orgID uuid.UUID, email s
 		return nil, err
 	}
 
-	// TODO: Send invitation email
+	// Send invitation email asynchronously (use background context since request context will be canceled)
+	go s.sendInvitationEmail(context.Background(), inv, invitedBy)
 
 	return inv, nil
 }
@@ -262,7 +272,8 @@ func (s *service) ResendInvitation(ctx context.Context, id uuid.UUID) (*invitati
 		return nil, err
 	}
 
-	// TODO: Send invitation email
+	// Send invitation email asynchronously (use background context since request context will be canceled)
+	go s.sendInvitationEmail(context.Background(), inv, inv.InvitedBy)
 
 	return inv, nil
 }
@@ -370,4 +381,47 @@ func (s *service) GetInviter(ctx context.Context, invID uuid.UUID) (*user.User, 
 	}
 
 	return s.userRepo.GetByID(ctx, inv.InvitedBy)
+}
+
+// sendInvitationEmail sends an invitation email to the invitee
+func (s *service) sendInvitationEmail(ctx context.Context, inv *invitation.Invitation, invitedByID uuid.UUID) {
+	// Get organization name
+	org, err := s.orgRepo.GetByID(ctx, inv.OrganizationID)
+	if err != nil {
+		return // Silently fail - email is not critical
+	}
+
+	// Get inviter name
+	inviter, err := s.userRepo.GetByID(ctx, invitedByID)
+	if err != nil {
+		return
+	}
+	inviterName := inviter.Username
+	if inviter.DisplayName != nil && *inviter.DisplayName != "" {
+		inviterName = *inviter.DisplayName
+	}
+
+	// Get role name
+	roleName := "Member"
+	if inv.RoleID != nil {
+		role, err := s.roleRepo.GetByID(ctx, *inv.RoleID)
+		if err == nil && role != nil {
+			roleName = role.Name
+		}
+	}
+
+	// Build invitation URL
+	inviteURL := fmt.Sprintf("%s/%s", s.emailConfig.InvitationURL, inv.Token)
+
+	// Send the email
+	err = s.mailService.SendMail(ctx, []string{inv.Email}, fmt.Sprintf("You've been invited to join %s", org.Name), "invitation.mjml", map[string]string{
+		"organization_name": org.Name,
+		"inviter_name":      inviterName,
+		"role_name":         roleName,
+		"invite_url":        inviteURL,
+	})
+	if err != nil {
+		// Log error but don't fail - email is not critical
+		return
+	}
 }

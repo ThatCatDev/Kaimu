@@ -26,8 +26,8 @@
       error = null;
       invitationLink = null;
       copied = false;
-      // Default to first non-owner role, or fall back to first role
-      const defaultRole = roles.find(r => r.name !== 'Owner') || roles[0];
+      // Default to "Member" role specifically, then fall back to first non-owner role
+      const defaultRole = roles.find(r => r.name === 'Member') || roles.find(r => r.name !== 'Owner') || roles[0];
       roleId = defaultRole?.id || '';
     }
   });

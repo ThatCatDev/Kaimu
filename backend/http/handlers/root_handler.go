@@ -127,20 +127,24 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		userRepository,
 	)
 
+	// Initialize email services first (needed by invitation service)
+	emailVerificationTokenRepository := emailVerificationTokenRepo.NewEmailVerificationTokenRepository(database.DB)
+	mjmlService := mjml.NewMJMLService()
+	mailService := mail.NewMailService(cfg.EmailConfig, mjmlService)
+
 	invitationService := invitation.NewService(
 		invitationRepository,
 		orgRepository,
 		orgMemberRepository,
 		userRepository,
 		roleRepository,
+		mailService,
+		cfg.EmailConfig,
 	)
 
 	userService := user.NewService(userRepository)
 
-	// Initialize email services
-	emailVerificationTokenRepository := emailVerificationTokenRepo.NewEmailVerificationTokenRepository(database.DB)
-	mjmlService := mjml.NewMJMLService()
-	mailService := mail.NewMailService(cfg.EmailConfig, mjmlService)
+	// Initialize email verification service (uses same mail service)
 	emailVerificationService := email.NewEmailVerificationService(
 		emailVerificationTokenRepository,
 		userRepository,

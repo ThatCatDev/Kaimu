@@ -67,6 +67,7 @@ services:
       EMAIL_FROM_NAME: Kaimu
       EMAIL_SSL_TYPE: none
       EMAIL_VERIFICATION_URL: http://localhost:4321/verify
+      EMAIL_INVITATION_URL: http://localhost:4321/invite
     volumes:
       - ./backend:/app
       - go_modules:/go/pkg/mod
