@@ -115,7 +115,7 @@
 
   <!-- Quick actions - simple icons that appear on hover, permission-gated -->
   {#if canEditCard || canDeleteCard}
-    <div class="absolute top-2 right-2 hidden group-hover:flex gap-1 z-10">
+    <div class="absolute top-3 right-3 hidden group-hover:flex gap-1 z-10">
       {#if canEditCard}
         <button
           type="button"
@@ -143,11 +143,7 @@
     </div>
   {/if}
 
-  <h4 class="text-sm font-medium text-gray-900 mb-1 pr-6">{card.title}</h4>
-
-  {#if card.description}
-    <p class="text-xs text-gray-500 mb-2 line-clamp-2">{card.description}</p>
-  {/if}
+  <h4 class="text-sm font-medium text-gray-900 mb-1 pr-16">{card.title}</h4>
 
   {#if card.tags && card.tags.length > 0}
     <div class="flex flex-wrap gap-1 mb-2">

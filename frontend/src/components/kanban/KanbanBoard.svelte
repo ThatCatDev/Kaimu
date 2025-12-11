@@ -12,6 +12,7 @@
   import type { BoardWithColumns, BoardColumn, BoardCard, Tag } from '../../lib/api/boards';
   import { getBoard, moveCard, getTags, deleteCard, reorderColumns, toggleColumnVisibility, deleteColumn, updateBoard } from '../../lib/api/boards';
   import EditableTitle from '../EditableTitle.svelte';
+  import EditableDescription from '../EditableDescription.svelte';
   import { Permissions } from '../../lib/stores/permissions.svelte';
   import { getMyPermissions } from '../../lib/api/rbac';
 
@@ -31,7 +32,9 @@
   let showCreateCardModal = $state(false);
   let createCardColumnId = $state<string | null>(null);
   let showCardDetailModal = $state(false);
-  let selectedCard = $state<BoardCard | null>(null);
+  // Use a cloned card object for editing to prevent board updates from affecting it
+  let editingCard = $state<BoardCard | null>(null);
+  let selectedProjectId = $state<string>(''); // Stable project ID for card detail view
 
   // Column modal states
   let showCreateColumnModal = $state(false);
@@ -128,10 +131,16 @@
     }
   }
 
-  async function handleRenameBoard(newName: string) {
+  async function handleUpdateBoardName(newName: string) {
     if (!board) return;
     const updated = await updateBoard(boardId, newName);
     board = { ...board, name: updated.name };
+  }
+
+  async function handleUpdateBoardDescription(newDescription: string) {
+    if (!board) return;
+    const updated = await updateBoard(boardId, undefined, newDescription);
+    board = { ...board, description: updated.description };
   }
 
   async function refreshBoard() {
@@ -143,6 +152,22 @@
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to refresh board';
     }
+  }
+
+  // Update a single card in the board display without affecting editingCard
+  // This allows the board to show updated card data while editing without resetting the form
+  function updateCardInBoard(cardId: string, updates: Partial<BoardCard>) {
+    if (!board) return;
+
+    board = {
+      ...board,
+      columns: board.columns.map(col => ({
+        ...col,
+        cards: col.cards.map(c =>
+          c.id === cardId ? { ...c, ...updates } : c
+        )
+      }))
+    };
   }
 
   async function reloadTags() {
@@ -168,7 +193,12 @@
   }
 
   function handleCardClick(card: BoardCard) {
-    selectedCard = card;
+    // Only update editingCard if it's a different card
+    // This prevents unnecessary resets when clicking the same card or during re-renders
+    if (!editingCard || editingCard.id !== card.id) {
+      editingCard = { ...card, tags: card.tags ? [...card.tags] : [] };
+    }
+    selectedProjectId = board?.project?.id ?? '';
     showCardDetailModal = true;
   }
 
@@ -269,7 +299,7 @@
 
   async function handleCardUpdated() {
     showCardDetailModal = false;
-    selectedCard = null;
+    editingCard = null;
     await refreshBoard();
   }
 
@@ -302,7 +332,7 @@
 
   function closeCardDetailModal() {
     showCardDetailModal = false;
-    selectedCard = null;
+    editingCard = null;
   }
 </script>
 
@@ -325,16 +355,22 @@
   <div class="h-full flex flex-col">
     <!-- Board header -->
     <div class="flex items-center justify-between mb-4">
-      <div>
+      <div class="flex-1 min-w-0 mr-4">
         <h1 class="text-2xl font-bold text-gray-900">
           {#if canManageBoard}
-            <EditableTitle value={board.name} onSave={handleRenameBoard} />
+            <EditableTitle value={board.name} onSave={handleUpdateBoardName} />
           {:else}
             {board.name}
           {/if}
         </h1>
-        {#if board.description}
-          <p class="text-sm text-gray-500">{board.description}</p>
+        {#if canManageBoard}
+          <EditableDescription
+            value={board.description}
+            onSave={handleUpdateBoardDescription}
+            placeholder="Add description..."
+          />
+        {:else if board.description}
+          <p class="text-sm text-gray-500 mt-1">{board.description}</p>
         {/if}
       </div>
       <div class="flex items-center gap-4">
@@ -466,12 +502,12 @@
     <!-- Card Detail Modal (when in modal mode) -->
     <CardDetailModal
       open={cardViewMode === 'modal' && showCardDetailModal}
-      card={selectedCard}
-      projectId={board.project.id}
+      card={editingCard}
+      projectId={selectedProjectId}
       {tags}
       onClose={closeCardDetailModal}
       onUpdated={handleCardUpdated}
-      onAutoSaved={refreshBoard}
+      onCardDataChanged={updateCardInBoard}
       onTagsChanged={reloadTags}
       viewMode={cardViewMode}
       onViewModeChange={setCardViewMode}
@@ -483,13 +519,13 @@
   <!-- Card Detail Panel (when in panel mode) -->
   {#if cardViewMode === 'panel'}
     <CardDetailPanel
-      card={selectedCard}
-      projectId={board?.project?.id ?? ''}
+      card={editingCard}
+      projectId={selectedProjectId}
       {tags}
       isOpen={showCardDetailModal}
       onClose={closeCardDetailModal}
       onUpdated={handleCardUpdated}
-      onAutoSaved={refreshBoard}
+      onCardDataChanged={updateCardInBoard}
       onTagsChanged={reloadTags}
       viewMode={cardViewMode}
       onViewModeChange={setCardViewMode}

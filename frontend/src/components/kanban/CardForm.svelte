@@ -1,6 +1,6 @@
 <script lang="ts">
   import { CardPriority } from '../../lib/graphql/generated';
-  import { Input, Textarea, BitsSelect, DatePicker } from '../ui';
+  import { Input, BitsSelect, DatePicker, RichTextEditor } from '../ui';
   import TagPicker from './TagPicker.svelte';
   import type { Tag } from '../../lib/api/boards';
 
@@ -63,18 +63,6 @@
   }: Props = $props();
 
 
-  // Local reactive bindings that call parent callbacks
-  let localTitle = $state(title);
-  let localDescription = $state(description);
-  let localPriority = $state(priority);
-  let localDueDate = $state(dueDate);
-
-  // Sync from parent
-  $effect(() => { localTitle = title; });
-  $effect(() => { localDescription = description; });
-  $effect(() => { localPriority = priority; });
-  $effect(() => { localDueDate = dueDate; });
-
   // Computed values for read-only display
   const selectedTags = $derived(tags.filter(t => selectedTagIds.includes(t.id)));
 
@@ -83,20 +71,6 @@
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
-
-  // Notify parent on changes
-  $effect(() => {
-    if (localTitle !== title) onTitleChange(localTitle);
-  });
-  $effect(() => {
-    if (localDescription !== description) onDescriptionChange(localDescription);
-  });
-  $effect(() => {
-    if (localPriority !== priority) onPriorityChange(localPriority);
-  });
-  $effect(() => {
-    if (localDueDate !== dueDate) onDueDateChange(localDueDate);
-  });
 </script>
 
 <div class="space-y-4">
@@ -109,21 +83,22 @@
   <Input
     id="{idPrefix}title"
     label="Title"
-    bind:value={localTitle}
+    value={title}
+    onInput={(e) => onTitleChange(e.currentTarget.value)}
     placeholder="Enter card title"
     required
     {disabled}
     {readOnly}
+    class="font-semibold text-base"
   />
 
-  <Textarea
-    id="{idPrefix}description"
+  <RichTextEditor
     label="Description"
-    bind:value={localDescription}
-    rows={descriptionRows}
-    placeholder="Add a description"
+    value={description}
+    placeholder="Add a description..."
     {disabled}
     {readOnly}
+    onUpdate={onDescriptionChange}
   />
 
   <div class="grid grid-cols-2 gap-4">
@@ -131,7 +106,8 @@
       id="{idPrefix}priority"
       label="Priority"
       options={priorityOptions}
-      bind:value={localPriority}
+      value={priority}
+      onValueChange={onPriorityChange}
       placeholder="Select priority..."
       disabled={disabled}
       {readOnly}
@@ -140,7 +116,8 @@
     <DatePicker
       id="{idPrefix}dueDate"
       label="Due Date"
-      bind:value={localDueDate}
+      value={dueDate}
+      onValueChange={onDueDateChange}
       disabled={disabled}
       {readOnly}
     />

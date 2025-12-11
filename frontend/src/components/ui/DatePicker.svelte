@@ -13,6 +13,7 @@
     minValue?: string;
     maxValue?: string;
     readOnly?: boolean;
+    onValueChange?: (value: string) => void;
   }
 
   let {
@@ -25,7 +26,8 @@
     id,
     minValue,
     maxValue,
-    readOnly = false
+    readOnly = false,
+    onValueChange
   }: Props = $props();
 
   function formatDisplayDate(dateStr: string): string {
@@ -60,13 +62,16 @@
   // Sync from CalendarDate to string value
   function handleValueChange(newValue: CalendarDate | undefined) {
     calendarValue = newValue;
-    value = newValue ? newValue.toString() : '';
+    const newStringValue = newValue ? newValue.toString() : '';
+    value = newStringValue;
+    onValueChange?.(newStringValue);
   }
 
   function clearDate(e: Event) {
     e.stopPropagation();
     calendarValue = undefined;
     value = '';
+    onValueChange?.('');
   }
 
   const minDate = $derived(minValue ? parseDate(minValue) : undefined);
@@ -99,7 +104,7 @@
   >
     <DatePicker.Input
       {id}
-      class="flex h-10 w-full items-center rounded-md border bg-white px-4 py-2 text-sm transition-colors focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 {error ? 'border-red-300 focus-within:ring-red-500 focus-within:border-red-500' : 'border-gray-300 hover:border-gray-400'} {disabled ? 'cursor-not-allowed opacity-50 bg-gray-50' : ''}"
+      class="flex h-auto w-full items-center rounded bg-transparent px-2 py-1.5 text-sm transition-colors hover:bg-gray-50 focus-within:outline-none focus-within:bg-gray-50 focus-within:ring-1 focus-within:ring-indigo-500 {error ? 'ring-1 ring-red-500 bg-red-50' : ''} {disabled ? 'cursor-not-allowed opacity-50' : ''}"
     >
       {#snippet children({ segments })}
         {#each segments as { part, value: segValue }}

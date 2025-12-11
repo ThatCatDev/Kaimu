@@ -11,7 +11,7 @@
     tags: Tag[];
     onClose: () => void;
     onUpdated: () => void;
-    onAutoSaved?: () => void;
+    onCardDataChanged?: (cardId: string, updates: Partial<BoardCard>) => void;
     onTagsChanged?: () => void;
     viewMode: 'modal' | 'panel';
     onViewModeChange: (mode: 'modal' | 'panel') => void;
@@ -20,7 +20,7 @@
     canDeleteCard?: boolean;
   }
 
-  let { open, card, projectId, tags, onClose, onUpdated, onAutoSaved, onTagsChanged, viewMode, onViewModeChange, canEditCard = true, canDeleteCard = true }: Props = $props();
+  let { open, card, projectId, tags, onClose, onUpdated, onCardDataChanged, onTagsChanged, viewMode, onViewModeChange, canEditCard = true, canDeleteCard = true }: Props = $props();
 
 
   let title = $state('');
@@ -34,36 +34,46 @@
   let saveTimeout: ReturnType<typeof setTimeout> | null = null;
   let showDeleteConfirm = $state(false);
   let lastSavedData = $state<string>('');
+  let isEditing = $state(false); // Track if user has started editing
+  let currentCardId = $state<string | null>(null);
 
-  // Initialize form when card changes or modal opens
+  // Use derived instead of function call in template to avoid re-render triggers
+  const currentDataHash = $derived(JSON.stringify({ title, description, priority, selectedTagIds, dueDate }));
+  const isSaved = $derived(currentDataHash === lastSavedData);
+
+  // Reset state when modal closes
   $effect(() => {
-    if (open && card) {
+    if (!open) {
+      currentCardId = null;
+      isEditing = false;
+    }
+  });
+
+  // Load card data ONLY when a DIFFERENT card is selected
+  // Never reload while editing the same card (prevents form reset during auto-save)
+  $effect(() => {
+    if (open && card && card.id !== currentCardId) {
+      // New card selected - load its data
+      currentCardId = card.id;
       title = card.title;
       description = card.description ?? '';
       priority = card.priority;
       selectedTagIds = card.tags?.map(t => t.id) ?? [];
       dueDate = card.dueDate ? card.dueDate.split('T')[0] : '';
       error = null;
-      lastSavedData = JSON.stringify({
-        title: card.title,
-        description: card.description ?? '',
-        priority: card.priority,
-        selectedTagIds: card.tags?.map(t => t.id) ?? [],
-        dueDate: card.dueDate ? card.dueDate.split('T')[0] : ''
-      });
+      isEditing = false;
+      // Set lastSavedData to current values so isSaved shows correctly
+      lastSavedData = JSON.stringify({ title, description, priority, selectedTagIds, dueDate });
     }
   });
-
-  function getCurrentDataHash(): string {
-    return JSON.stringify({ title, description, priority, selectedTagIds, dueDate });
-  }
 
   // Auto-save effect
   $effect(() => {
     if (!open || !card) return;
 
-    const currentData = getCurrentDataHash();
-    if (lastSavedData && currentData !== lastSavedData && title.trim()) {
+    if (lastSavedData && currentDataHash !== lastSavedData && title.trim()) {
+      // User has made changes - mark as editing
+      isEditing = true;
       if (saveTimeout) clearTimeout(saveTimeout);
       saveTimeout = setTimeout(() => {
         autoSave();
@@ -90,8 +100,16 @@
         selectedTagIds,
         dueDateRfc3339
       );
-      lastSavedData = getCurrentDataHash();
-      onAutoSaved?.();
+      lastSavedData = currentDataHash;
+
+      // Update card display on board without resetting form
+      onCardDataChanged?.(card.id, {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        priority,
+        dueDate: dueDateRfc3339,
+        tags: tags.filter(t => selectedTagIds.includes(t.id))
+      });
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to save';
     } finally {
@@ -142,6 +160,13 @@
       minute: '2-digit',
     });
   }
+
+  // Stable callback functions to prevent re-renders
+  function handleTitleChange(v: string) { title = v; }
+  function handleDescriptionChange(v: string) { description = v; }
+  function handlePriorityChange(v: typeof priority) { priority = v; }
+  function handleDueDateChange(v: string) { dueDate = v; }
+  function handleTagSelectionChange(ids: string[]) { selectedTagIds = ids; }
 </script>
 
 <Modal {open} onOpenChange={handleOpenChange} title="Card Details" size="2xl">
@@ -169,14 +194,14 @@
           {selectedTagIds}
           {projectId}
           {tags}
-          onTitleChange={(v) => title = v}
-          onDescriptionChange={(v) => description = v}
-          onPriorityChange={(v) => priority = v}
-          onDueDateChange={(v) => dueDate = v}
-          onTagSelectionChange={(ids) => selectedTagIds = ids}
+          onTitleChange={handleTitleChange}
+          onDescriptionChange={handleDescriptionChange}
+          onPriorityChange={handlePriorityChange}
+          onDueDateChange={handleDueDateChange}
+          onTagSelectionChange={handleTagSelectionChange}
           {onTagsChanged}
           {error}
-          disabled={saving || deleting}
+          disabled={deleting}
           readOnly={!canEditCard}
           descriptionRows={4}
           idPrefix="detail-"
@@ -205,7 +230,7 @@
         {#if canEditCard}
           {#if saving}
             <span class="text-xs text-gray-400">Saving...</span>
-          {:else if getCurrentDataHash() === lastSavedData}
+          {:else if isSaved}
             <span class="text-xs text-green-600">Saved</span>
           {/if}
         {/if}

@@ -11,6 +11,7 @@ import (
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/card"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/card_tag"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
+	"github.com/thatcatdev/kaimu/backend/internal/sanitize"
 	"github.com/thatcatdev/kaimu/backend/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -123,8 +124,8 @@ func (s *service) CreateCard(ctx context.Context, input CreateCardInput) (*card.
 		ColumnID:    input.ColumnID,
 		BoardID:     col.BoardID,
 		Title:       input.Title,
-		Description: input.Description,
-		Position:    maxPos + 1000, // Start at 1000 intervals
+		Description: sanitize.HTML(input.Description), // Sanitize HTML to prevent XSS
+		Position:    maxPos + 1000,                    // Start at 1000 intervals
 		Priority:    input.Priority,
 		AssigneeID:  input.AssigneeID,
 		DueDate:     input.DueDate,
@@ -205,7 +206,7 @@ func (s *service) UpdateCard(ctx context.Context, input UpdateCardInput) (*card.
 		c.Title = *input.Title
 	}
 	if input.Description != nil {
-		c.Description = *input.Description
+		c.Description = sanitize.HTML(*input.Description) // Sanitize HTML to prevent XSS
 	}
 	if input.Priority != nil {
 		c.Priority = *input.Priority
