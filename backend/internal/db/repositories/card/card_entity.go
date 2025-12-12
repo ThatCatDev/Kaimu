@@ -31,6 +31,18 @@ type Card struct {
 	CreatedBy   *uuid.UUID   `gorm:"type:uuid"`
 }
 
+// CardSprint represents the many-to-many relationship between cards and sprints
+type CardSprint struct {
+	ID       uuid.UUID `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
+	CardID   uuid.UUID `gorm:"type:uuid;not null"`
+	SprintID uuid.UUID `gorm:"type:uuid;not null"`
+	AddedAt  time.Time `gorm:"autoCreateTime"`
+}
+
+func (CardSprint) TableName() string {
+	return "card_sprints"
+}
+
 func (Card) TableName() string {
 	return "cards"
 }

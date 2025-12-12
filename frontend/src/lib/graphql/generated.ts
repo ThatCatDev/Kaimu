@@ -31,6 +31,7 @@ export type AuthPayload = {
 
 export type Board = {
   __typename?: 'Board';
+  activeSprint?: Maybe<Sprint>;
   columns: Array<BoardColumn>;
   createdAt: Scalars['Time']['output'];
   description?: Maybe<Scalars['String']['output']>;
@@ -38,6 +39,7 @@ export type Board = {
   isDefault: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   project: Project;
+  sprints: Array<Sprint>;
   updatedAt: Scalars['Time']['output'];
 };
 
@@ -68,6 +70,7 @@ export type Card = {
   id: Scalars['ID']['output'];
   position: Scalars['Float']['output'];
   priority: CardPriority;
+  sprints: Array<Sprint>;
   tags: Array<Tag>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['Time']['output'];
@@ -127,6 +130,14 @@ export type CreateRoleInput = {
   permissionCodes: Array<Scalars['String']['input']>;
 };
 
+export type CreateSprintInput = {
+  boardId: Scalars['ID']['input'];
+  endDate?: InputMaybe<Scalars['Time']['input']>;
+  goal?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  startDate?: InputMaybe<Scalars['Time']['input']>;
+};
+
 export type CreateTagInput = {
   color: Scalars['String']['input'];
   description?: InputMaybe<Scalars['String']['input']>;
@@ -163,16 +174,25 @@ export type MoveCardInput = {
   targetColumnId: Scalars['ID']['input'];
 };
 
+export type MoveCardToSprintInput = {
+  cardId: Scalars['ID']['input'];
+  sprintId: Scalars['ID']['input'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   /** Accept an invitation (for the invited user) */
   acceptInvitation: Organization;
+  /** Add a card to a sprint (cards can be in multiple sprints) */
+  addCardToSprint: Card;
   /** Assign/change a project-specific role */
   assignProjectRole: ProjectMember;
   /** Cancel a pending invitation */
   cancelInvitation: Scalars['Boolean']['output'];
   /** Change a member's role in an organization */
   changeMemberRole: OrganizationMember;
+  /** Complete a sprint (sets status to closed) */
+  completeSprint: Sprint;
   /** Create a new board */
   createBoard: Board;
   /** Create a new card */
@@ -185,6 +205,8 @@ export type Mutation = {
   createProject: Project;
   /** Create a custom role */
   createRole: Role;
+  /** Create a new sprint */
+  createSprint: Sprint;
   /** Create a new tag */
   createTag: Tag;
   /** Delete a board */
@@ -199,6 +221,8 @@ export type Mutation = {
   deleteProject: Scalars['Boolean']['output'];
   /** Delete a custom role */
   deleteRole: Scalars['Boolean']['output'];
+  /** Delete a sprint */
+  deleteSprint: Scalars['Boolean']['output'];
   /** Delete a tag */
   deleteTag: Scalars['Boolean']['output'];
   /** Invite a user to an organization */
@@ -209,8 +233,12 @@ export type Mutation = {
   logout: Scalars['Boolean']['output'];
   /** Move a card to a different column */
   moveCard: Card;
+  /** Move a card to backlog (remove from all sprints) */
+  moveCardToBacklog: Card;
   /** Register a new user (sends verification email) */
   register: AuthPayload;
+  /** Remove a card from a sprint */
+  removeCardFromSprint: Card;
   /** Remove a member from an organization */
   removeMember: Scalars['Boolean']['output'];
   /** Remove a member from a project */
@@ -221,6 +249,10 @@ export type Mutation = {
   resendInvitation: Invitation;
   /** Resend verification email */
   resendVerificationEmail: Scalars['Boolean']['output'];
+  /** Set all sprints for a card (replaces existing sprint assignments) */
+  setCardSprints: Card;
+  /** Start a sprint (sets status to active) */
+  startSprint: Sprint;
   /** Toggle column visibility */
   toggleColumnVisibility: BoardColumn;
   /** Update a board */
@@ -237,6 +269,8 @@ export type Mutation = {
   updateProject: Project;
   /** Update a custom role */
   updateRole: Role;
+  /** Update a sprint */
+  updateSprint: Sprint;
   /** Update a tag */
   updateTag: Tag;
   /** Verify email with token */
@@ -246,6 +280,11 @@ export type Mutation = {
 
 export type MutationAcceptInvitationArgs = {
   token: Scalars['String']['input'];
+};
+
+
+export type MutationAddCardToSprintArgs = {
+  input: MoveCardToSprintInput;
 };
 
 
@@ -262,6 +301,12 @@ export type MutationCancelInvitationArgs = {
 export type MutationChangeMemberRoleArgs = {
   input: ChangeMemberRoleInput;
   organizationId: Scalars['ID']['input'];
+};
+
+
+export type MutationCompleteSprintArgs = {
+  id: Scalars['ID']['input'];
+  moveIncompleteToBacklog?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -292,6 +337,11 @@ export type MutationCreateProjectArgs = {
 
 export type MutationCreateRoleArgs = {
   input: CreateRoleInput;
+};
+
+
+export type MutationCreateSprintArgs = {
+  input: CreateSprintInput;
 };
 
 
@@ -330,6 +380,11 @@ export type MutationDeleteRoleArgs = {
 };
 
 
+export type MutationDeleteSprintArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteTagArgs = {
   id: Scalars['ID']['input'];
 };
@@ -350,8 +405,18 @@ export type MutationMoveCardArgs = {
 };
 
 
+export type MutationMoveCardToBacklogArgs = {
+  cardId: Scalars['ID']['input'];
+};
+
+
 export type MutationRegisterArgs = {
   input: RegisterInput;
+};
+
+
+export type MutationRemoveCardFromSprintArgs = {
+  input: MoveCardToSprintInput;
 };
 
 
@@ -373,6 +438,17 @@ export type MutationReorderColumnsArgs = {
 
 
 export type MutationResendInvitationArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type MutationSetCardSprintsArgs = {
+  cardId: Scalars['ID']['input'];
+  sprintIds: Array<Scalars['ID']['input']>;
+};
+
+
+export type MutationStartSprintArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -417,6 +493,12 @@ export type MutationUpdateRoleArgs = {
 };
 
 
+export type MutationUpdateSprintArgs = {
+  id: Scalars['ID']['input'];
+  input: UpdateSprintInput;
+};
+
+
 export type MutationUpdateTagArgs = {
   input: UpdateTagInput;
 };
@@ -455,6 +537,15 @@ export type OrganizationMember = {
   user: User;
 };
 
+export type PageInfo = {
+  __typename?: 'PageInfo';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
+  hasPreviousPage: Scalars['Boolean']['output'];
+  startCursor?: Maybe<Scalars['String']['output']>;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type Permission = {
   __typename?: 'Permission';
   code: Scalars['String']['output'];
@@ -490,12 +581,20 @@ export type ProjectMember = {
 export type Query = {
   __typename?: 'Query';
   _service: _Service;
+  /** Get the active sprint for a board */
+  activeSprint?: Maybe<Sprint>;
+  /** Get backlog cards (cards not assigned to any sprint) */
+  backlogCards: Array<Card>;
   /** Get a board by ID */
   board?: Maybe<Board>;
   /** Get all boards for a project */
   boards: Array<Board>;
   /** Get a card by ID */
   card?: Maybe<Card>;
+  /** Get closed sprints for a board (paginated) */
+  closedSprints: SprintConnection;
+  /** Get future sprints for a board */
+  futureSprints: Array<Sprint>;
   /** Check if current user has a specific permission */
   hasPermission: Scalars['Boolean']['output'];
   /** Hello World query */
@@ -528,8 +627,24 @@ export type Query = {
   roles: Array<Role>;
   /** Search across organizations, projects, boards, cards, and users */
   search: SearchResults;
+  /** Get a sprint by ID */
+  sprint?: Maybe<Sprint>;
+  /** Get cards in a sprint */
+  sprintCards: Array<Card>;
+  /** Get all sprints for a board */
+  sprints: Array<Sprint>;
   /** Get all tags for a project */
   tags: Array<Tag>;
+};
+
+
+export type QueryActiveSprintArgs = {
+  boardId: Scalars['ID']['input'];
+};
+
+
+export type QueryBacklogCardsArgs = {
+  boardId: Scalars['ID']['input'];
 };
 
 
@@ -545,6 +660,18 @@ export type QueryBoardsArgs = {
 
 export type QueryCardArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryClosedSprintsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  boardId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryFutureSprintsArgs = {
+  boardId: Scalars['ID']['input'];
 };
 
 
@@ -600,6 +727,21 @@ export type QuerySearchArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   query: Scalars['String']['input'];
   scope?: InputMaybe<SearchScope>;
+};
+
+
+export type QuerySprintArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
+export type QuerySprintCardsArgs = {
+  sprintId: Scalars['ID']['input'];
+};
+
+
+export type QuerySprintsArgs = {
+  boardId: Scalars['ID']['input'];
 };
 
 
@@ -667,6 +809,40 @@ export type SearchScope = {
   projectId?: InputMaybe<Scalars['ID']['input']>;
 };
 
+export type Sprint = {
+  __typename?: 'Sprint';
+  board: Board;
+  cards: Array<Card>;
+  createdAt: Scalars['Time']['output'];
+  createdBy?: Maybe<User>;
+  endDate?: Maybe<Scalars['Time']['output']>;
+  goal?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  position: Scalars['Int']['output'];
+  startDate?: Maybe<Scalars['Time']['output']>;
+  status: SprintStatus;
+  updatedAt: Scalars['Time']['output'];
+};
+
+export type SprintConnection = {
+  __typename?: 'SprintConnection';
+  edges: Array<SprintEdge>;
+  pageInfo: PageInfo;
+};
+
+export type SprintEdge = {
+  __typename?: 'SprintEdge';
+  cursor: Scalars['String']['output'];
+  node: Sprint;
+};
+
+export enum SprintStatus {
+  Active = 'ACTIVE',
+  Closed = 'CLOSED',
+  Future = 'FUTURE'
+}
+
 export type Tag = {
   __typename?: 'Tag';
   color: Scalars['String']['output'];
@@ -725,6 +901,13 @@ export type UpdateRoleInput = {
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
   permissionCodes?: InputMaybe<Array<Scalars['String']['input']>>;
+};
+
+export type UpdateSprintInput = {
+  endDate?: InputMaybe<Scalars['Time']['input']>;
+  goal?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  startDate?: InputMaybe<Scalars['Time']['input']>;
 };
 
 export type UpdateTagInput = {
@@ -1121,3 +1304,124 @@ export type RemoveProjectMemberMutationVariables = Exact<{
 
 
 export type RemoveProjectMemberMutation = { __typename?: 'Mutation', removeProjectMember: boolean };
+
+export type SprintFieldsFragment = { __typename?: 'Sprint', id: string, name: string, goal?: string | null, startDate?: string | null, endDate?: string | null, status: SprintStatus, position: number, createdAt: string, updatedAt: string };
+
+export type CardFieldsFragment = { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } };
+
+export type GetSprintQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GetSprintQuery = { __typename?: 'Query', sprint?: { __typename?: 'Sprint', id: string, name: string, goal?: string | null, startDate?: string | null, endDate?: string | null, status: SprintStatus, position: number, createdAt: string, updatedAt: string, board: { __typename?: 'Board', id: string, name: string } } | null };
+
+export type GetSprintsQueryVariables = Exact<{
+  boardId: Scalars['ID']['input'];
+}>;
+
+
+export type GetSprintsQuery = { __typename?: 'Query', sprints: Array<{ __typename?: 'Sprint', id: string, name: string, goal?: string | null, startDate?: string | null, endDate?: string | null, status: SprintStatus, position: number, createdAt: string, updatedAt: string }> };
+
+export type GetActiveSprintQueryVariables = Exact<{
+  boardId: Scalars['ID']['input'];
+}>;
+
+
+export type GetActiveSprintQuery = { __typename?: 'Query', activeSprint?: { __typename?: 'Sprint', id: string, name: string, goal?: string | null, startDate?: string | null, endDate?: string | null, status: SprintStatus, position: number, createdAt: string, updatedAt: string } | null };
+
+export type GetFutureSprintsQueryVariables = Exact<{
+  boardId: Scalars['ID']['input'];
+}>;
+
+
+export type GetFutureSprintsQuery = { __typename?: 'Query', futureSprints: Array<{ __typename?: 'Sprint', id: string, name: string, goal?: string | null, startDate?: string | null, endDate?: string | null, status: SprintStatus, position: number, createdAt: string, updatedAt: string }> };
+
+export type GetClosedSprintsQueryVariables = Exact<{
+  boardId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GetClosedSprintsQuery = { __typename?: 'Query', closedSprints: { __typename?: 'SprintConnection', edges: Array<{ __typename?: 'SprintEdge', cursor: string, node: { __typename?: 'Sprint', id: string, name: string, goal?: string | null, startDate?: string | null, endDate?: string | null, status: SprintStatus, position: number, createdAt: string, updatedAt: string } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null, totalCount: number } } };
+
+export type GetSprintCardsQueryVariables = Exact<{
+  sprintId: Scalars['ID']['input'];
+}>;
+
+
+export type GetSprintCardsQuery = { __typename?: 'Query', sprintCards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } }> };
+
+export type GetBacklogCardsQueryVariables = Exact<{
+  boardId: Scalars['ID']['input'];
+}>;
+
+
+export type GetBacklogCardsQuery = { __typename?: 'Query', backlogCards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } }> };
+
+export type CreateSprintMutationVariables = Exact<{
+  input: CreateSprintInput;
+}>;
+
+
+export type CreateSprintMutation = { __typename?: 'Mutation', createSprint: { __typename?: 'Sprint', id: string, name: string, goal?: string | null, startDate?: string | null, endDate?: string | null, status: SprintStatus, position: number, createdAt: string, updatedAt: string } };
+
+export type UpdateSprintMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  input: UpdateSprintInput;
+}>;
+
+
+export type UpdateSprintMutation = { __typename?: 'Mutation', updateSprint: { __typename?: 'Sprint', id: string, name: string, goal?: string | null, startDate?: string | null, endDate?: string | null, status: SprintStatus, position: number, createdAt: string, updatedAt: string } };
+
+export type DeleteSprintMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteSprintMutation = { __typename?: 'Mutation', deleteSprint: boolean };
+
+export type StartSprintMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type StartSprintMutation = { __typename?: 'Mutation', startSprint: { __typename?: 'Sprint', id: string, name: string, goal?: string | null, startDate?: string | null, endDate?: string | null, status: SprintStatus, position: number, createdAt: string, updatedAt: string } };
+
+export type CompleteSprintMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+  moveIncompleteToBacklog?: InputMaybe<Scalars['Boolean']['input']>;
+}>;
+
+
+export type CompleteSprintMutation = { __typename?: 'Mutation', completeSprint: { __typename?: 'Sprint', id: string, name: string, goal?: string | null, startDate?: string | null, endDate?: string | null, status: SprintStatus, position: number, createdAt: string, updatedAt: string } };
+
+export type AddCardToSprintMutationVariables = Exact<{
+  input: MoveCardToSprintInput;
+}>;
+
+
+export type AddCardToSprintMutation = { __typename?: 'Mutation', addCardToSprint: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };
+
+export type RemoveCardFromSprintMutationVariables = Exact<{
+  input: MoveCardToSprintInput;
+}>;
+
+
+export type RemoveCardFromSprintMutation = { __typename?: 'Mutation', removeCardFromSprint: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };
+
+export type SetCardSprintsMutationVariables = Exact<{
+  cardId: Scalars['ID']['input'];
+  sprintIds: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
+}>;
+
+
+export type SetCardSprintsMutation = { __typename?: 'Mutation', setCardSprints: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };
+
+export type MoveCardToBacklogMutationVariables = Exact<{
+  cardId: Scalars['ID']['input'];
+}>;
+
+
+export type MoveCardToBacklogMutation = { __typename?: 'Mutation', moveCardToBacklog: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };

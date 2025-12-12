@@ -114,6 +114,10 @@ export const Permissions = {
   CARD_MOVE: 'card:move',
   CARD_DELETE: 'card:delete',
   CARD_ASSIGN: 'card:assign',
+
+  // Sprint permissions
+  SPRINT_VIEW: 'sprint:view',
+  SPRINT_MANAGE: 'sprint:manage',
 } as const;
 
 export type PermissionCode = (typeof Permissions)[keyof typeof Permissions];

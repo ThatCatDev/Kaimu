@@ -111,6 +111,8 @@ type Board {
     description: String
     isDefault: Boolean!
     columns: [BoardColumn!]!
+    sprints: [Sprint!]!
+    activeSprint: Sprint
     createdAt: Time!
     updatedAt: Time!
 }
@@ -133,6 +135,7 @@ type Card {
     id: ID!
     column: BoardColumn!
     board: Board!
+    sprints: [Sprint!]!
     title: String!
     description: String
     position: Float!
@@ -140,6 +143,28 @@ type Card {
     assignee: User
     tags: [Tag!]!
     dueDate: Time
+    createdAt: Time!
+    updatedAt: Time!
+    createdBy: User
+}
+
+# Sprint Types
+enum SprintStatus {
+    FUTURE
+    ACTIVE
+    CLOSED
+}
+
+type Sprint {
+    id: ID!
+    board: Board!
+    name: String!
+    goal: String
+    startDate: Time
+    endDate: Time
+    status: SprintStatus!
+    position: Int!
+    cards: [Card!]!
     createdAt: Time!
     updatedAt: Time!
     createdBy: User
@@ -325,4 +350,44 @@ type SearchResults {
 input SearchScope {
     organizationId: ID
     projectId: ID
+}
+
+# Sprint Inputs
+input CreateSprintInput {
+    boardId: ID!
+    name: String!
+    goal: String
+    startDate: Time
+    endDate: Time
+}
+
+input UpdateSprintInput {
+    name: String
+    goal: String
+    startDate: Time
+    endDate: Time
+}
+
+input MoveCardToSprintInput {
+    cardId: ID!
+    sprintId: ID!
+}
+
+# Pagination Types
+type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+    totalCount: Int!
+}
+
+type SprintConnection {
+    edges: [SprintEdge!]!
+    pageInfo: PageInfo!
+}
+
+type SprintEdge {
+    node: Sprint!
+    cursor: String!
 }

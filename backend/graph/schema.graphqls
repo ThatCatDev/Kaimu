@@ -41,6 +41,22 @@ type Query {
     myPermissions(resourceType: String!, resourceId: ID!): [String!]!
     "Search across organizations, projects, boards, cards, and users"
     search(query: String!, scope: SearchScope, limit: Int = 20): SearchResults!
+
+    # Sprint Queries
+    "Get a sprint by ID"
+    sprint(id: ID!): Sprint
+    "Get all sprints for a board"
+    sprints(boardId: ID!): [Sprint!]!
+    "Get the active sprint for a board"
+    activeSprint(boardId: ID!): Sprint
+    "Get future sprints for a board"
+    futureSprints(boardId: ID!): [Sprint!]!
+    "Get closed sprints for a board (paginated)"
+    closedSprints(boardId: ID!, first: Int = 20, after: String): SprintConnection!
+    "Get cards in a sprint"
+    sprintCards(sprintId: ID!): [Card!]!
+    "Get backlog cards (cards not assigned to any sprint)"
+    backlogCards(boardId: ID!): [Card!]!
 }
 
 type Mutation {
@@ -126,4 +142,24 @@ type Mutation {
     assignProjectRole(input: AssignProjectRoleInput!): ProjectMember!
     "Remove a member from a project"
     removeProjectMember(projectId: ID!, userId: ID!): Boolean!
+
+    # Sprint Mutations
+    "Create a new sprint"
+    createSprint(input: CreateSprintInput!): Sprint!
+    "Update a sprint"
+    updateSprint(id: ID!, input: UpdateSprintInput!): Sprint!
+    "Delete a sprint"
+    deleteSprint(id: ID!): Boolean!
+    "Start a sprint (sets status to active)"
+    startSprint(id: ID!): Sprint!
+    "Complete a sprint (sets status to closed)"
+    completeSprint(id: ID!, moveIncompleteToBacklog: Boolean = true): Sprint!
+    "Add a card to a sprint (cards can be in multiple sprints)"
+    addCardToSprint(input: MoveCardToSprintInput!): Card!
+    "Remove a card from a sprint"
+    removeCardFromSprint(input: MoveCardToSprintInput!): Card!
+    "Set all sprints for a card (replaces existing sprint assignments)"
+    setCardSprints(cardId: ID!, sprintIds: [ID!]!): Card!
+    "Move a card to backlog (remove from all sprints)"
+    moveCardToBacklog(cardId: ID!): Card!
 }

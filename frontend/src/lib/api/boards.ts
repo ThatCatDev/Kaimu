@@ -89,6 +89,11 @@ const BOARD_QUERY = `
             id
             username
           }
+          sprints {
+            id
+            name
+            status
+          }
         }
       }
     }

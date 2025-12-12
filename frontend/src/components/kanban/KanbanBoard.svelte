@@ -162,7 +162,8 @@
     board = { ...board, description: updated.description };
   }
 
-  async function refreshBoard() {
+  // Export refreshBoard so parent components can trigger refresh
+  export async function refreshBoard() {
     try {
       board = await getBoard(boardId);
       if (board) {
@@ -565,6 +566,7 @@
       open={cardViewMode === 'modal' && showCardDetailModal}
       card={editingCard}
       projectId={selectedProjectId}
+      {boardId}
       {tags}
       onClose={closeCardDetailModal}
       onUpdated={handleCardUpdated}
@@ -582,6 +584,7 @@
     <CardDetailPanel
       card={editingCard}
       projectId={selectedProjectId}
+      {boardId}
       {tags}
       isOpen={showCardDetailModal}
       onClose={closeCardDetailModal}

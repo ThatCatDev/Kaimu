@@ -1,0 +1,165 @@
+# Sprint queries and mutations
+
+fragment SprintFields on Sprint {
+  id
+  name
+  goal
+  startDate
+  endDate
+  status
+  position
+  createdAt
+  updatedAt
+}
+
+fragment CardFields on Card {
+  id
+  title
+  description
+  position
+  priority
+  dueDate
+  createdAt
+  updatedAt
+  assignee {
+    id
+    username
+    displayName
+    avatarUrl
+  }
+  tags {
+    id
+    name
+    color
+  }
+  column {
+    id
+    name
+  }
+}
+
+query GetSprint($id: ID!) {
+  sprint(id: $id) {
+    ...SprintFields
+    board {
+      id
+      name
+    }
+  }
+}
+
+query GetSprints($boardId: ID!) {
+  sprints(boardId: $boardId) {
+    ...SprintFields
+  }
+}
+
+query GetActiveSprint($boardId: ID!) {
+  activeSprint(boardId: $boardId) {
+    ...SprintFields
+  }
+}
+
+query GetFutureSprints($boardId: ID!) {
+  futureSprints(boardId: $boardId) {
+    ...SprintFields
+  }
+}
+
+query GetClosedSprints($boardId: ID!, $first: Int, $after: String) {
+  closedSprints(boardId: $boardId, first: $first, after: $after) {
+    edges {
+      node {
+        ...SprintFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+      totalCount
+    }
+  }
+}
+
+query GetSprintCards($sprintId: ID!) {
+  sprintCards(sprintId: $sprintId) {
+    ...CardFields
+  }
+}
+
+query GetBacklogCards($boardId: ID!) {
+  backlogCards(boardId: $boardId) {
+    ...CardFields
+  }
+}
+
+mutation CreateSprint($input: CreateSprintInput!) {
+  createSprint(input: $input) {
+    ...SprintFields
+  }
+}
+
+mutation UpdateSprint($id: ID!, $input: UpdateSprintInput!) {
+  updateSprint(id: $id, input: $input) {
+    ...SprintFields
+  }
+}
+
+mutation DeleteSprint($id: ID!) {
+  deleteSprint(id: $id)
+}
+
+mutation StartSprint($id: ID!) {
+  startSprint(id: $id) {
+    ...SprintFields
+  }
+}
+
+mutation CompleteSprint($id: ID!, $moveIncompleteToBacklog: Boolean) {
+  completeSprint(id: $id, moveIncompleteToBacklog: $moveIncompleteToBacklog) {
+    ...SprintFields
+  }
+}
+
+mutation AddCardToSprint($input: MoveCardToSprintInput!) {
+  addCardToSprint(input: $input) {
+    ...CardFields
+    sprints {
+      id
+      name
+    }
+  }
+}
+
+mutation RemoveCardFromSprint($input: MoveCardToSprintInput!) {
+  removeCardFromSprint(input: $input) {
+    ...CardFields
+    sprints {
+      id
+      name
+    }
+  }
+}
+
+mutation SetCardSprints($cardId: ID!, $sprintIds: [ID!]!) {
+  setCardSprints(cardId: $cardId, sprintIds: $sprintIds) {
+    ...CardFields
+    sprints {
+      id
+      name
+    }
+  }
+}
+
+mutation MoveCardToBacklog($cardId: ID!) {
+  moveCardToBacklog(cardId: $cardId) {
+    ...CardFields
+    sprints {
+      id
+      name
+    }
+  }
+}

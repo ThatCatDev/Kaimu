@@ -1,7 +1,7 @@
 ---
 import Layout from '../../../../layouts/Layout.astro';
 import AppShell from '../../../../components/AppShell.svelte';
-import KanbanBoard from '../../../../components/kanban/KanbanBoard.svelte';
+import BoardWithSprints from '../../../../components/kanban/BoardWithSprints.svelte';
 
 export const prerender = false;
 
@@ -12,9 +12,11 @@ const cardId = Astro.url.searchParams.get('card');
 <Layout title="Board - Kaimu">
   <AppShell client:load currentPath={`/projects/${projectId}/board/${boardId}`}>
     <div class="h-full overflow-hidden">
-      <div class="max-w-full mx-auto py-4 px-4 sm:px-6 lg:px-8 h-full">
-        <KanbanBoard client:load boardId={boardId!} initialCardId={cardId} />
-      </div>
+      <BoardWithSprints
+        client:load
+        boardId={boardId!}
+        initialCardId={cardId}
+      />
     </div>
   </AppShell>
 </Layout>

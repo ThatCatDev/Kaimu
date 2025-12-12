@@ -256,12 +256,29 @@ export async function login(page: Page, username: string, password: string): Pro
 }
 
 /**
- * Navigates to the board page for a project
+ * Navigates to the board page for a project.
+ * If no boards exist, creates a default "Kanban Board".
  */
 export async function navigateToBoard(page: Page, projectId: string): Promise<string> {
   await page.goto(`/projects/${projectId}`);
   await page.waitForLoadState('networkidle');
-  await page.getByRole('link', { name: /Kanban Board/ }).click();
+
+  // Check if there are any boards - look for "No boards" text
+  const noBoardsVisible = await page.getByText('No boards').isVisible().catch(() => false);
+
+  if (noBoardsVisible) {
+    // Create a board first
+    await page.getByRole('button', { name: 'New Board' }).click();
+    await expect(page.getByRole('heading', { name: 'Create Board' })).toBeVisible({ timeout: 5000 });
+    await page.fill('#boardName', 'Kanban Board');
+    await page.getByRole('button', { name: 'Create Board', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Create Board' })).not.toBeVisible({ timeout: 5000 });
+    // Wait for board to appear
+    await expect(page.getByText('Kanban Board')).toBeVisible({ timeout: 5000 });
+  }
+
+  // Click on the first board link
+  await page.locator('a[href*="/board/"]').first().click();
   await expect(page).toHaveURL(/\/projects\/[a-f0-9-]+\/board\/[a-f0-9-]+/, { timeout: 10000 });
   await expect(page.getByRole('heading', { name: 'Todo', exact: true })).toBeVisible({ timeout: 10000 });
 

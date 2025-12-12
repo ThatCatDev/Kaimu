@@ -13,6 +13,7 @@ import (
 	"github.com/thatcatdev/kaimu/backend/internal/services/project"
 	"github.com/thatcatdev/kaimu/backend/internal/services/rbac"
 	"github.com/thatcatdev/kaimu/backend/internal/services/search"
+	"github.com/thatcatdev/kaimu/backend/internal/services/sprint"
 	"github.com/thatcatdev/kaimu/backend/internal/services/tag"
 	"github.com/thatcatdev/kaimu/backend/internal/services/user"
 )
@@ -38,4 +39,5 @@ type Resolver struct {
 	EmailVerificationService email.EmailVerificationService
 	SearchService            search.Service
 	SearchIndexer            *resolvers.SearchIndexer
+	SprintService            sprint.Service
 }

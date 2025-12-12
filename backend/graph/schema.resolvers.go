@@ -353,6 +353,55 @@ func (r *mutationResolver) RemoveProjectMember(ctx context.Context, projectID st
 	return resolvers.RemoveProjectMember(ctx, r.RBACService, projectID, userID)
 }
 
+// CreateSprint is the resolver for the createSprint field.
+func (r *mutationResolver) CreateSprint(ctx context.Context, input model.CreateSprintInput) (*model.Sprint, error) {
+	return resolvers.CreateSprint(ctx, r.RBACService, r.SprintService, input)
+}
+
+// UpdateSprint is the resolver for the updateSprint field.
+func (r *mutationResolver) UpdateSprint(ctx context.Context, id string, input model.UpdateSprintInput) (*model.Sprint, error) {
+	return resolvers.UpdateSprint(ctx, r.RBACService, r.SprintService, id, input)
+}
+
+// DeleteSprint is the resolver for the deleteSprint field.
+func (r *mutationResolver) DeleteSprint(ctx context.Context, id string) (bool, error) {
+	return resolvers.DeleteSprint(ctx, r.RBACService, r.SprintService, id)
+}
+
+// StartSprint is the resolver for the startSprint field.
+func (r *mutationResolver) StartSprint(ctx context.Context, id string) (*model.Sprint, error) {
+	return resolvers.StartSprint(ctx, r.RBACService, r.SprintService, id)
+}
+
+// CompleteSprint is the resolver for the completeSprint field.
+func (r *mutationResolver) CompleteSprint(ctx context.Context, id string, moveIncompleteToBacklog *bool) (*model.Sprint, error) {
+	moveToBacklog := true
+	if moveIncompleteToBacklog != nil {
+		moveToBacklog = *moveIncompleteToBacklog
+	}
+	return resolvers.CompleteSprint(ctx, r.RBACService, r.SprintService, id, moveToBacklog)
+}
+
+// AddCardToSprint is the resolver for the addCardToSprint field.
+func (r *mutationResolver) AddCardToSprint(ctx context.Context, input model.MoveCardToSprintInput) (*model.Card, error) {
+	return resolvers.AddCardToSprint(ctx, r.RBACService, r.SprintService, input)
+}
+
+// RemoveCardFromSprint is the resolver for the removeCardFromSprint field.
+func (r *mutationResolver) RemoveCardFromSprint(ctx context.Context, input model.MoveCardToSprintInput) (*model.Card, error) {
+	return resolvers.RemoveCardFromSprint(ctx, r.RBACService, r.SprintService, input)
+}
+
+// SetCardSprints is the resolver for the setCardSprints field.
+func (r *mutationResolver) SetCardSprints(ctx context.Context, cardID string, sprintIds []string) (*model.Card, error) {
+	return resolvers.SetCardSprints(ctx, r.RBACService, r.SprintService, cardID, sprintIds)
+}
+
+// MoveCardToBacklog is the resolver for the moveCardToBacklog field.
+func (r *mutationResolver) MoveCardToBacklog(ctx context.Context, cardID string) (*model.Card, error) {
+	return resolvers.MoveCardToBacklog(ctx, r.RBACService, r.SprintService, r.BoardService, cardID)
+}
+
 // HelloWorld is the resolver for the helloWorld field.
 func (r *queryResolver) HelloWorld(ctx context.Context) (string, error) {
 	return resolvers.Hello(), nil
@@ -466,6 +515,41 @@ func (r *queryResolver) Search(ctx context.Context, query string, scope *model.S
 		return nil, errors.New("search service is not configured")
 	}
 	return resolvers.Search(ctx, r.SearchService, query, scope, limit)
+}
+
+// Sprint is the resolver for the sprint field.
+func (r *queryResolver) Sprint(ctx context.Context, id string) (*model.Sprint, error) {
+	return resolvers.Sprint(ctx, r.RBACService, r.SprintService, id)
+}
+
+// Sprints is the resolver for the sprints field.
+func (r *queryResolver) Sprints(ctx context.Context, boardID string) ([]*model.Sprint, error) {
+	return resolvers.Sprints(ctx, r.RBACService, r.SprintService, boardID)
+}
+
+// ActiveSprint is the resolver for the activeSprint field.
+func (r *queryResolver) ActiveSprint(ctx context.Context, boardID string) (*model.Sprint, error) {
+	return resolvers.ActiveSprint(ctx, r.RBACService, r.SprintService, boardID)
+}
+
+// FutureSprints is the resolver for the futureSprints field.
+func (r *queryResolver) FutureSprints(ctx context.Context, boardID string) ([]*model.Sprint, error) {
+	return resolvers.FutureSprints(ctx, r.RBACService, r.SprintService, boardID)
+}
+
+// ClosedSprints is the resolver for the closedSprints field.
+func (r *queryResolver) ClosedSprints(ctx context.Context, boardID string, first *int, after *string) (*model.SprintConnection, error) {
+	return resolvers.ClosedSprints(ctx, r.RBACService, r.SprintService, boardID, first, after)
+}
+
+// SprintCards is the resolver for the sprintCards field.
+func (r *queryResolver) SprintCards(ctx context.Context, sprintID string) ([]*model.Card, error) {
+	return resolvers.SprintCards(ctx, r.RBACService, r.SprintService, sprintID)
+}
+
+// BacklogCards is the resolver for the backlogCards field.
+func (r *queryResolver) BacklogCards(ctx context.Context, boardID string) ([]*model.Card, error) {
+	return resolvers.BacklogCards(ctx, r.RBACService, r.SprintService, r.BoardService, boardID)
 }
 
 // Mutation returns generated.MutationResolver implementation.

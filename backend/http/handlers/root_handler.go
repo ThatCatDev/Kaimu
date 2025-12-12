@@ -24,6 +24,7 @@ import (
 	projectMemberRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/project_member"
 	roleRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/role"
 	rolePermissionRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/role_permission"
+	sprintRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/sprint"
 	tagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
 	"github.com/thatcatdev/kaimu/backend/internal/directives"
@@ -40,6 +41,7 @@ import (
 	"github.com/thatcatdev/kaimu/backend/internal/services/rbac"
 	"github.com/thatcatdev/kaimu/backend/internal/resolvers"
 	"github.com/thatcatdev/kaimu/backend/internal/services/search"
+	"github.com/thatcatdev/kaimu/backend/internal/services/sprint"
 	"github.com/thatcatdev/kaimu/backend/internal/services/tag"
 	"github.com/thatcatdev/kaimu/backend/internal/services/user"
 )
@@ -59,6 +61,7 @@ type Dependencies struct {
 	EmailVerificationService email.EmailVerificationService
 	SearchService            search.Service
 	SearchIndexer            *resolvers.SearchIndexer
+	SprintService            sprint.Service
 	OIDCHandler              *OIDCHandler
 }
 
@@ -128,6 +131,7 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		orgMemberRepository,
 		projectMemberRepository,
 		projectRepository,
+		boardRepository,
 		userRepository,
 	)
 
@@ -147,6 +151,14 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 	)
 
 	userService := user.NewService(userRepository)
+
+	// Initialize sprint repository and service
+	sprintRepository := sprintRepo.NewRepository(database.DB)
+	sprintService := sprint.NewService(
+		sprintRepository,
+		cardRepository,
+		boardRepository,
+	)
 
 	// Initialize email verification service (uses same mail service)
 	emailVerificationService := email.NewEmailVerificationService(
@@ -208,6 +220,7 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		EmailVerificationService: emailVerificationService,
 		SearchService:            searchService,
 		SearchIndexer:            searchIndexer,
+		SprintService:            sprintService,
 		OIDCHandler:              oidcHandler,
 	}
 }
@@ -243,6 +256,7 @@ func BuildRootHandlerWithContext(ctx context.Context, conf config.Config, deps *
 		EmailVerificationService: deps.EmailVerificationService,
 		SearchService:            deps.SearchService,
 		SearchIndexer:            deps.SearchIndexer,
+		SprintService:            deps.SprintService,
 	}
 
 	cfg := generated.Config{Resolvers: resolvers, Directives: directives.GetDirectives()}

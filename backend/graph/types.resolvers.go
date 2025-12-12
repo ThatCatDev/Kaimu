@@ -22,6 +22,16 @@ func (r *boardResolver) Columns(ctx context.Context, obj *model.Board) ([]*model
 	return resolvers.BoardColumns(ctx, r.BoardService, obj)
 }
 
+// Sprints is the resolver for the sprints field.
+func (r *boardResolver) Sprints(ctx context.Context, obj *model.Board) ([]*model.Sprint, error) {
+	return resolvers.BoardSprints(ctx, r.SprintService, obj)
+}
+
+// ActiveSprint is the resolver for the activeSprint field.
+func (r *boardResolver) ActiveSprint(ctx context.Context, obj *model.Board) (*model.Sprint, error) {
+	return resolvers.BoardActiveSprint(ctx, r.SprintService, obj)
+}
+
 // Board is the resolver for the board field.
 func (r *boardColumnResolver) Board(ctx context.Context, obj *model.BoardColumn) (*model.Board, error) {
 	return resolvers.ColumnBoard(ctx, r.BoardService, obj)
@@ -40,6 +50,11 @@ func (r *cardResolver) Column(ctx context.Context, obj *model.Card) (*model.Boar
 // Board is the resolver for the board field.
 func (r *cardResolver) Board(ctx context.Context, obj *model.Card) (*model.Board, error) {
 	return resolvers.CardBoard(ctx, r.CardService, obj)
+}
+
+// Sprints is the resolver for the sprints field.
+func (r *cardResolver) Sprints(ctx context.Context, obj *model.Card) ([]*model.Sprint, error) {
+	return resolvers.CardSprints(ctx, r.SprintService, obj)
 }
 
 // Assignee is the resolver for the assignee field.
@@ -117,6 +132,21 @@ func (r *roleResolver) Permissions(ctx context.Context, obj *model.Role) ([]*mod
 	return resolvers.RolePermissions(ctx, r.RBACService, obj)
 }
 
+// Board is the resolver for the board field.
+func (r *sprintResolver) Board(ctx context.Context, obj *model.Sprint) (*model.Board, error) {
+	return resolvers.SprintBoard(ctx, r.SprintService, obj)
+}
+
+// Cards is the resolver for the cards field.
+func (r *sprintResolver) Cards(ctx context.Context, obj *model.Sprint) ([]*model.Card, error) {
+	return resolvers.SprintCardsResolver(ctx, r.SprintService, obj)
+}
+
+// CreatedBy is the resolver for the createdBy field.
+func (r *sprintResolver) CreatedBy(ctx context.Context, obj *model.Sprint) (*model.User, error) {
+	return resolvers.SprintCreatedBy(ctx, r.UserService, r.SprintService, obj)
+}
+
 // Project is the resolver for the project field.
 func (r *tagResolver) Project(ctx context.Context, obj *model.Tag) (*model.Project, error) {
 	return resolvers.TagProject(ctx, r.TagService, r.OrganizationService, obj)
@@ -148,6 +178,9 @@ func (r *Resolver) ProjectMember() generated.ProjectMemberResolver { return &pro
 // Role returns generated.RoleResolver implementation.
 func (r *Resolver) Role() generated.RoleResolver { return &roleResolver{r} }
 
+// Sprint returns generated.SprintResolver implementation.
+func (r *Resolver) Sprint() generated.SprintResolver { return &sprintResolver{r} }
+
 // Tag returns generated.TagResolver implementation.
 func (r *Resolver) Tag() generated.TagResolver { return &tagResolver{r} }
 
@@ -159,4 +192,5 @@ type organizationMemberResolver struct{ *Resolver }
 type projectResolver struct{ *Resolver }
 type projectMemberResolver struct{ *Resolver }
 type roleResolver struct{ *Resolver }
+type sprintResolver struct{ *Resolver }
 type tagResolver struct{ *Resolver }

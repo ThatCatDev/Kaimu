@@ -7,6 +7,7 @@ import (
 	"errors"
 
 	"github.com/google/uuid"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/board"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization_member"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/permission"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/project"
@@ -77,6 +78,7 @@ type service struct {
 	orgMemberRepo      organization_member.Repository
 	projectMemberRepo  project_member.Repository
 	projectRepo        project.Repository
+	boardRepo          board.Repository
 	userRepo           user.Repository
 }
 
@@ -87,6 +89,7 @@ func NewService(
 	orgMemberRepo organization_member.Repository,
 	projectMemberRepo project_member.Repository,
 	projectRepo project.Repository,
+	boardRepo board.Repository,
 	userRepo user.Repository,
 ) Service {
 	return &service{
@@ -96,6 +99,7 @@ func NewService(
 		orgMemberRepo:      orgMemberRepo,
 		projectMemberRepo:  projectMemberRepo,
 		projectRepo:        projectRepo,
+		boardRepo:          boardRepo,
 		userRepo:           userRepo,
 	}
 }
@@ -170,12 +174,17 @@ func (s *service) HasBoardPermission(ctx context.Context, userID, boardID uuid.U
 	)
 	defer span.End()
 
-	// For now, board permissions inherit from project
-	// We need to get the project ID from the board
-	// This requires access to the board repository, which we don't have here
-	// Instead, we'll need the caller to provide the project ID or add board repo
-	// For now, return permission denied - this should be called with project ID instead
-	return false, errors.New("use HasProjectPermission for board operations")
+	// Get the board to find its project
+	b, err := s.boardRepo.GetByID(ctx, boardID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	// Board permissions inherit from the parent project
+	return s.HasProjectPermission(ctx, userID, b.ProjectID, permissionCode)
 }
 
 // GetUserOrgPermissions returns all permission codes a user has in an organization

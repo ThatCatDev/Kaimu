@@ -163,7 +163,8 @@
   const categoryLabels: Record<string, string> = {
     organization: 'Organization',
     project: 'Project',
-    board: 'Board'
+    board: 'Board',
+    card: 'Card',
   };
 </script>
 

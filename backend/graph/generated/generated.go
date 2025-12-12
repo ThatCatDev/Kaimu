@@ -48,6 +48,7 @@ type ResolverRoot interface {
 	ProjectMember() ProjectMemberResolver
 	Query() QueryResolver
 	Role() RoleResolver
+	Sprint() SprintResolver
 	Tag() TagResolver
 }
 
@@ -62,14 +63,16 @@ type ComplexityRoot struct {
 	}
 
 	Board struct {
-		Columns     func(childComplexity int) int
-		CreatedAt   func(childComplexity int) int
-		Description func(childComplexity int) int
-		ID          func(childComplexity int) int
-		IsDefault   func(childComplexity int) int
-		Name        func(childComplexity int) int
-		Project     func(childComplexity int) int
-		UpdatedAt   func(childComplexity int) int
+		ActiveSprint func(childComplexity int) int
+		Columns      func(childComplexity int) int
+		CreatedAt    func(childComplexity int) int
+		Description  func(childComplexity int) int
+		ID           func(childComplexity int) int
+		IsDefault    func(childComplexity int) int
+		Name         func(childComplexity int) int
+		Project      func(childComplexity int) int
+		Sprints      func(childComplexity int) int
+		UpdatedAt    func(childComplexity int) int
 	}
 
 	BoardColumn struct {
@@ -97,6 +100,7 @@ type ComplexityRoot struct {
 		ID          func(childComplexity int) int
 		Position    func(childComplexity int) int
 		Priority    func(childComplexity int) int
+		Sprints     func(childComplexity int) int
 		Tags        func(childComplexity int) int
 		Title       func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
@@ -115,15 +119,18 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		AcceptInvitation        func(childComplexity int, token string) int
+		AddCardToSprint         func(childComplexity int, input model.MoveCardToSprintInput) int
 		AssignProjectRole       func(childComplexity int, input model.AssignProjectRoleInput) int
 		CancelInvitation        func(childComplexity int, id string) int
 		ChangeMemberRole        func(childComplexity int, organizationID string, input model.ChangeMemberRoleInput) int
+		CompleteSprint          func(childComplexity int, id string, moveIncompleteToBacklog *bool) int
 		CreateBoard             func(childComplexity int, input model.CreateBoardInput) int
 		CreateCard              func(childComplexity int, input model.CreateCardInput) int
 		CreateColumn            func(childComplexity int, input model.CreateColumnInput) int
 		CreateOrganization      func(childComplexity int, input model.CreateOrganizationInput) int
 		CreateProject           func(childComplexity int, input model.CreateProjectInput) int
 		CreateRole              func(childComplexity int, input model.CreateRoleInput) int
+		CreateSprint            func(childComplexity int, input model.CreateSprintInput) int
 		CreateTag               func(childComplexity int, input model.CreateTagInput) int
 		DeleteBoard             func(childComplexity int, id string) int
 		DeleteCard              func(childComplexity int, id string) int
@@ -131,17 +138,22 @@ type ComplexityRoot struct {
 		DeleteOrganization      func(childComplexity int, id string) int
 		DeleteProject           func(childComplexity int, id string) int
 		DeleteRole              func(childComplexity int, id string) int
+		DeleteSprint            func(childComplexity int, id string) int
 		DeleteTag               func(childComplexity int, id string) int
 		InviteMember            func(childComplexity int, input model.InviteMemberInput) int
 		Login                   func(childComplexity int, input model.LoginInput) int
 		Logout                  func(childComplexity int) int
 		MoveCard                func(childComplexity int, input model.MoveCardInput) int
+		MoveCardToBacklog       func(childComplexity int, cardID string) int
 		Register                func(childComplexity int, input model.RegisterInput) int
+		RemoveCardFromSprint    func(childComplexity int, input model.MoveCardToSprintInput) int
 		RemoveMember            func(childComplexity int, organizationID string, userID string) int
 		RemoveProjectMember     func(childComplexity int, projectID string, userID string) int
 		ReorderColumns          func(childComplexity int, input model.ReorderColumnsInput) int
 		ResendInvitation        func(childComplexity int, id string) int
 		ResendVerificationEmail func(childComplexity int) int
+		SetCardSprints          func(childComplexity int, cardID string, sprintIds []string) int
+		StartSprint             func(childComplexity int, id string) int
 		ToggleColumnVisibility  func(childComplexity int, id string) int
 		UpdateBoard             func(childComplexity int, input model.UpdateBoardInput) int
 		UpdateCard              func(childComplexity int, input model.UpdateCardInput) int
@@ -150,6 +162,7 @@ type ComplexityRoot struct {
 		UpdateOrganization      func(childComplexity int, input model.UpdateOrganizationInput) int
 		UpdateProject           func(childComplexity int, input model.UpdateProjectInput) int
 		UpdateRole              func(childComplexity int, input model.UpdateRoleInput) int
+		UpdateSprint            func(childComplexity int, id string, input model.UpdateSprintInput) int
 		UpdateTag               func(childComplexity int, input model.UpdateTagInput) int
 		VerifyEmail             func(childComplexity int, token string) int
 	}
@@ -177,6 +190,14 @@ type ComplexityRoot struct {
 		LegacyRole func(childComplexity int) int
 		Role       func(childComplexity int) int
 		User       func(childComplexity int) int
+	}
+
+	PageInfo struct {
+		EndCursor       func(childComplexity int) int
+		HasNextPage     func(childComplexity int) int
+		HasPreviousPage func(childComplexity int) int
+		StartCursor     func(childComplexity int) int
+		TotalCount      func(childComplexity int) int
 	}
 
 	Permission struct {
@@ -209,9 +230,13 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		ActiveSprint        func(childComplexity int, boardID string) int
+		BacklogCards        func(childComplexity int, boardID string) int
 		Board               func(childComplexity int, id string) int
 		Boards              func(childComplexity int, projectID string) int
 		Card                func(childComplexity int, id string) int
+		ClosedSprints       func(childComplexity int, boardID string, first *int, after *string) int
+		FutureSprints       func(childComplexity int, boardID string) int
 		HasPermission       func(childComplexity int, permission string, resourceType string, resourceID string) int
 		HelloWorld          func(childComplexity int) int
 		Invitations         func(childComplexity int, organizationID string) int
@@ -228,6 +253,9 @@ type ComplexityRoot struct {
 		Role                func(childComplexity int, id string) int
 		Roles               func(childComplexity int, organizationID string) int
 		Search              func(childComplexity int, query string, scope *model.SearchScope, limit *int) int
+		Sprint              func(childComplexity int, id string) int
+		SprintCards         func(childComplexity int, sprintID string) int
+		Sprints             func(childComplexity int, boardID string) int
 		Tags                func(childComplexity int, projectID string) int
 		__resolve__service  func(childComplexity int) int
 	}
@@ -265,6 +293,31 @@ type ComplexityRoot struct {
 		TotalCount func(childComplexity int) int
 	}
 
+	Sprint struct {
+		Board     func(childComplexity int) int
+		Cards     func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		CreatedBy func(childComplexity int) int
+		EndDate   func(childComplexity int) int
+		Goal      func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
+		Position  func(childComplexity int) int
+		StartDate func(childComplexity int) int
+		Status    func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+	}
+
+	SprintConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	SprintEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	Tag struct {
 		Color       func(childComplexity int) int
 		CreatedAt   func(childComplexity int) int
@@ -293,6 +346,8 @@ type BoardResolver interface {
 	Project(ctx context.Context, obj *model.Board) (*model.Project, error)
 
 	Columns(ctx context.Context, obj *model.Board) ([]*model.BoardColumn, error)
+	Sprints(ctx context.Context, obj *model.Board) ([]*model.Sprint, error)
+	ActiveSprint(ctx context.Context, obj *model.Board) (*model.Sprint, error)
 }
 type BoardColumnResolver interface {
 	Board(ctx context.Context, obj *model.BoardColumn) (*model.Board, error)
@@ -302,6 +357,7 @@ type BoardColumnResolver interface {
 type CardResolver interface {
 	Column(ctx context.Context, obj *model.Card) (*model.BoardColumn, error)
 	Board(ctx context.Context, obj *model.Card) (*model.Board, error)
+	Sprints(ctx context.Context, obj *model.Card) ([]*model.Sprint, error)
 
 	Assignee(ctx context.Context, obj *model.Card) (*model.User, error)
 	Tags(ctx context.Context, obj *model.Card) ([]*model.Tag, error)
@@ -352,6 +408,15 @@ type MutationResolver interface {
 	RemoveMember(ctx context.Context, organizationID string, userID string) (bool, error)
 	AssignProjectRole(ctx context.Context, input model.AssignProjectRoleInput) (*model.ProjectMember, error)
 	RemoveProjectMember(ctx context.Context, projectID string, userID string) (bool, error)
+	CreateSprint(ctx context.Context, input model.CreateSprintInput) (*model.Sprint, error)
+	UpdateSprint(ctx context.Context, id string, input model.UpdateSprintInput) (*model.Sprint, error)
+	DeleteSprint(ctx context.Context, id string) (bool, error)
+	StartSprint(ctx context.Context, id string) (*model.Sprint, error)
+	CompleteSprint(ctx context.Context, id string, moveIncompleteToBacklog *bool) (*model.Sprint, error)
+	AddCardToSprint(ctx context.Context, input model.MoveCardToSprintInput) (*model.Card, error)
+	RemoveCardFromSprint(ctx context.Context, input model.MoveCardToSprintInput) (*model.Card, error)
+	SetCardSprints(ctx context.Context, cardID string, sprintIds []string) (*model.Card, error)
+	MoveCardToBacklog(ctx context.Context, cardID string) (*model.Card, error)
 }
 type OrganizationMemberResolver interface {
 	User(ctx context.Context, obj *model.OrganizationMember) (*model.User, error)
@@ -388,9 +453,23 @@ type QueryResolver interface {
 	HasPermission(ctx context.Context, permission string, resourceType string, resourceID string) (bool, error)
 	MyPermissions(ctx context.Context, resourceType string, resourceID string) ([]string, error)
 	Search(ctx context.Context, query string, scope *model.SearchScope, limit *int) (*model.SearchResults, error)
+	Sprint(ctx context.Context, id string) (*model.Sprint, error)
+	Sprints(ctx context.Context, boardID string) ([]*model.Sprint, error)
+	ActiveSprint(ctx context.Context, boardID string) (*model.Sprint, error)
+	FutureSprints(ctx context.Context, boardID string) ([]*model.Sprint, error)
+	ClosedSprints(ctx context.Context, boardID string, first *int, after *string) (*model.SprintConnection, error)
+	SprintCards(ctx context.Context, sprintID string) ([]*model.Card, error)
+	BacklogCards(ctx context.Context, boardID string) ([]*model.Card, error)
 }
 type RoleResolver interface {
 	Permissions(ctx context.Context, obj *model.Role) ([]*model.Permission, error)
+}
+type SprintResolver interface {
+	Board(ctx context.Context, obj *model.Sprint) (*model.Board, error)
+
+	Cards(ctx context.Context, obj *model.Sprint) ([]*model.Card, error)
+
+	CreatedBy(ctx context.Context, obj *model.Sprint) (*model.User, error)
 }
 type TagResolver interface {
 	Project(ctx context.Context, obj *model.Tag) (*model.Project, error)
@@ -417,6 +496,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.AuthPayload.User(childComplexity), true
+
+	case "Board.activeSprint":
+		if e.complexity.Board.ActiveSprint == nil {
+			break
+		}
+
+		return e.complexity.Board.ActiveSprint(childComplexity), true
 
 	case "Board.columns":
 		if e.complexity.Board.Columns == nil {
@@ -466,6 +552,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Board.Project(childComplexity), true
+
+	case "Board.sprints":
+		if e.complexity.Board.Sprints == nil {
+			break
+		}
+
+		return e.complexity.Board.Sprints(childComplexity), true
 
 	case "Board.updatedAt":
 		if e.complexity.Board.UpdatedAt == nil {
@@ -621,6 +714,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Card.Priority(childComplexity), true
 
+	case "Card.sprints":
+		if e.complexity.Card.Sprints == nil {
+			break
+		}
+
+		return e.complexity.Card.Sprints(childComplexity), true
+
 	case "Card.tags":
 		if e.complexity.Card.Tags == nil {
 			break
@@ -710,6 +810,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.AcceptInvitation(childComplexity, args["token"].(string)), true
 
+	case "Mutation.addCardToSprint":
+		if e.complexity.Mutation.AddCardToSprint == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addCardToSprint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddCardToSprint(childComplexity, args["input"].(model.MoveCardToSprintInput)), true
+
 	case "Mutation.assignProjectRole":
 		if e.complexity.Mutation.AssignProjectRole == nil {
 			break
@@ -745,6 +857,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ChangeMemberRole(childComplexity, args["organizationId"].(string), args["input"].(model.ChangeMemberRoleInput)), true
+
+	case "Mutation.completeSprint":
+		if e.complexity.Mutation.CompleteSprint == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_completeSprint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CompleteSprint(childComplexity, args["id"].(string), args["moveIncompleteToBacklog"].(*bool)), true
 
 	case "Mutation.createBoard":
 		if e.complexity.Mutation.CreateBoard == nil {
@@ -817,6 +941,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateRole(childComplexity, args["input"].(model.CreateRoleInput)), true
+
+	case "Mutation.createSprint":
+		if e.complexity.Mutation.CreateSprint == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createSprint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateSprint(childComplexity, args["input"].(model.CreateSprintInput)), true
 
 	case "Mutation.createTag":
 		if e.complexity.Mutation.CreateTag == nil {
@@ -902,6 +1038,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.DeleteRole(childComplexity, args["id"].(string)), true
 
+	case "Mutation.deleteSprint":
+		if e.complexity.Mutation.DeleteSprint == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteSprint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteSprint(childComplexity, args["id"].(string)), true
+
 	case "Mutation.deleteTag":
 		if e.complexity.Mutation.DeleteTag == nil {
 			break
@@ -957,6 +1105,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.MoveCard(childComplexity, args["input"].(model.MoveCardInput)), true
 
+	case "Mutation.moveCardToBacklog":
+		if e.complexity.Mutation.MoveCardToBacklog == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_moveCardToBacklog_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.MoveCardToBacklog(childComplexity, args["cardId"].(string)), true
+
 	case "Mutation.register":
 		if e.complexity.Mutation.Register == nil {
 			break
@@ -968,6 +1128,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Register(childComplexity, args["input"].(model.RegisterInput)), true
+
+	case "Mutation.removeCardFromSprint":
+		if e.complexity.Mutation.RemoveCardFromSprint == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeCardFromSprint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RemoveCardFromSprint(childComplexity, args["input"].(model.MoveCardToSprintInput)), true
 
 	case "Mutation.removeMember":
 		if e.complexity.Mutation.RemoveMember == nil {
@@ -1023,6 +1195,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ResendVerificationEmail(childComplexity), true
+
+	case "Mutation.setCardSprints":
+		if e.complexity.Mutation.SetCardSprints == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setCardSprints_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetCardSprints(childComplexity, args["cardId"].(string), args["sprintIds"].([]string)), true
+
+	case "Mutation.startSprint":
+		if e.complexity.Mutation.StartSprint == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_startSprint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.StartSprint(childComplexity, args["id"].(string)), true
 
 	case "Mutation.toggleColumnVisibility":
 		if e.complexity.Mutation.ToggleColumnVisibility == nil {
@@ -1119,6 +1315,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UpdateRole(childComplexity, args["input"].(model.UpdateRoleInput)), true
+
+	case "Mutation.updateSprint":
+		if e.complexity.Mutation.UpdateSprint == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateSprint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateSprint(childComplexity, args["id"].(string), args["input"].(model.UpdateSprintInput)), true
 
 	case "Mutation.updateTag":
 		if e.complexity.Mutation.UpdateTag == nil {
@@ -1255,6 +1463,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.OrganizationMember.User(childComplexity), true
+
+	case "PageInfo.endCursor":
+		if e.complexity.PageInfo.EndCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.EndCursor(childComplexity), true
+
+	case "PageInfo.hasNextPage":
+		if e.complexity.PageInfo.HasNextPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasNextPage(childComplexity), true
+
+	case "PageInfo.hasPreviousPage":
+		if e.complexity.PageInfo.HasPreviousPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasPreviousPage(childComplexity), true
+
+	case "PageInfo.startCursor":
+		if e.complexity.PageInfo.StartCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.StartCursor(childComplexity), true
+
+	case "PageInfo.totalCount":
+		if e.complexity.PageInfo.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.TotalCount(childComplexity), true
 
 	case "Permission.code":
 		if e.complexity.Permission.Code == nil {
@@ -1396,6 +1639,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ProjectMember.User(childComplexity), true
 
+	case "Query.activeSprint":
+		if e.complexity.Query.ActiveSprint == nil {
+			break
+		}
+
+		args, err := ec.field_Query_activeSprint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ActiveSprint(childComplexity, args["boardId"].(string)), true
+
+	case "Query.backlogCards":
+		if e.complexity.Query.BacklogCards == nil {
+			break
+		}
+
+		args, err := ec.field_Query_backlogCards_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.BacklogCards(childComplexity, args["boardId"].(string)), true
+
 	case "Query.board":
 		if e.complexity.Query.Board == nil {
 			break
@@ -1431,6 +1698,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Card(childComplexity, args["id"].(string)), true
+
+	case "Query.closedSprints":
+		if e.complexity.Query.ClosedSprints == nil {
+			break
+		}
+
+		args, err := ec.field_Query_closedSprints_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.ClosedSprints(childComplexity, args["boardId"].(string), args["first"].(*int), args["after"].(*string)), true
+
+	case "Query.futureSprints":
+		if e.complexity.Query.FutureSprints == nil {
+			break
+		}
+
+		args, err := ec.field_Query_futureSprints_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.FutureSprints(childComplexity, args["boardId"].(string)), true
 
 	case "Query.hasPermission":
 		if e.complexity.Query.HasPermission == nil {
@@ -1593,6 +1884,42 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["scope"].(*model.SearchScope), args["limit"].(*int)), true
+
+	case "Query.sprint":
+		if e.complexity.Query.Sprint == nil {
+			break
+		}
+
+		args, err := ec.field_Query_sprint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Sprint(childComplexity, args["id"].(string)), true
+
+	case "Query.sprintCards":
+		if e.complexity.Query.SprintCards == nil {
+			break
+		}
+
+		args, err := ec.field_Query_sprintCards_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.SprintCards(childComplexity, args["sprintId"].(string)), true
+
+	case "Query.sprints":
+		if e.complexity.Query.Sprints == nil {
+			break
+		}
+
+		args, err := ec.field_Query_sprints_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Sprints(childComplexity, args["boardId"].(string)), true
 
 	case "Query.tags":
 		if e.complexity.Query.Tags == nil {
@@ -1781,6 +2108,118 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.SearchResults.TotalCount(childComplexity), true
 
+	case "Sprint.board":
+		if e.complexity.Sprint.Board == nil {
+			break
+		}
+
+		return e.complexity.Sprint.Board(childComplexity), true
+
+	case "Sprint.cards":
+		if e.complexity.Sprint.Cards == nil {
+			break
+		}
+
+		return e.complexity.Sprint.Cards(childComplexity), true
+
+	case "Sprint.createdAt":
+		if e.complexity.Sprint.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Sprint.CreatedAt(childComplexity), true
+
+	case "Sprint.createdBy":
+		if e.complexity.Sprint.CreatedBy == nil {
+			break
+		}
+
+		return e.complexity.Sprint.CreatedBy(childComplexity), true
+
+	case "Sprint.endDate":
+		if e.complexity.Sprint.EndDate == nil {
+			break
+		}
+
+		return e.complexity.Sprint.EndDate(childComplexity), true
+
+	case "Sprint.goal":
+		if e.complexity.Sprint.Goal == nil {
+			break
+		}
+
+		return e.complexity.Sprint.Goal(childComplexity), true
+
+	case "Sprint.id":
+		if e.complexity.Sprint.ID == nil {
+			break
+		}
+
+		return e.complexity.Sprint.ID(childComplexity), true
+
+	case "Sprint.name":
+		if e.complexity.Sprint.Name == nil {
+			break
+		}
+
+		return e.complexity.Sprint.Name(childComplexity), true
+
+	case "Sprint.position":
+		if e.complexity.Sprint.Position == nil {
+			break
+		}
+
+		return e.complexity.Sprint.Position(childComplexity), true
+
+	case "Sprint.startDate":
+		if e.complexity.Sprint.StartDate == nil {
+			break
+		}
+
+		return e.complexity.Sprint.StartDate(childComplexity), true
+
+	case "Sprint.status":
+		if e.complexity.Sprint.Status == nil {
+			break
+		}
+
+		return e.complexity.Sprint.Status(childComplexity), true
+
+	case "Sprint.updatedAt":
+		if e.complexity.Sprint.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.Sprint.UpdatedAt(childComplexity), true
+
+	case "SprintConnection.edges":
+		if e.complexity.SprintConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.SprintConnection.Edges(childComplexity), true
+
+	case "SprintConnection.pageInfo":
+		if e.complexity.SprintConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.SprintConnection.PageInfo(childComplexity), true
+
+	case "SprintEdge.cursor":
+		if e.complexity.SprintEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.SprintEdge.Cursor(childComplexity), true
+
+	case "SprintEdge.node":
+		if e.complexity.SprintEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.SprintEdge.Node(childComplexity), true
+
 	case "Tag.color":
 		if e.complexity.Tag.Color == nil {
 			break
@@ -1895,10 +2334,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateOrganizationInput,
 		ec.unmarshalInputCreateProjectInput,
 		ec.unmarshalInputCreateRoleInput,
+		ec.unmarshalInputCreateSprintInput,
 		ec.unmarshalInputCreateTagInput,
 		ec.unmarshalInputInviteMemberInput,
 		ec.unmarshalInputLoginInput,
 		ec.unmarshalInputMoveCardInput,
+		ec.unmarshalInputMoveCardToSprintInput,
 		ec.unmarshalInputRegisterInput,
 		ec.unmarshalInputReorderColumnsInput,
 		ec.unmarshalInputSearchScope,
@@ -1909,6 +2350,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputUpdateOrganizationInput,
 		ec.unmarshalInputUpdateProjectInput,
 		ec.unmarshalInputUpdateRoleInput,
+		ec.unmarshalInputUpdateSprintInput,
 		ec.unmarshalInputUpdateTagInput,
 	)
 	first := true
@@ -2085,6 +2527,22 @@ scalar Date
     myPermissions(resourceType: String!, resourceId: ID!): [String!]!
     "Search across organizations, projects, boards, cards, and users"
     search(query: String!, scope: SearchScope, limit: Int = 20): SearchResults!
+
+    # Sprint Queries
+    "Get a sprint by ID"
+    sprint(id: ID!): Sprint
+    "Get all sprints for a board"
+    sprints(boardId: ID!): [Sprint!]!
+    "Get the active sprint for a board"
+    activeSprint(boardId: ID!): Sprint
+    "Get future sprints for a board"
+    futureSprints(boardId: ID!): [Sprint!]!
+    "Get closed sprints for a board (paginated)"
+    closedSprints(boardId: ID!, first: Int = 20, after: String): SprintConnection!
+    "Get cards in a sprint"
+    sprintCards(sprintId: ID!): [Card!]!
+    "Get backlog cards (cards not assigned to any sprint)"
+    backlogCards(boardId: ID!): [Card!]!
 }
 
 type Mutation {
@@ -2170,6 +2628,26 @@ type Mutation {
     assignProjectRole(input: AssignProjectRoleInput!): ProjectMember!
     "Remove a member from a project"
     removeProjectMember(projectId: ID!, userId: ID!): Boolean!
+
+    # Sprint Mutations
+    "Create a new sprint"
+    createSprint(input: CreateSprintInput!): Sprint!
+    "Update a sprint"
+    updateSprint(id: ID!, input: UpdateSprintInput!): Sprint!
+    "Delete a sprint"
+    deleteSprint(id: ID!): Boolean!
+    "Start a sprint (sets status to active)"
+    startSprint(id: ID!): Sprint!
+    "Complete a sprint (sets status to closed)"
+    completeSprint(id: ID!, moveIncompleteToBacklog: Boolean = true): Sprint!
+    "Add a card to a sprint (cards can be in multiple sprints)"
+    addCardToSprint(input: MoveCardToSprintInput!): Card!
+    "Remove a card from a sprint"
+    removeCardFromSprint(input: MoveCardToSprintInput!): Card!
+    "Set all sprints for a card (replaces existing sprint assignments)"
+    setCardSprints(cardId: ID!, sprintIds: [ID!]!): Card!
+    "Move a card to backlog (remove from all sprints)"
+    moveCardToBacklog(cardId: ID!): Card!
 }
 `, BuiltIn: false},
 	{Name: "../types.graphqls", Input: `type User {
@@ -2285,6 +2763,8 @@ type Board {
     description: String
     isDefault: Boolean!
     columns: [BoardColumn!]!
+    sprints: [Sprint!]!
+    activeSprint: Sprint
     createdAt: Time!
     updatedAt: Time!
 }
@@ -2307,6 +2787,7 @@ type Card {
     id: ID!
     column: BoardColumn!
     board: Board!
+    sprints: [Sprint!]!
     title: String!
     description: String
     position: Float!
@@ -2314,6 +2795,28 @@ type Card {
     assignee: User
     tags: [Tag!]!
     dueDate: Time
+    createdAt: Time!
+    updatedAt: Time!
+    createdBy: User
+}
+
+# Sprint Types
+enum SprintStatus {
+    FUTURE
+    ACTIVE
+    CLOSED
+}
+
+type Sprint {
+    id: ID!
+    board: Board!
+    name: String!
+    goal: String
+    startDate: Time
+    endDate: Time
+    status: SprintStatus!
+    position: Int!
+    cards: [Card!]!
     createdAt: Time!
     updatedAt: Time!
     createdBy: User
@@ -2500,6 +3003,46 @@ input SearchScope {
     organizationId: ID
     projectId: ID
 }
+
+# Sprint Inputs
+input CreateSprintInput {
+    boardId: ID!
+    name: String!
+    goal: String
+    startDate: Time
+    endDate: Time
+}
+
+input UpdateSprintInput {
+    name: String
+    goal: String
+    startDate: Time
+    endDate: Time
+}
+
+input MoveCardToSprintInput {
+    cardId: ID!
+    sprintId: ID!
+}
+
+# Pagination Types
+type PageInfo {
+    hasNextPage: Boolean!
+    hasPreviousPage: Boolean!
+    startCursor: String
+    endCursor: String
+    totalCount: Int!
+}
+
+type SprintConnection {
+    edges: [SprintEdge!]!
+    pageInfo: PageInfo!
+}
+
+type SprintEdge {
+    node: Sprint!
+    cursor: String!
+}
 `, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
 	directive @key(fields: _FieldSet!) repeatable on OBJECT | INTERFACE
@@ -2598,6 +3141,21 @@ func (ec *executionContext) field_Mutation_acceptInvitation_args(ctx context.Con
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_addCardToSprint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.MoveCardToSprintInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNMoveCardToSprintInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐMoveCardToSprintInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_assignProjectRole_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2649,6 +3207,30 @@ func (ec *executionContext) field_Mutation_changeMemberRole_args(ctx context.Con
 		}
 	}
 	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_completeSprint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 *bool
+	if tmp, ok := rawArgs["moveIncompleteToBacklog"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("moveIncompleteToBacklog"))
+		arg1, err = ec.unmarshalOBoolean2ᚖbool(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["moveIncompleteToBacklog"] = arg1
 	return args, nil
 }
 
@@ -2734,6 +3316,21 @@ func (ec *executionContext) field_Mutation_createRole_args(ctx context.Context, 
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNCreateRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateRoleInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_createSprint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CreateSprintInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateSprintInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateSprintInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2847,6 +3444,21 @@ func (ec *executionContext) field_Mutation_deleteRole_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_deleteSprint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_deleteTag_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2892,6 +3504,21 @@ func (ec *executionContext) field_Mutation_login_args(ctx context.Context, rawAr
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_moveCardToBacklog_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["cardId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["cardId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_moveCard_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2914,6 +3541,21 @@ func (ec *executionContext) field_Mutation_register_args(ctx context.Context, ra
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNRegisterInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐRegisterInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeCardFromSprint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.MoveCardToSprintInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNMoveCardToSprintInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐMoveCardToSprintInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2986,6 +3628,45 @@ func (ec *executionContext) field_Mutation_reorderColumns_args(ctx context.Conte
 }
 
 func (ec *executionContext) field_Mutation_resendInvitation_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setCardSprints_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["cardId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["cardId"] = arg0
+	var arg1 []string
+	if tmp, ok := rawArgs["sprintIds"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sprintIds"))
+		arg1, err = ec.unmarshalNID2ᚕstringᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["sprintIds"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_startSprint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -3120,6 +3801,30 @@ func (ec *executionContext) field_Mutation_updateRole_args(ctx context.Context, 
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateSprint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	var arg1 model.UpdateSprintInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNUpdateSprintInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateSprintInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updateTag_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3165,6 +3870,36 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_activeSprint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["boardId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["boardId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_backlogCards_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["boardId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["boardId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_board_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3207,6 +3942,54 @@ func (ec *executionContext) field_Query_card_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_closedSprints_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["boardId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["boardId"] = arg0
+	var arg1 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg1, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg1
+	var arg2 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg2, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_futureSprints_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["boardId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["boardId"] = arg0
 	return args, nil
 }
 
@@ -3402,6 +4185,51 @@ func (ec *executionContext) field_Query_search_args(ctx context.Context, rawArgs
 		}
 	}
 	args["limit"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_sprintCards_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["sprintId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sprintId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["sprintId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_sprint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_sprints_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["boardId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["boardId"] = arg0
 	return args, nil
 }
 
@@ -3825,6 +4653,143 @@ func (ec *executionContext) fieldContext_Board_columns(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Board_sprints(ctx context.Context, field graphql.CollectedField, obj *model.Board) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Board_sprints(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Board().Sprints(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Sprint)
+	fc.Result = res
+	return ec.marshalNSprint2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Board_sprints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Board",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Board_activeSprint(ctx context.Context, field graphql.CollectedField, obj *model.Board) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Board_activeSprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Board().ActiveSprint(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Sprint)
+	fc.Result = res
+	return ec.marshalOSprint2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Board_activeSprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Board",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Board_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Board) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Board_createdAt(ctx, field)
 	if err != nil {
@@ -4008,6 +4973,10 @@ func (ec *executionContext) fieldContext_BoardColumn_board(ctx context.Context, 
 				return ec.fieldContext_Board_isDefault(ctx, field)
 			case "columns":
 				return ec.fieldContext_Board_columns(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Board_sprints(ctx, field)
+			case "activeSprint":
+				return ec.fieldContext_Board_activeSprint(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Board_createdAt(ctx, field)
 			case "updatedAt":
@@ -4322,6 +5291,8 @@ func (ec *executionContext) fieldContext_BoardColumn_cards(ctx context.Context, 
 				return ec.fieldContext_Card_column(ctx, field)
 			case "board":
 				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
 			case "title":
 				return ec.fieldContext_Card_title(ctx, field)
 			case "description":
@@ -4600,12 +5571,86 @@ func (ec *executionContext) fieldContext_Card_board(ctx context.Context, field g
 				return ec.fieldContext_Board_isDefault(ctx, field)
 			case "columns":
 				return ec.fieldContext_Board_columns(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Board_sprints(ctx, field)
+			case "activeSprint":
+				return ec.fieldContext_Board_activeSprint(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Board_createdAt(ctx, field)
 			case "updatedAt":
 				return ec.fieldContext_Board_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Board", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Card_sprints(ctx context.Context, field graphql.CollectedField, obj *model.Card) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Card_sprints(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Card().Sprints(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Sprint)
+	fc.Result = res
+	return ec.marshalNSprint2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Card_sprints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Card",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
 		},
 	}
 	return fc, nil
@@ -6292,6 +7337,10 @@ func (ec *executionContext) fieldContext_Mutation_createBoard(ctx context.Contex
 				return ec.fieldContext_Board_isDefault(ctx, field)
 			case "columns":
 				return ec.fieldContext_Board_columns(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Board_sprints(ctx, field)
+			case "activeSprint":
+				return ec.fieldContext_Board_activeSprint(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Board_createdAt(ctx, field)
 			case "updatedAt":
@@ -6365,6 +7414,10 @@ func (ec *executionContext) fieldContext_Mutation_updateBoard(ctx context.Contex
 				return ec.fieldContext_Board_isDefault(ctx, field)
 			case "columns":
 				return ec.fieldContext_Board_columns(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Board_sprints(ctx, field)
+			case "activeSprint":
+				return ec.fieldContext_Board_activeSprint(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Board_createdAt(ctx, field)
 			case "updatedAt":
@@ -6858,6 +7911,8 @@ func (ec *executionContext) fieldContext_Mutation_createCard(ctx context.Context
 				return ec.fieldContext_Card_column(ctx, field)
 			case "board":
 				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
 			case "title":
 				return ec.fieldContext_Card_title(ctx, field)
 			case "description":
@@ -6941,6 +7996,8 @@ func (ec *executionContext) fieldContext_Mutation_updateCard(ctx context.Context
 				return ec.fieldContext_Card_column(ctx, field)
 			case "board":
 				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
 			case "title":
 				return ec.fieldContext_Card_title(ctx, field)
 			case "description":
@@ -7024,6 +8081,8 @@ func (ec *executionContext) fieldContext_Mutation_moveCard(ctx context.Context, 
 				return ec.fieldContext_Card_column(ctx, field)
 			case "board":
 				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
 			case "title":
 				return ec.fieldContext_Card_title(ctx, field)
 			case "description":
@@ -8031,6 +9090,725 @@ func (ec *executionContext) fieldContext_Mutation_removeProjectMember(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createSprint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createSprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateSprint(rctx, fc.Args["input"].(model.CreateSprintInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Sprint)
+	fc.Result = res
+	return ec.marshalNSprint2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createSprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createSprint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateSprint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateSprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateSprint(rctx, fc.Args["id"].(string), fc.Args["input"].(model.UpdateSprintInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Sprint)
+	fc.Result = res
+	return ec.marshalNSprint2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateSprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateSprint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteSprint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteSprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteSprint(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteSprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteSprint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_startSprint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_startSprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().StartSprint(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Sprint)
+	fc.Result = res
+	return ec.marshalNSprint2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_startSprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_startSprint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_completeSprint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_completeSprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CompleteSprint(rctx, fc.Args["id"].(string), fc.Args["moveIncompleteToBacklog"].(*bool))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Sprint)
+	fc.Result = res
+	return ec.marshalNSprint2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_completeSprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_completeSprint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_addCardToSprint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_addCardToSprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddCardToSprint(rctx, fc.Args["input"].(model.MoveCardToSprintInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_addCardToSprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "column":
+				return ec.fieldContext_Card_column(ctx, field)
+			case "board":
+				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
+			case "title":
+				return ec.fieldContext_Card_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Card_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Card_position(ctx, field)
+			case "priority":
+				return ec.fieldContext_Card_priority(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Card_assignee(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Card_dueDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Card_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Card_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Card_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_addCardToSprint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removeCardFromSprint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_removeCardFromSprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RemoveCardFromSprint(rctx, fc.Args["input"].(model.MoveCardToSprintInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_removeCardFromSprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "column":
+				return ec.fieldContext_Card_column(ctx, field)
+			case "board":
+				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
+			case "title":
+				return ec.fieldContext_Card_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Card_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Card_position(ctx, field)
+			case "priority":
+				return ec.fieldContext_Card_priority(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Card_assignee(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Card_dueDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Card_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Card_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Card_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeCardFromSprint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_setCardSprints(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_setCardSprints(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetCardSprints(rctx, fc.Args["cardId"].(string), fc.Args["sprintIds"].([]string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_setCardSprints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "column":
+				return ec.fieldContext_Card_column(ctx, field)
+			case "board":
+				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
+			case "title":
+				return ec.fieldContext_Card_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Card_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Card_position(ctx, field)
+			case "priority":
+				return ec.fieldContext_Card_priority(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Card_assignee(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Card_dueDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Card_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Card_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Card_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_setCardSprints_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_moveCardToBacklog(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_moveCardToBacklog(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().MoveCardToBacklog(rctx, fc.Args["cardId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_moveCardToBacklog(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "column":
+				return ec.fieldContext_Card_column(ctx, field)
+			case "board":
+				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
+			case "title":
+				return ec.fieldContext_Card_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Card_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Card_position(ctx, field)
+			case "priority":
+				return ec.fieldContext_Card_priority(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Card_assignee(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Card_dueDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Card_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Card_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Card_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_moveCardToBacklog_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _OIDCProvider_slug(ctx context.Context, field graphql.CollectedField, obj *model.OIDCProvider) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_OIDCProvider_slug(ctx, field)
 	if err != nil {
@@ -8816,6 +10594,220 @@ func (ec *executionContext) fieldContext_OrganizationMember_createdAt(ctx contex
 	return fc, nil
 }
 
+func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasNextPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasPreviousPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_startCursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StartCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_startCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_endCursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EndCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Permission_id(ctx context.Context, field graphql.CollectedField, obj *model.Permission) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Permission_id(ctx, field)
 	if err != nil {
@@ -9321,6 +11313,10 @@ func (ec *executionContext) fieldContext_Project_boards(ctx context.Context, fie
 				return ec.fieldContext_Board_isDefault(ctx, field)
 			case "columns":
 				return ec.fieldContext_Board_columns(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Board_sprints(ctx, field)
+			case "activeSprint":
+				return ec.fieldContext_Board_activeSprint(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Board_createdAt(ctx, field)
 			case "updatedAt":
@@ -9380,6 +11376,10 @@ func (ec *executionContext) fieldContext_Project_defaultBoard(ctx context.Contex
 				return ec.fieldContext_Board_isDefault(ctx, field)
 			case "columns":
 				return ec.fieldContext_Board_columns(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Board_sprints(ctx, field)
+			case "activeSprint":
+				return ec.fieldContext_Board_activeSprint(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Board_createdAt(ctx, field)
 			case "updatedAt":
@@ -10219,6 +12219,10 @@ func (ec *executionContext) fieldContext_Query_board(ctx context.Context, field 
 				return ec.fieldContext_Board_isDefault(ctx, field)
 			case "columns":
 				return ec.fieldContext_Board_columns(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Board_sprints(ctx, field)
+			case "activeSprint":
+				return ec.fieldContext_Board_activeSprint(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Board_createdAt(ctx, field)
 			case "updatedAt":
@@ -10292,6 +12296,10 @@ func (ec *executionContext) fieldContext_Query_boards(ctx context.Context, field
 				return ec.fieldContext_Board_isDefault(ctx, field)
 			case "columns":
 				return ec.fieldContext_Board_columns(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Board_sprints(ctx, field)
+			case "activeSprint":
+				return ec.fieldContext_Board_activeSprint(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Board_createdAt(ctx, field)
 			case "updatedAt":
@@ -10356,6 +12364,8 @@ func (ec *executionContext) fieldContext_Query_card(ctx context.Context, field g
 				return ec.fieldContext_Card_column(ctx, field)
 			case "board":
 				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
 			case "title":
 				return ec.fieldContext_Card_title(ctx, field)
 			case "description":
@@ -10439,6 +12449,8 @@ func (ec *executionContext) fieldContext_Query_myCards(ctx context.Context, fiel
 				return ec.fieldContext_Card_column(ctx, field)
 			case "board":
 				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
 			case "title":
 				return ec.fieldContext_Card_title(ctx, field)
 			case "description":
@@ -11108,6 +13120,555 @@ func (ec *executionContext) fieldContext_Query_search(ctx context.Context, field
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_search_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_sprint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_sprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Sprint(rctx, fc.Args["id"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Sprint)
+	fc.Result = res
+	return ec.marshalOSprint2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_sprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_sprint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_sprints(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_sprints(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Sprints(rctx, fc.Args["boardId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Sprint)
+	fc.Result = res
+	return ec.marshalNSprint2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_sprints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_sprints_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_activeSprint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_activeSprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ActiveSprint(rctx, fc.Args["boardId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Sprint)
+	fc.Result = res
+	return ec.marshalOSprint2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_activeSprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_activeSprint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_futureSprints(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_futureSprints(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().FutureSprints(rctx, fc.Args["boardId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Sprint)
+	fc.Result = res
+	return ec.marshalNSprint2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_futureSprints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_futureSprints_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_closedSprints(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_closedSprints(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().ClosedSprints(rctx, fc.Args["boardId"].(string), fc.Args["first"].(*int), fc.Args["after"].(*string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.SprintConnection)
+	fc.Result = res
+	return ec.marshalNSprintConnection2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_closedSprints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "edges":
+				return ec.fieldContext_SprintConnection_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_SprintConnection_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SprintConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_closedSprints_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_sprintCards(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_sprintCards(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().SprintCards(rctx, fc.Args["sprintId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_sprintCards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "column":
+				return ec.fieldContext_Card_column(ctx, field)
+			case "board":
+				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
+			case "title":
+				return ec.fieldContext_Card_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Card_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Card_position(ctx, field)
+			case "priority":
+				return ec.fieldContext_Card_priority(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Card_assignee(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Card_dueDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Card_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Card_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Card_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_sprintCards_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_backlogCards(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_backlogCards(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().BacklogCards(rctx, fc.Args["boardId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_backlogCards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "column":
+				return ec.fieldContext_Card_column(ctx, field)
+			case "board":
+				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
+			case "title":
+				return ec.fieldContext_Card_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Card_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Card_position(ctx, field)
+			case "priority":
+				return ec.fieldContext_Card_priority(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Card_assignee(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Card_dueDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Card_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Card_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Card_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_backlogCards_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -12359,6 +14920,810 @@ func (ec *executionContext) _SearchResults_query(ctx context.Context, field grap
 func (ec *executionContext) fieldContext_SearchResults_query(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "SearchResults",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_id(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_board(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_board(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Sprint().Board(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Board)
+	fc.Result = res
+	return ec.marshalNBoard2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBoard(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_board(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Board_id(ctx, field)
+			case "project":
+				return ec.fieldContext_Board_project(ctx, field)
+			case "name":
+				return ec.fieldContext_Board_name(ctx, field)
+			case "description":
+				return ec.fieldContext_Board_description(ctx, field)
+			case "isDefault":
+				return ec.fieldContext_Board_isDefault(ctx, field)
+			case "columns":
+				return ec.fieldContext_Board_columns(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Board_sprints(ctx, field)
+			case "activeSprint":
+				return ec.fieldContext_Board_activeSprint(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Board_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Board_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Board", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_name(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_goal(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_goal(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Goal, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_goal(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_startDate(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_startDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StartDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_startDate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_endDate(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_endDate(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EndDate, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_endDate(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_status(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_status(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Status, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.SprintStatus)
+	fc.Result = res
+	return ec.marshalNSprintStatus2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintStatus(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type SprintStatus does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_position(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_position(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Position, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_position(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_cards(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_cards(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Sprint().Cards(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_cards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "column":
+				return ec.fieldContext_Card_column(ctx, field)
+			case "board":
+				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
+			case "title":
+				return ec.fieldContext_Card_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Card_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Card_position(ctx, field)
+			case "priority":
+				return ec.fieldContext_Card_priority(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Card_assignee(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Card_dueDate(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Card_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Card_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Card_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Sprint_createdBy(ctx context.Context, field graphql.CollectedField, obj *model.Sprint) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Sprint_createdBy(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Sprint().CreatedBy(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Sprint_createdBy(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Sprint",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "emailVerified":
+				return ec.fieldContext_User_emailVerified(ctx, field)
+			case "displayName":
+				return ec.fieldContext_User_displayName(ctx, field)
+			case "avatarUrl":
+				return ec.fieldContext_User_avatarUrl(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SprintConnection_edges(ctx context.Context, field graphql.CollectedField, obj *model.SprintConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SprintConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.SprintEdge)
+	fc.Result = res
+	return ec.marshalNSprintEdge2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SprintConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SprintConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "node":
+				return ec.fieldContext_SprintEdge_node(ctx, field)
+			case "cursor":
+				return ec.fieldContext_SprintEdge_cursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type SprintEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SprintConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.SprintConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SprintConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SprintConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SprintConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_PageInfo_totalCount(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SprintEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.SprintEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SprintEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Sprint)
+	fc.Result = res
+	return ec.marshalNSprint2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SprintEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SprintEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Sprint_id(ctx, field)
+			case "board":
+				return ec.fieldContext_Sprint_board(ctx, field)
+			case "name":
+				return ec.fieldContext_Sprint_name(ctx, field)
+			case "goal":
+				return ec.fieldContext_Sprint_goal(ctx, field)
+			case "startDate":
+				return ec.fieldContext_Sprint_startDate(ctx, field)
+			case "endDate":
+				return ec.fieldContext_Sprint_endDate(ctx, field)
+			case "status":
+				return ec.fieldContext_Sprint_status(ctx, field)
+			case "position":
+				return ec.fieldContext_Sprint_position(ctx, field)
+			case "cards":
+				return ec.fieldContext_Sprint_cards(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Sprint_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Sprint_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Sprint_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Sprint", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _SprintEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.SprintEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_SprintEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_SprintEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "SprintEdge",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -15177,6 +18542,71 @@ func (ec *executionContext) unmarshalInputCreateRoleInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCreateSprintInput(ctx context.Context, obj interface{}) (model.CreateSprintInput, error) {
+	var it model.CreateSprintInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"boardId", "name", "goal", "startDate", "endDate"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "boardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BoardID = data
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "goal":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("goal"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Goal = data
+		case "startDate":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "endDate":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateTagInput(ctx context.Context, obj interface{}) (model.CreateTagInput, error) {
 	var it model.CreateTagInput
 	asMap := map[string]interface{}{}
@@ -15359,6 +18789,44 @@ func (ec *executionContext) unmarshalInputMoveCardInput(ctx context.Context, obj
 				return it, err
 			}
 			it.AfterCardID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputMoveCardToSprintInput(ctx context.Context, obj interface{}) (model.MoveCardToSprintInput, error) {
+	var it model.MoveCardToSprintInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cardId", "sprintId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CardID = data
+		case "sprintId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sprintId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SprintID = data
 		}
 	}
 
@@ -15889,6 +19357,62 @@ func (ec *executionContext) unmarshalInputUpdateRoleInput(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputUpdateSprintInput(ctx context.Context, obj interface{}) (model.UpdateSprintInput, error) {
+	var it model.UpdateSprintInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"name", "goal", "startDate", "endDate"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "goal":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("goal"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Goal = data
+		case "startDate":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("startDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StartDate = data
+		case "endDate":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("endDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.EndDate = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputUpdateTagInput(ctx context.Context, obj interface{}) (model.UpdateTagInput, error) {
 	var it model.UpdateTagInput
 	asMap := map[string]interface{}{}
@@ -16069,6 +19593,75 @@ func (ec *executionContext) _Board(ctx context.Context, sel ast.SelectionSet, ob
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "sprints":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Board_sprints(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "activeSprint":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Board_activeSprint(ctx, field, obj)
 				return res
 			}
 
@@ -16332,6 +19925,42 @@ func (ec *executionContext) _Card(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Card_board(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "sprints":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Card_sprints(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
@@ -16964,6 +20593,69 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "createSprint":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createSprint(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "updateSprint":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateSprint(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "deleteSprint":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteSprint(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "startSprint":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_startSprint(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "completeSprint":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_completeSprint(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "addCardToSprint":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addCardToSprint(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "removeCardFromSprint":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removeCardFromSprint(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "setCardSprints":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_setCardSprints(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "moveCardToBacklog":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_moveCardToBacklog(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -17204,6 +20896,59 @@ func (ec *executionContext) _OrganizationMember(ctx context.Context, sel ast.Sel
 			out.Values[i] = ec._OrganizationMember_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var pageInfoImplementors = []string{"PageInfo"}
+
+func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "hasNextPage":
+			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "hasPreviousPage":
+			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "startCursor":
+			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
+		case "endCursor":
+			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
+		case "totalCount":
+			out.Values[i] = ec._PageInfo_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -18045,6 +21790,154 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "sprint":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_sprint(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "sprints":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_sprints(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "activeSprint":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_activeSprint(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "futureSprints":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_futureSprints(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "closedSprints":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_closedSprints(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "sprintCards":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_sprintCards(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
+		case "backlogCards":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_backlogCards(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx,
+					func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
 		case "_service":
 			field := field
 
@@ -18307,6 +22200,269 @@ func (ec *executionContext) _SearchResults(ctx context.Context, sel ast.Selectio
 			}
 		case "query":
 			out.Values[i] = ec._SearchResults_query(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var sprintImplementors = []string{"Sprint"}
+
+func (ec *executionContext) _Sprint(ctx context.Context, sel ast.SelectionSet, obj *model.Sprint) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sprintImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Sprint")
+		case "id":
+			out.Values[i] = ec._Sprint_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "board":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Sprint_board(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "name":
+			out.Values[i] = ec._Sprint_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "goal":
+			out.Values[i] = ec._Sprint_goal(ctx, field, obj)
+		case "startDate":
+			out.Values[i] = ec._Sprint_startDate(ctx, field, obj)
+		case "endDate":
+			out.Values[i] = ec._Sprint_endDate(ctx, field, obj)
+		case "status":
+			out.Values[i] = ec._Sprint_status(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "position":
+			out.Values[i] = ec._Sprint_position(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "cards":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Sprint_cards(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&fs.Invalids, 1)
+				}
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		case "createdAt":
+			out.Values[i] = ec._Sprint_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._Sprint_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "createdBy":
+			field := field
+
+			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Sprint_createdBy(ctx, field, obj)
+				return res
+			}
+
+			if field.Deferrable != nil {
+				dfs, ok := deferred[field.Deferrable.Label]
+				di := 0
+				if ok {
+					dfs.AddField(field)
+					di = len(dfs.Values) - 1
+				} else {
+					dfs = graphql.NewFieldSet([]graphql.CollectedField{field})
+					deferred[field.Deferrable.Label] = dfs
+				}
+				dfs.Concurrently(di, func(ctx context.Context) graphql.Marshaler {
+					return innerFunc(ctx, dfs)
+				})
+
+				// don't run the out.Concurrently() call below
+				out.Values[i] = graphql.Null
+				continue
+			}
+
+			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var sprintConnectionImplementors = []string{"SprintConnection"}
+
+func (ec *executionContext) _SprintConnection(ctx context.Context, sel ast.SelectionSet, obj *model.SprintConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sprintConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SprintConnection")
+		case "edges":
+			out.Values[i] = ec._SprintConnection_edges(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "pageInfo":
+			out.Values[i] = ec._SprintConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var sprintEdgeImplementors = []string{"SprintEdge"}
+
+func (ec *executionContext) _SprintEdge(ctx context.Context, sel ast.SelectionSet, obj *model.SprintEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, sprintEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("SprintEdge")
+		case "node":
+			out.Values[i] = ec._SprintEdge_node(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cursor":
+			out.Values[i] = ec._SprintEdge_cursor(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -19100,6 +23256,11 @@ func (ec *executionContext) unmarshalNCreateRoleInput2githubᚗcomᚋthatcatdev�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNCreateSprintInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateSprintInput(ctx context.Context, v interface{}) (model.CreateSprintInput, error) {
+	res, err := ec.unmarshalInputCreateSprintInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNCreateTagInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCreateTagInput(ctx context.Context, v interface{}) (model.CreateTagInput, error) {
 	res, err := ec.unmarshalInputCreateTagInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -19252,6 +23413,11 @@ func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋthatcatdevᚋkai
 
 func (ec *executionContext) unmarshalNMoveCardInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐMoveCardInput(ctx context.Context, v interface{}) (model.MoveCardInput, error) {
 	res, err := ec.unmarshalInputMoveCardInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNMoveCardToSprintInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐMoveCardToSprintInput(ctx context.Context, v interface{}) (model.MoveCardToSprintInput, error) {
+	res, err := ec.unmarshalInputMoveCardToSprintInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -19423,6 +23589,16 @@ func (ec *executionContext) marshalNOrganizationMember2ᚖgithubᚗcomᚋthatcat
 		return graphql.Null
 	}
 	return ec._OrganizationMember(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPermission2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐPermissionᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Permission) graphql.Marshaler {
@@ -19741,6 +23917,142 @@ func (ec *executionContext) marshalNSearchResults2ᚖgithubᚗcomᚋthatcatdev�
 	return ec._SearchResults(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNSprint2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx context.Context, sel ast.SelectionSet, v model.Sprint) graphql.Marshaler {
+	return ec._Sprint(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSprint2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Sprint) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSprint2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSprint2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx context.Context, sel ast.SelectionSet, v *model.Sprint) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Sprint(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSprintConnection2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintConnection(ctx context.Context, sel ast.SelectionSet, v model.SprintConnection) graphql.Marshaler {
+	return ec._SprintConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNSprintConnection2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintConnection(ctx context.Context, sel ast.SelectionSet, v *model.SprintConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SprintConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNSprintEdge2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.SprintEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNSprintEdge2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNSprintEdge2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintEdge(ctx context.Context, sel ast.SelectionSet, v *model.SprintEdge) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._SprintEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNSprintStatus2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintStatus(ctx context.Context, v interface{}) (model.SprintStatus, error) {
+	var res model.SprintStatus
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNSprintStatus2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprintStatus(ctx context.Context, sel ast.SelectionSet, v model.SprintStatus) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -19893,6 +24205,11 @@ func (ec *executionContext) unmarshalNUpdateProjectInput2githubᚗcomᚋthatcatd
 
 func (ec *executionContext) unmarshalNUpdateRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateRoleInput(ctx context.Context, v interface{}) (model.UpdateRoleInput, error) {
 	res, err := ec.unmarshalInputUpdateRoleInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNUpdateSprintInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐUpdateSprintInput(ctx context.Context, v interface{}) (model.UpdateSprintInput, error) {
+	res, err := ec.unmarshalInputUpdateSprintInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -20340,6 +24657,13 @@ func (ec *executionContext) unmarshalOSearchScope2ᚖgithubᚗcomᚋthatcatdev�
 	}
 	res, err := ec.unmarshalInputSearchScope(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOSprint2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐSprint(ctx context.Context, sel ast.SelectionSet, v *model.Sprint) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Sprint(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {

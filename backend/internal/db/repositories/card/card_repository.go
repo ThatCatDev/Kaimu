@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Repository interface {
@@ -15,11 +16,20 @@ type Repository interface {
 	GetByColumnID(ctx context.Context, columnID uuid.UUID) ([]*Card, error)
 	GetByBoardID(ctx context.Context, boardID uuid.UUID) ([]*Card, error)
 	GetByAssigneeID(ctx context.Context, assigneeID uuid.UUID) ([]*Card, error)
+	GetBySprintID(ctx context.Context, sprintID uuid.UUID) ([]*Card, error)
+	GetBacklogByBoardID(ctx context.Context, boardID uuid.UUID) ([]*Card, error)
 	GetAll(ctx context.Context) ([]*Card, error)
 	GetMaxPosition(ctx context.Context, columnID uuid.UUID) (float64, error)
 	GetPositionBetween(ctx context.Context, columnID uuid.UUID, afterCardID *uuid.UUID) (float64, error)
 	Update(ctx context.Context, card *Card) error
 	Delete(ctx context.Context, id uuid.UUID) error
+
+	// Card-Sprint relationship methods (many-to-many)
+	AddCardToSprint(ctx context.Context, cardID, sprintID uuid.UUID) error
+	RemoveCardFromSprint(ctx context.Context, cardID, sprintID uuid.UUID) error
+	GetSprintIDsForCard(ctx context.Context, cardID uuid.UUID) ([]uuid.UUID, error)
+	SetCardSprints(ctx context.Context, cardID uuid.UUID, sprintIDs []uuid.UUID) error
+	RemoveCardFromAllSprints(ctx context.Context, cardID uuid.UUID) error
 }
 
 type repository struct {
@@ -72,6 +82,32 @@ func (r *repository) GetByAssigneeID(ctx context.Context, assigneeID uuid.UUID) 
 	err := r.db.WithContext(ctx).
 		Where("assignee_id = ?", assigneeID).
 		Order("due_date ASC NULLS LAST, created_at DESC").
+		Find(&cards).Error
+	if err != nil {
+		return nil, err
+	}
+	return cards, nil
+}
+
+func (r *repository) GetBySprintID(ctx context.Context, sprintID uuid.UUID) ([]*Card, error) {
+	var cards []*Card
+	err := r.db.WithContext(ctx).
+		Joins("JOIN card_sprints ON card_sprints.card_id = cards.id").
+		Where("card_sprints.sprint_id = ?", sprintID).
+		Order("cards.position ASC").
+		Find(&cards).Error
+	if err != nil {
+		return nil, err
+	}
+	return cards, nil
+}
+
+func (r *repository) GetBacklogByBoardID(ctx context.Context, boardID uuid.UUID) ([]*Card, error) {
+	var cards []*Card
+	// Cards in backlog are those not assigned to any sprint
+	err := r.db.WithContext(ctx).
+		Where("board_id = ? AND id NOT IN (SELECT card_id FROM card_sprints)", boardID).
+		Order("position ASC").
 		Find(&cards).Error
 	if err != nil {
 		return nil, err
@@ -153,4 +189,70 @@ func (r *repository) Update(ctx context.Context, card *Card) error {
 
 func (r *repository) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Delete(&Card{}, "id = ?", id).Error
+}
+
+// AddCardToSprint adds a card to a sprint (many-to-many)
+func (r *repository) AddCardToSprint(ctx context.Context, cardID, sprintID uuid.UUID) error {
+	cardSprint := &CardSprint{
+		CardID:   cardID,
+		SprintID: sprintID,
+	}
+	// Use ON CONFLICT DO NOTHING to handle duplicate entries gracefully
+	return r.db.WithContext(ctx).
+		Clauses(clause.OnConflict{DoNothing: true}).
+		Create(cardSprint).Error
+}
+
+// RemoveCardFromSprint removes a card from a sprint
+func (r *repository) RemoveCardFromSprint(ctx context.Context, cardID, sprintID uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Where("card_id = ? AND sprint_id = ?", cardID, sprintID).
+		Delete(&CardSprint{}).Error
+}
+
+// GetSprintIDsForCard returns all sprint IDs that a card belongs to
+func (r *repository) GetSprintIDsForCard(ctx context.Context, cardID uuid.UUID) ([]uuid.UUID, error) {
+	var cardSprints []CardSprint
+	err := r.db.WithContext(ctx).
+		Where("card_id = ?", cardID).
+		Order("added_at ASC").
+		Find(&cardSprints).Error
+	if err != nil {
+		return nil, err
+	}
+
+	sprintIDs := make([]uuid.UUID, len(cardSprints))
+	for i, cs := range cardSprints {
+		sprintIDs[i] = cs.SprintID
+	}
+	return sprintIDs, nil
+}
+
+// SetCardSprints replaces all sprint assignments for a card
+func (r *repository) SetCardSprints(ctx context.Context, cardID uuid.UUID, sprintIDs []uuid.UUID) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		// Remove all existing sprint assignments
+		if err := tx.Where("card_id = ?", cardID).Delete(&CardSprint{}).Error; err != nil {
+			return err
+		}
+
+		// Add new sprint assignments
+		for _, sprintID := range sprintIDs {
+			cardSprint := &CardSprint{
+				CardID:   cardID,
+				SprintID: sprintID,
+			}
+			if err := tx.Create(cardSprint).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// RemoveCardFromAllSprints removes a card from all sprints (moves to backlog)
+func (r *repository) RemoveCardFromAllSprints(ctx context.Context, cardID uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Where("card_id = ?", cardID).
+		Delete(&CardSprint{}).Error
 }

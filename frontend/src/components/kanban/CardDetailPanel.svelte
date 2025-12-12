@@ -1,12 +1,14 @@
 <script lang="ts">
   import { updateCard, deleteCard, type BoardCard, type Tag } from '../../lib/api/boards';
-  import { CardPriority } from '../../lib/graphql/generated';
+  import { CardPriority, SprintStatus } from '../../lib/graphql/generated';
   import { Button, ConfirmModal } from '../ui';
   import CardForm from './CardForm.svelte';
+  import { getActiveSprint, getFutureSprints, getClosedSprints, setCardSprints, type SprintData } from '../../lib/api/sprints';
 
   interface Props {
     card: BoardCard | null;
     projectId: string;
+    boardId: string;
     tags: Tag[];
     isOpen: boolean;
     onClose: () => void;
@@ -20,7 +22,7 @@
     canDeleteCard?: boolean;
   }
 
-  let { card, projectId, tags, isOpen, onClose, onUpdated, onCardDataChanged, onTagsChanged, viewMode, onViewModeChange, canEditCard = true, canDeleteCard = true }: Props = $props();
+  let { card, projectId, boardId, tags, isOpen, onClose, onUpdated, onCardDataChanged, onTagsChanged, viewMode, onViewModeChange, canEditCard = true, canDeleteCard = true }: Props = $props();
 
 
   let title = $state('');
@@ -35,12 +37,49 @@
   let lastSavedData = $state<string>('');
   let showDeleteConfirm = $state(false);
 
+  // Sprint state
+  let activeSprints = $state<SprintData[]>([]);
+  let futureSprints = $state<SprintData[]>([]);
+  let closedSprints = $state<SprintData[]>([]);
+  let closedSprintsPageInfo = $state<{ hasNextPage: boolean; endCursor: string | null; totalCount: number } | null>(null);
+  let selectedSprintIds = $state<string[]>([]);
+  let loadingSprints = $state(false);
+  let loadingMoreClosed = $state(false);
+  let savingSprints = $state(false);
+
   let currentCardId = $state<string | null>(null);
   let isEditing = $state(false); // Track if user has started editing
 
   // Use derived instead of function call in template to avoid re-render triggers
   const currentDataHash = $derived(JSON.stringify({ title, description, priority, selectedTagIds, dueDate }));
   const isSaved = $derived(currentDataHash === lastSavedData);
+
+  // Sprint UI state
+  let sprintSearch = $state('');
+  let showAllClosedSprints = $state(false);
+  const CLOSED_SPRINTS_PREVIEW_COUNT = 5;
+  const CLOSED_SPRINTS_PAGE_SIZE = 10;
+
+  // Combine all sprints for operations
+  const availableSprints = $derived([...activeSprints, ...futureSprints, ...closedSprints]);
+
+  // Filter sprints by search
+  const filteredActiveSprints = $derived(
+    sprintSearch ? activeSprints.filter(s => s.name.toLowerCase().includes(sprintSearch.toLowerCase())) : activeSprints
+  );
+  const filteredFutureSprints = $derived(
+    sprintSearch ? futureSprints.filter(s => s.name.toLowerCase().includes(sprintSearch.toLowerCase())) : futureSprints
+  );
+  const filteredClosedSprints = $derived(
+    sprintSearch ? closedSprints.filter(s => s.name.toLowerCase().includes(sprintSearch.toLowerCase())) : closedSprints
+  );
+
+  // Limit closed sprints display unless searching or expanded
+  const displayedClosedSprints = $derived(
+    sprintSearch || showAllClosedSprints ? filteredClosedSprints : filteredClosedSprints.slice(0, CLOSED_SPRINTS_PREVIEW_COUNT)
+  );
+  const hasMoreClosedSprints = $derived(filteredClosedSprints.length > CLOSED_SPRINTS_PREVIEW_COUNT);
+  const totalSprintCount = $derived(availableSprints.length);
 
   // Reset state when panel closes
   $effect(() => {
@@ -49,6 +88,46 @@
       isEditing = false;
     }
   });
+
+  // Load sprints when panel opens
+  $effect(() => {
+    if (isOpen && boardId) {
+      loadSprints();
+    }
+  });
+
+  async function loadSprints() {
+    try {
+      loadingSprints = true;
+      const [active, future, closedResult] = await Promise.all([
+        getActiveSprint(boardId),
+        getFutureSprints(boardId),
+        getClosedSprints(boardId, CLOSED_SPRINTS_PAGE_SIZE),
+      ]);
+      activeSprints = active ? [active] : [];
+      futureSprints = future;
+      closedSprints = closedResult.sprints;
+      closedSprintsPageInfo = closedResult.pageInfo;
+    } catch (e) {
+      console.error('Failed to load sprints:', e);
+    } finally {
+      loadingSprints = false;
+    }
+  }
+
+  async function loadMoreClosedSprints() {
+    if (!closedSprintsPageInfo?.hasNextPage || loadingMoreClosed) return;
+    try {
+      loadingMoreClosed = true;
+      const result = await getClosedSprints(boardId, CLOSED_SPRINTS_PAGE_SIZE, closedSprintsPageInfo.endCursor ?? undefined);
+      closedSprints = [...closedSprints, ...result.sprints];
+      closedSprintsPageInfo = result.pageInfo;
+    } catch (e) {
+      console.error('Failed to load more closed sprints:', e);
+    } finally {
+      loadingMoreClosed = false;
+    }
+  }
 
   // Load card data ONLY when a DIFFERENT card is selected
   // Never reload while editing the same card (prevents form reset during auto-save)
@@ -60,6 +139,7 @@
       description = card.description ?? '';
       priority = card.priority;
       selectedTagIds = card.tags?.map(t => t.id) ?? [];
+      selectedSprintIds = card.sprints?.map(s => s.id) ?? [];
       dueDate = card.dueDate ? card.dueDate.split('T')[0] : '';
       error = null;
       isEditing = false;
@@ -166,6 +246,35 @@
   function handleDueDateChange(v: string) { dueDate = v; }
   function handleTagSelectionChange(ids: string[]) { selectedTagIds = ids; }
 
+  // Handle sprint selection changes
+  async function handleSprintToggle(sprintId: string) {
+    if (!card || !canEditCard) return;
+
+    const isSelected = selectedSprintIds.includes(sprintId);
+    const newSprintIds = isSelected
+      ? selectedSprintIds.filter(id => id !== sprintId)
+      : [...selectedSprintIds, sprintId];
+
+    try {
+      savingSprints = true;
+      await setCardSprints(card.id, newSprintIds);
+      selectedSprintIds = newSprintIds;
+
+      // Update the board display
+      onCardDataChanged?.(card.id, {
+        sprints: availableSprints.filter(s => newSprintIds.includes(s.id)).map(s => ({
+          id: s.id,
+          name: s.name,
+          status: s.status
+        }))
+      });
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to update sprints';
+    } finally {
+      savingSprints = false;
+    }
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     if (!isOpen) return;
 
@@ -235,6 +344,159 @@
           descriptionRows={5}
           idPrefix="detail-"
         />
+
+        <!-- Sprint Selection -->
+        {#if availableSprints.length > 0 || selectedSprintIds.length > 0}
+          <div class="mt-4 pt-4 border-t border-gray-200">
+            <div class="flex items-center justify-between mb-2">
+              <label class="block text-sm font-medium text-gray-700">Sprints</label>
+              {#if savingSprints}
+                <span class="text-xs text-gray-400">Saving...</span>
+              {/if}
+            </div>
+            {#if loadingSprints}
+              <div class="text-sm text-gray-400">Loading sprints...</div>
+            {:else if availableSprints.length === 0}
+              <div class="text-sm text-gray-500">No sprints available</div>
+            {:else}
+              <!-- Search input for large sprint lists -->
+              {#if totalSprintCount > 10}
+                <div class="mb-3">
+                  <input
+                    type="text"
+                    bind:value={sprintSearch}
+                    placeholder="Search sprints..."
+                    class="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+              {/if}
+
+              <div class="space-y-3 max-h-64 overflow-y-auto">
+                <!-- Active Sprints -->
+                {#if filteredActiveSprints.length > 0}
+                  <div>
+                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Active</div>
+                    <div class="space-y-1">
+                      {#each filteredActiveSprints as sprint (sprint.id)}
+                        {@const isSelected = selectedSprintIds.includes(sprint.id)}
+                        <button
+                          type="button"
+                          onclick={() => handleSprintToggle(sprint.id)}
+                          disabled={!canEditCard || savingSprints}
+                          class="w-full flex items-center gap-2 px-3 py-2 rounded-md text-left transition-colors {isSelected ? 'bg-indigo-50 border border-indigo-200' : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'} {!canEditCard ? 'cursor-not-allowed opacity-60' : ''}"
+                        >
+                          <span class="w-4 h-4 flex items-center justify-center rounded {isSelected ? 'bg-indigo-600 text-white' : 'border border-gray-300'}">
+                            {#if isSelected}
+                              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                              </svg>
+                            {/if}
+                          </span>
+                          <span class="flex-1 text-sm {isSelected ? 'text-indigo-700 font-medium' : 'text-gray-700'}">{sprint.name}</span>
+                          <span class="text-xs px-1.5 py-0.5 rounded bg-green-100 text-green-700">Active</span>
+                        </button>
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
+
+                <!-- Future Sprints -->
+                {#if filteredFutureSprints.length > 0}
+                  <div>
+                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Future</div>
+                    <div class="space-y-1">
+                      {#each filteredFutureSprints as sprint (sprint.id)}
+                        {@const isSelected = selectedSprintIds.includes(sprint.id)}
+                        <button
+                          type="button"
+                          onclick={() => handleSprintToggle(sprint.id)}
+                          disabled={!canEditCard || savingSprints}
+                          class="w-full flex items-center gap-2 px-3 py-2 rounded-md text-left transition-colors {isSelected ? 'bg-indigo-50 border border-indigo-200' : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'} {!canEditCard ? 'cursor-not-allowed opacity-60' : ''}"
+                        >
+                          <span class="w-4 h-4 flex items-center justify-center rounded {isSelected ? 'bg-indigo-600 text-white' : 'border border-gray-300'}">
+                            {#if isSelected}
+                              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                              </svg>
+                            {/if}
+                          </span>
+                          <span class="flex-1 text-sm {isSelected ? 'text-indigo-700 font-medium' : 'text-gray-700'}">{sprint.name}</span>
+                          <span class="text-xs px-1.5 py-0.5 rounded bg-blue-100 text-blue-700">Future</span>
+                        </button>
+                      {/each}
+                    </div>
+                  </div>
+                {/if}
+
+                <!-- Closed Sprints -->
+                {#if filteredClosedSprints.length > 0 || closedSprintsPageInfo?.hasNextPage}
+                  <div>
+                    <div class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">
+                      Closed {#if closedSprintsPageInfo}({closedSprintsPageInfo.totalCount}){/if}
+                    </div>
+                    <div class="space-y-1">
+                      {#each displayedClosedSprints as sprint (sprint.id)}
+                        {@const isSelected = selectedSprintIds.includes(sprint.id)}
+                        <button
+                          type="button"
+                          onclick={() => handleSprintToggle(sprint.id)}
+                          disabled={!canEditCard || savingSprints}
+                          class="w-full flex items-center gap-2 px-3 py-2 rounded-md text-left transition-colors {isSelected ? 'bg-indigo-50 border border-indigo-200' : 'bg-gray-50 border border-gray-200 hover:bg-gray-100'} {!canEditCard ? 'cursor-not-allowed opacity-60' : ''}"
+                        >
+                          <span class="w-4 h-4 flex items-center justify-center rounded {isSelected ? 'bg-indigo-600 text-white' : 'border border-gray-300'}">
+                            {#if isSelected}
+                              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                              </svg>
+                            {/if}
+                          </span>
+                          <span class="flex-1 text-sm {isSelected ? 'text-indigo-700 font-medium' : 'text-gray-600'}">{sprint.name}</span>
+                          <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">Closed</span>
+                        </button>
+                      {/each}
+                    </div>
+                    <!-- Show more/less toggle for local preview -->
+                    {#if hasMoreClosedSprints && !sprintSearch && !showAllClosedSprints}
+                      <button
+                        type="button"
+                        onclick={() => showAllClosedSprints = true}
+                        class="w-full mt-1 px-3 py-1.5 text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-md transition-colors"
+                      >
+                        Show {filteredClosedSprints.length - CLOSED_SPRINTS_PREVIEW_COUNT} more loaded
+                      </button>
+                    {/if}
+                    <!-- Load more from server -->
+                    {#if closedSprintsPageInfo?.hasNextPage && (showAllClosedSprints || sprintSearch || !hasMoreClosedSprints)}
+                      <button
+                        type="button"
+                        onclick={loadMoreClosedSprints}
+                        disabled={loadingMoreClosed}
+                        class="w-full mt-1 px-3 py-1.5 text-xs text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded-md transition-colors disabled:opacity-50"
+                      >
+                        {loadingMoreClosed ? 'Loading...' : `Load more (${closedSprintsPageInfo.totalCount - closedSprints.length} remaining)`}
+                      </button>
+                    {/if}
+                    <!-- Show less when expanded -->
+                    {#if showAllClosedSprints && hasMoreClosedSprints && !sprintSearch}
+                      <button
+                        type="button"
+                        onclick={() => showAllClosedSprints = false}
+                        class="w-full mt-1 px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors"
+                      >
+                        Show less
+                      </button>
+                    {/if}
+                  </div>
+                {/if}
+
+                <!-- No results -->
+                {#if sprintSearch && filteredActiveSprints.length === 0 && filteredFutureSprints.length === 0 && filteredClosedSprints.length === 0}
+                  <div class="text-sm text-gray-500 text-center py-2">No sprints match "{sprintSearch}"</div>
+                {/if}
+              </div>
+            {/if}
+          </div>
+        {/if}
 
         <div class="pt-4 mt-4 border-t border-gray-200 text-xs text-gray-500">
           <p>Created: {formatDate(card.createdAt)}</p>

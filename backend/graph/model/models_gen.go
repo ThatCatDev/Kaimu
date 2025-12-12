@@ -20,14 +20,16 @@ type AuthPayload struct {
 }
 
 type Board struct {
-	ID          string         `json:"id"`
-	Project     *Project       `json:"project"`
-	Name        string         `json:"name"`
-	Description *string        `json:"description,omitempty"`
-	IsDefault   bool           `json:"isDefault"`
-	Columns     []*BoardColumn `json:"columns"`
-	CreatedAt   time.Time      `json:"createdAt"`
-	UpdatedAt   time.Time      `json:"updatedAt"`
+	ID           string         `json:"id"`
+	Project      *Project       `json:"project"`
+	Name         string         `json:"name"`
+	Description  *string        `json:"description,omitempty"`
+	IsDefault    bool           `json:"isDefault"`
+	Columns      []*BoardColumn `json:"columns"`
+	Sprints      []*Sprint      `json:"sprints"`
+	ActiveSprint *Sprint        `json:"activeSprint,omitempty"`
+	CreatedAt    time.Time      `json:"createdAt"`
+	UpdatedAt    time.Time      `json:"updatedAt"`
 }
 
 type BoardColumn struct {
@@ -48,6 +50,7 @@ type Card struct {
 	ID          string       `json:"id"`
 	Column      *BoardColumn `json:"column"`
 	Board       *Board       `json:"board"`
+	Sprints     []*Sprint    `json:"sprints"`
 	Title       string       `json:"title"`
 	Description *string      `json:"description,omitempty"`
 	Position    float64      `json:"position"`
@@ -106,6 +109,14 @@ type CreateRoleInput struct {
 	PermissionCodes []string `json:"permissionCodes"`
 }
 
+type CreateSprintInput struct {
+	BoardID   string     `json:"boardId"`
+	Name      string     `json:"name"`
+	Goal      *string    `json:"goal,omitempty"`
+	StartDate *time.Time `json:"startDate,omitempty"`
+	EndDate   *time.Time `json:"endDate,omitempty"`
+}
+
 type CreateTagInput struct {
 	ProjectID   string  `json:"projectId"`
 	Name        string  `json:"name"`
@@ -141,6 +152,11 @@ type MoveCardInput struct {
 	AfterCardID    *string `json:"afterCardId,omitempty"`
 }
 
+type MoveCardToSprintInput struct {
+	CardID   string `json:"cardId"`
+	SprintID string `json:"sprintId"`
+}
+
 type OIDCProvider struct {
 	Slug string `json:"slug"`
 	Name string `json:"name"`
@@ -164,6 +180,14 @@ type OrganizationMember struct {
 	Role       *Role     `json:"role"`
 	LegacyRole string    `json:"legacyRole"`
 	CreatedAt  time.Time `json:"createdAt"`
+}
+
+type PageInfo struct {
+	HasNextPage     bool    `json:"hasNextPage"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
+	StartCursor     *string `json:"startCursor,omitempty"`
+	EndCursor       *string `json:"endCursor,omitempty"`
+	TotalCount      int     `json:"totalCount"`
 }
 
 type Permission struct {
@@ -244,6 +268,31 @@ type SearchScope struct {
 	ProjectID      *string `json:"projectId,omitempty"`
 }
 
+type Sprint struct {
+	ID        string       `json:"id"`
+	Board     *Board       `json:"board"`
+	Name      string       `json:"name"`
+	Goal      *string      `json:"goal,omitempty"`
+	StartDate *time.Time   `json:"startDate,omitempty"`
+	EndDate   *time.Time   `json:"endDate,omitempty"`
+	Status    SprintStatus `json:"status"`
+	Position  int          `json:"position"`
+	Cards     []*Card      `json:"cards"`
+	CreatedAt time.Time    `json:"createdAt"`
+	UpdatedAt time.Time    `json:"updatedAt"`
+	CreatedBy *User        `json:"createdBy,omitempty"`
+}
+
+type SprintConnection struct {
+	Edges    []*SprintEdge `json:"edges"`
+	PageInfo *PageInfo     `json:"pageInfo"`
+}
+
+type SprintEdge struct {
+	Node   *Sprint `json:"node"`
+	Cursor string  `json:"cursor"`
+}
+
 type Tag struct {
 	ID          string    `json:"id"`
 	Project     *Project  `json:"project"`
@@ -301,6 +350,13 @@ type UpdateRoleInput struct {
 	Name            *string  `json:"name,omitempty"`
 	Description     *string  `json:"description,omitempty"`
 	PermissionCodes []string `json:"permissionCodes,omitempty"`
+}
+
+type UpdateSprintInput struct {
+	Name      *string    `json:"name,omitempty"`
+	Goal      *string    `json:"goal,omitempty"`
+	StartDate *time.Time `json:"startDate,omitempty"`
+	EndDate   *time.Time `json:"endDate,omitempty"`
 }
 
 type UpdateTagInput struct {
@@ -411,5 +467,48 @@ func (e *SearchEntityType) UnmarshalGQL(v interface{}) error {
 }
 
 func (e SearchEntityType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type SprintStatus string
+
+const (
+	SprintStatusFuture SprintStatus = "FUTURE"
+	SprintStatusActive SprintStatus = "ACTIVE"
+	SprintStatusClosed SprintStatus = "CLOSED"
+)
+
+var AllSprintStatus = []SprintStatus{
+	SprintStatusFuture,
+	SprintStatusActive,
+	SprintStatusClosed,
+}
+
+func (e SprintStatus) IsValid() bool {
+	switch e {
+	case SprintStatusFuture, SprintStatusActive, SprintStatusClosed:
+		return true
+	}
+	return false
+}
+
+func (e SprintStatus) String() string {
+	return string(e)
+}
+
+func (e *SprintStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = SprintStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid SprintStatus", str)
+	}
+	return nil
+}
+
+func (e SprintStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

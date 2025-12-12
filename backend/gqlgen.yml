@@ -69,6 +69,10 @@ models:
         resolver: true
       columns:
         resolver: true
+      sprints:
+        resolver: true
+      activeSprint:
+        resolver: true
   BoardColumn:
     fields:
       board:
@@ -86,6 +90,8 @@ models:
       assignee:
         resolver: true
       createdBy:
+        resolver: true
+      sprints:
         resolver: true
   Tag:
     fields:
@@ -124,4 +130,12 @@ models:
       organization:
         resolver: true
       invitedBy:
+        resolver: true
+  Sprint:
+    fields:
+      board:
+        resolver: true
+      cards:
+        resolver: true
+      createdBy:
         resolver: true
