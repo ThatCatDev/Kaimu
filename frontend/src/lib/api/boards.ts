@@ -88,6 +88,7 @@ const BOARD_QUERY = `
           assignee {
             id
             username
+            displayName
           }
           sprints {
             id
@@ -222,6 +223,7 @@ const CREATE_CARD_MUTATION = `
       assignee {
         id
         username
+        displayName
       }
     }
   }
@@ -244,6 +246,7 @@ const UPDATE_CARD_MUTATION = `
       assignee {
         id
         username
+        displayName
       }
     }
   }
@@ -408,19 +411,22 @@ export async function updateCard(
   title?: string,
   description?: string,
   priority?: CardPriority,
-  assigneeId?: string,
+  assigneeId?: string | null,
   tagIds?: string[],
   dueDate?: string | null
 ): Promise<UpdateCardMutation['updateCard']> {
   // When dueDate is explicitly null, we want to clear it
   const clearDueDate = dueDate === null;
+  // When assigneeId is explicitly null, we want to clear it
+  const clearAssignee = assigneeId === null;
   const data = await graphql<UpdateCardMutation>(UPDATE_CARD_MUTATION, {
     input: {
       id,
       title,
       description,
       priority,
-      assigneeId,
+      assigneeId: clearAssignee ? undefined : assigneeId,
+      clearAssignee: clearAssignee ? true : undefined,
       tagIds,
       dueDate: clearDueDate ? undefined : dueDate,
       clearDueDate: clearDueDate ? true : undefined,

@@ -1,13 +1,14 @@
 <script lang="ts">
   import { updateCard, deleteCard, type BoardCard, type Tag } from '../../lib/api/boards';
   import { CardPriority, SprintStatus } from '../../lib/graphql/generated';
-  import { Button, ConfirmModal } from '../ui';
+  import { Button, ConfirmModal, AssigneeCombobox } from '../ui';
   import CardForm from './CardForm.svelte';
   import { getActiveSprint, getFutureSprints, getClosedSprints, setCardSprints, type SprintData } from '../../lib/api/sprints';
 
   interface Props {
     card: BoardCard | null;
     projectId: string;
+    organizationId: string;
     boardId: string;
     tags: Tag[];
     isOpen: boolean;
@@ -22,7 +23,7 @@
     canDeleteCard?: boolean;
   }
 
-  let { card, projectId, boardId, tags, isOpen, onClose, onUpdated, onCardDataChanged, onTagsChanged, viewMode, onViewModeChange, canEditCard = true, canDeleteCard = true }: Props = $props();
+  let { card, projectId, organizationId, boardId, tags, isOpen, onClose, onUpdated, onCardDataChanged, onTagsChanged, viewMode, onViewModeChange, canEditCard = true, canDeleteCard = true }: Props = $props();
 
 
   let title = $state('');
@@ -46,6 +47,10 @@
   let loadingSprints = $state(false);
   let loadingMoreClosed = $state(false);
   let savingSprints = $state(false);
+
+  // Assignee state
+  let selectedAssigneeId = $state<string | null>(null);
+  let savingAssignee = $state(false);
 
   let currentCardId = $state<string | null>(null);
   let isEditing = $state(false); // Track if user has started editing
@@ -89,7 +94,7 @@
     }
   });
 
-  // Load sprints when panel opens
+  // Load sprints and members when panel opens
   $effect(() => {
     if (isOpen && boardId) {
       loadSprints();
@@ -140,6 +145,7 @@
       priority = card.priority;
       selectedTagIds = card.tags?.map(t => t.id) ?? [];
       selectedSprintIds = card.sprints?.map(s => s.id) ?? [];
+      selectedAssigneeId = card.assignee?.id ?? null;
       dueDate = card.dueDate ? card.dueDate.split('T')[0] : '';
       error = null;
       isEditing = false;
@@ -246,6 +252,36 @@
   function handleDueDateChange(v: string) { dueDate = v; }
   function handleTagSelectionChange(ids: string[]) { selectedTagIds = ids; }
 
+  // Handle assignee selection changes
+  async function handleAssigneeChange(userId: string | null, displayName?: string) {
+    console.log('CardDetailPanel handleAssigneeChange called with:', userId, displayName);
+    console.log('card:', card?.id, 'canEditCard:', canEditCard);
+
+    if (!card || !canEditCard) {
+      console.log('Early return - card or canEditCard is falsy');
+      return;
+    }
+
+    try {
+      savingAssignee = true;
+      console.log('Calling updateCard with assigneeId:', userId);
+      // Pass null to clear assignee, undefined to not change it
+      await updateCard(card.id, undefined, undefined, undefined, userId, undefined, undefined);
+      console.log('updateCard completed successfully');
+      selectedAssigneeId = userId;
+
+      // Update the board display with the displayName for proper avatar rendering
+      onCardDataChanged?.(card.id, {
+        assignee: userId ? { id: userId, username: displayName ?? '', displayName: displayName ?? '' } : undefined
+      });
+    } catch (e) {
+      console.error('updateCard failed:', e);
+      error = e instanceof Error ? e.message : 'Failed to update assignee';
+    } finally {
+      savingAssignee = false;
+    }
+  }
+
   // Handle sprint selection changes
   async function handleSprintToggle(sprintId: string) {
     if (!card || !canEditCard) return;
@@ -344,6 +380,25 @@
           descriptionRows={5}
           idPrefix="detail-"
         />
+
+        <!-- Assignee Selection -->
+        <div class="mt-4 pt-4 border-t border-gray-200">
+          <div class="flex items-center justify-between mb-2">
+            <span class="block text-sm font-medium text-gray-700">Assignee</span>
+            {#if savingAssignee}
+              <span class="text-xs text-gray-400">Saving...</span>
+            {/if}
+          </div>
+          <AssigneeCombobox
+            value={selectedAssigneeId}
+            {organizationId}
+            initialUserName={card?.assignee?.displayName ?? card?.assignee?.username}
+            placeholder="Search for a user..."
+            disabled={!canEditCard || savingAssignee}
+            readOnly={!canEditCard}
+            onValueChange={handleAssigneeChange}
+          />
+        </div>
 
         <!-- Sprint Selection -->
         {#if availableSprints.length > 0 || selectedSprintIds.length > 0}

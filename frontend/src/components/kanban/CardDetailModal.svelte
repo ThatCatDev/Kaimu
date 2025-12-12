@@ -1,7 +1,7 @@
 <script lang="ts">
   import { updateCard, deleteCard, type BoardCard, type Tag } from '../../lib/api/boards';
   import { CardPriority, SprintStatus } from '../../lib/graphql/generated';
-  import { Button, Modal, ConfirmModal } from '../ui';
+  import { Button, Modal, ConfirmModal, AssigneeCombobox } from '../ui';
   import CardForm from './CardForm.svelte';
   import { getActiveSprint, getFutureSprints, getClosedSprints, setCardSprints, type SprintData } from '../../lib/api/sprints';
 
@@ -9,6 +9,7 @@
     open: boolean;
     card: BoardCard | null;
     projectId: string;
+    organizationId: string;
     boardId: string;
     tags: Tag[];
     onClose: () => void;
@@ -22,7 +23,7 @@
     canDeleteCard?: boolean;
   }
 
-  let { open, card, projectId, boardId, tags, onClose, onUpdated, onCardDataChanged, onTagsChanged, viewMode, onViewModeChange, canEditCard = true, canDeleteCard = true }: Props = $props();
+  let { open, card, projectId, organizationId, boardId, tags, onClose, onUpdated, onCardDataChanged, onTagsChanged, viewMode, onViewModeChange, canEditCard = true, canDeleteCard = true }: Props = $props();
 
 
   let title = $state('');
@@ -48,6 +49,10 @@
   let loadingSprints = $state(false);
   let loadingMoreClosed = $state(false);
   let savingSprints = $state(false);
+
+  // Assignee state
+  let selectedAssigneeId = $state<string | null>(null);
+  let savingAssignee = $state(false);
 
   // Use derived instead of function call in template to avoid re-render triggers
   const currentDataHash = $derived(JSON.stringify({ title, description, priority, selectedTagIds, dueDate }));
@@ -139,6 +144,7 @@
       priority = card.priority;
       selectedTagIds = card.tags?.map(t => t.id) ?? [];
       selectedSprintIds = card.sprints?.map(s => s.id) ?? [];
+      selectedAssigneeId = card.assignee?.id ?? null;
       dueDate = card.dueDate ? card.dueDate.split('T')[0] : '';
       error = null;
       isEditing = false;
@@ -248,6 +254,27 @@
   function handleDueDateChange(v: string) { dueDate = v; }
   function handleTagSelectionChange(ids: string[]) { selectedTagIds = ids; }
 
+  // Handle assignee selection changes
+  async function handleAssigneeChange(userId: string | null, displayName?: string) {
+    if (!card || !canEditCard) return;
+
+    try {
+      savingAssignee = true;
+      // Pass null to clear assignee, undefined to not change it
+      await updateCard(card.id, undefined, undefined, undefined, userId, undefined, undefined);
+      selectedAssigneeId = userId;
+
+      // Update the board display with the displayName for proper avatar rendering
+      onCardDataChanged?.(card.id, {
+        assignee: userId ? { id: userId, username: displayName ?? '', displayName: displayName ?? '' } : undefined
+      });
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Failed to update assignee';
+    } finally {
+      savingAssignee = false;
+    }
+  }
+
   // Handle sprint selection changes
   async function handleSprintToggle(sprintId: string) {
     if (!card || !canEditCard) return;
@@ -315,6 +342,25 @@
           descriptionRows={4}
           idPrefix="detail-"
         />
+
+        <!-- Assignee Selection -->
+        <div class="mt-4 pt-4 border-t border-gray-200">
+          <div class="flex items-center justify-between mb-2">
+            <span class="block text-sm font-medium text-gray-700">Assignee</span>
+            {#if savingAssignee}
+              <span class="text-xs text-gray-400">Saving...</span>
+            {/if}
+          </div>
+          <AssigneeCombobox
+            value={selectedAssigneeId}
+            {organizationId}
+            initialUserName={card?.assignee?.displayName ?? card?.assignee?.username}
+            placeholder="Search for a user..."
+            disabled={!canEditCard || savingAssignee}
+            readOnly={!canEditCard}
+            onValueChange={handleAssigneeChange}
+          />
+        </div>
 
         <!-- Sprint Selection -->
         {#if availableSprints.length > 0 || selectedSprintIds.length > 0}

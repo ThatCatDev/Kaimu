@@ -83,7 +83,7 @@ func (r *mutationResolver) ResendVerificationEmail(ctx context.Context) (bool, e
 
 // UpdateMe is the resolver for the updateMe field.
 func (r *mutationResolver) UpdateMe(ctx context.Context, input model.UpdateMeInput) (*model.User, error) {
-	return resolvers.UpdateMe(ctx, r.UserService, input)
+	return resolvers.UpdateMe(ctx, r.UserService, r.OrganizationService, r.SearchIndexer, input)
 }
 
 // CreateOrganization is the resolver for the createOrganization field.

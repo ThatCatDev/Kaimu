@@ -861,6 +861,7 @@ export type UpdateBoardInput = {
 
 export type UpdateCardInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  clearAssignee?: InputMaybe<Scalars['Boolean']['input']>;
   clearDueDate?: InputMaybe<Scalars['Boolean']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['Time']['input']>;
@@ -974,7 +975,7 @@ export type BoardQueryVariables = Exact<{
 }>;
 
 
-export type BoardQuery = { __typename?: 'Query', board?: { __typename?: 'Board', id: string, name: string, description?: string | null, isDefault: boolean, createdAt: string, updatedAt: string, project: { __typename?: 'Project', id: string, name: string, key: string, organization: { __typename?: 'Organization', id: string, name: string, slug: string } }, columns: Array<{ __typename?: 'BoardColumn', id: string, name: string, position: number, isBacklog: boolean, isHidden: boolean, color?: string | null, wipLimit?: number | null, cards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null }> }> } | null };
+export type BoardQuery = { __typename?: 'Query', board?: { __typename?: 'Board', id: string, name: string, description?: string | null, isDefault: boolean, createdAt: string, updatedAt: string, project: { __typename?: 'Project', id: string, name: string, key: string, organization: { __typename?: 'Organization', id: string, name: string, slug: string } }, columns: Array<{ __typename?: 'BoardColumn', id: string, name: string, position: number, isBacklog: boolean, isHidden: boolean, color?: string | null, wipLimit?: number | null, cards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null } | null }> }> } | null };
 
 export type BoardsQueryVariables = Exact<{
   projectId: Scalars['ID']['input'];
@@ -1063,14 +1064,14 @@ export type CreateCardMutationVariables = Exact<{
 }>;
 
 
-export type CreateCardMutation = { __typename?: 'Mutation', createCard: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null } };
+export type CreateCardMutation = { __typename?: 'Mutation', createCard: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null } | null } };
 
 export type UpdateCardMutationVariables = Exact<{
   input: UpdateCardInput;
 }>;
 
 
-export type UpdateCardMutation = { __typename?: 'Mutation', updateCard: { __typename?: 'Card', id: string, title: string, description?: string | null, priority: CardPriority, dueDate?: string | null, updatedAt: string, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string } | null } };
+export type UpdateCardMutation = { __typename?: 'Mutation', updateCard: { __typename?: 'Card', id: string, title: string, description?: string | null, priority: CardPriority, dueDate?: string | null, updatedAt: string, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null } | null } };
 
 export type MoveCardMutationVariables = Exact<{
   input: MoveCardInput;

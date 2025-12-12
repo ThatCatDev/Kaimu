@@ -20,6 +20,8 @@ const REGISTER_MUTATION = `
         username
         email
         emailVerified
+        displayName
+        avatarUrl
         createdAt
       }
     }
@@ -32,6 +34,10 @@ const LOGIN_MUTATION = `
       user {
         id
         username
+        email
+        emailVerified
+        displayName
+        avatarUrl
         createdAt
       }
     }
@@ -79,6 +85,8 @@ const VERIFY_EMAIL_MUTATION = `
         username
         email
         emailVerified
+        displayName
+        avatarUrl
         createdAt
       }
     }

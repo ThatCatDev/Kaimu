@@ -59,7 +59,7 @@ func (r *cardResolver) Sprints(ctx context.Context, obj *model.Card) ([]*model.S
 
 // Assignee is the resolver for the assignee field.
 func (r *cardResolver) Assignee(ctx context.Context, obj *model.Card) (*model.User, error) {
-	return resolvers.CardAssignee(ctx, r.CardService, obj)
+	return resolvers.CardAssignee(ctx, r.CardService, r.UserService, obj)
 }
 
 // Tags is the resolver for the tags field.
@@ -69,7 +69,7 @@ func (r *cardResolver) Tags(ctx context.Context, obj *model.Card) ([]*model.Tag,
 
 // CreatedBy is the resolver for the createdBy field.
 func (r *cardResolver) CreatedBy(ctx context.Context, obj *model.Card) (*model.User, error) {
-	return resolvers.CardCreatedBy(ctx, r.CardService, obj)
+	return resolvers.CardCreatedBy(ctx, r.CardService, r.UserService, obj)
 }
 
 // Role is the resolver for the role field.

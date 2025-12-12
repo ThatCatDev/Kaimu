@@ -259,6 +259,7 @@ input UpdateCardInput {
     description: String
     priority: CardPriority
     assigneeId: ID
+    clearAssignee: Boolean
     tagIds: [ID!]
     dueDate: Time
     clearDueDate: Boolean

@@ -566,6 +566,7 @@
       open={cardViewMode === 'modal' && showCardDetailModal}
       card={editingCard}
       projectId={selectedProjectId}
+      organizationId={board?.project.organization.id ?? ''}
       {boardId}
       {tags}
       onClose={closeCardDetailModal}
@@ -584,6 +585,7 @@
     <CardDetailPanel
       card={editingCard}
       projectId={selectedProjectId}
+      organizationId={board?.project.organization.id ?? ''}
       {boardId}
       {tags}
       isOpen={showCardDetailModal}

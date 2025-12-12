@@ -43,6 +43,7 @@ query Board($id: ID!) {
         assignee {
           id
           username
+          displayName
         }
       }
     }
@@ -188,6 +189,7 @@ mutation CreateCard($input: CreateCardInput!) {
     assignee {
       id
       username
+      displayName
     }
   }
 }
@@ -208,6 +210,7 @@ mutation UpdateCard($input: UpdateCardInput!) {
     assignee {
       id
       username
+      displayName
     }
   }
 }

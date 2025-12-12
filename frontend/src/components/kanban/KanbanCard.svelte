@@ -180,7 +180,7 @@
 
     {#if card.assignee}
       <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-medium">
-        {card.assignee.username.charAt(0).toUpperCase()}
+        {(card.assignee.displayName || card.assignee.username).charAt(0).toUpperCase()}
       </span>
     {/if}
   </div>

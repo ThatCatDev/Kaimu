@@ -12,6 +12,7 @@ import (
 	cardService "github.com/thatcatdev/kaimu/backend/internal/services/card"
 	rbacService "github.com/thatcatdev/kaimu/backend/internal/services/rbac"
 	tagService "github.com/thatcatdev/kaimu/backend/internal/services/tag"
+	userService "github.com/thatcatdev/kaimu/backend/internal/services/user"
 )
 
 // Card returns a card by ID
@@ -191,7 +192,9 @@ func UpdateCard(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardSe
 		p := modelPriorityToCard(*input.Priority)
 		updateInput.Priority = &p
 	}
-	if input.AssigneeID != nil {
+	if input.ClearAssignee != nil && *input.ClearAssignee {
+		updateInput.ClearAssignee = true
+	} else if input.AssigneeID != nil {
 		assigneeID, err := uuid.Parse(*input.AssigneeID)
 		if err != nil {
 			return nil, err
@@ -364,15 +367,51 @@ func CardTags(ctx context.Context, cardSvc cardService.Service, c *model.Card) (
 }
 
 // CardAssignee resolves the assignee field of a Card
-// Returns nil for now - user lookup can be added later
-func CardAssignee(ctx context.Context, cardSvc cardService.Service, c *model.Card) (*model.User, error) {
-	return nil, nil
+func CardAssignee(ctx context.Context, cardSvc cardService.Service, userSvc userService.Service, c *model.Card) (*model.User, error) {
+	cardID, err := uuid.Parse(c.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	cardEntity, err := cardSvc.GetCard(ctx, cardID)
+	if err != nil {
+		return nil, err
+	}
+
+	if cardEntity.AssigneeID == nil {
+		return nil, nil
+	}
+
+	user, err := userSvc.GetByID(ctx, *cardEntity.AssigneeID)
+	if err != nil {
+		return nil, err
+	}
+
+	return UserToModel(user), nil
 }
 
 // CardCreatedBy resolves the createdBy field of a Card
-// Returns nil for now - user lookup can be added later
-func CardCreatedBy(ctx context.Context, cardSvc cardService.Service, c *model.Card) (*model.User, error) {
-	return nil, nil
+func CardCreatedBy(ctx context.Context, cardSvc cardService.Service, userSvc userService.Service, c *model.Card) (*model.User, error) {
+	cardID, err := uuid.Parse(c.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	cardEntity, err := cardSvc.GetCard(ctx, cardID)
+	if err != nil {
+		return nil, err
+	}
+
+	if cardEntity.CreatedBy == nil {
+		return nil, nil
+	}
+
+	user, err := userSvc.GetByID(ctx, *cardEntity.CreatedBy)
+	if err != nil {
+		return nil, err
+	}
+
+	return UserToModel(user), nil
 }
 
 func cardToModel(c *card.Card) *model.Card {
