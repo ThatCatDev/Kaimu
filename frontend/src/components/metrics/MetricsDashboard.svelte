@@ -140,8 +140,26 @@
   <div class="h-full flex flex-col bg-gray-50">
     <div class="flex-1 overflow-auto p-6">
     {#if loading}
-      <div class="flex items-center justify-center h-64">
-        <div class="text-gray-500">Loading metrics...</div>
+      <div class="space-y-6">
+        <div>
+          <div class="h-4 w-16 bg-gray-200 rounded animate-pulse mb-3"></div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {#each [1, 2, 3, 4] as _}
+              <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+                <div class="h-4 w-24 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div class="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            {/each}
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {#each [1, 2, 3, 4] as _}
+            <div class="bg-white rounded-lg p-4 shadow-sm border border-gray-100">
+              <div class="h-4 w-24 bg-gray-200 rounded animate-pulse mb-3"></div>
+              <div class="h-64 bg-gray-100 rounded animate-pulse"></div>
+            </div>
+          {/each}
+        </div>
       </div>
     {:else}
       <!-- Backlog Stats (always visible) -->

@@ -468,8 +468,33 @@
 </script>
 
 {#if loading}
-  <div class="flex items-center justify-center h-64">
-    <div class="text-gray-500">Loading board...</div>
+  <div class="h-full flex flex-col">
+    <div class="flex items-center justify-end py-3">
+      <div class="flex items-center gap-4">
+        <div class="h-8 w-32 bg-gray-200 rounded animate-pulse"></div>
+        <div class="h-5 w-40 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    </div>
+    <div class="flex-1 overflow-x-auto">
+      <div class="flex gap-4 h-full pb-4">
+        {#each [1, 2, 3, 4] as _}
+          <div class="w-72 flex-shrink-0 bg-gray-100 rounded-lg p-3">
+            <div class="flex items-center justify-between mb-3">
+              <div class="h-5 w-24 bg-gray-200 rounded animate-pulse"></div>
+              <div class="h-5 w-8 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div class="space-y-2">
+              {#each [1, 2] as __}
+                <div class="bg-white rounded-lg shadow-sm p-3">
+                  <div class="h-4 w-full bg-gray-200 rounded animate-pulse mb-2"></div>
+                  <div class="h-3 w-2/3 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/each}
+      </div>
+    </div>
   </div>
 {:else if error}
   <div class="rounded-md bg-red-50 p-4">

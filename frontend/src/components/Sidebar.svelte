@@ -185,8 +185,21 @@
     {/if}
 
     {#if loading}
-      <div class="px-4 py-2 text-sm text-gray-500">
-        {collapsed ? '' : 'Loading...'}
+      <div class="px-4 py-2 space-y-2">
+        {#if !collapsed}
+          {#each [1, 2, 3] as _}
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 bg-gray-700 rounded animate-pulse"></div>
+              <div class="flex-1 h-4 bg-gray-700 rounded animate-pulse"></div>
+            </div>
+          {/each}
+        {:else}
+          {#each [1, 2, 3] as _}
+            <div class="flex justify-center py-1">
+              <div class="w-6 h-6 bg-gray-700 rounded animate-pulse"></div>
+            </div>
+          {/each}
+        {/if}
       </div>
     {:else}
       <div class="mt-2 space-y-1">

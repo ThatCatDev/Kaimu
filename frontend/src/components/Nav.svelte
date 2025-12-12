@@ -40,7 +40,10 @@
 
       <div class="flex items-center gap-4">
         {#if isLoading}
-          <span class="text-gray-400">Loading...</span>
+          <div class="flex items-center gap-3">
+            <div class="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+            <div class="h-8 w-20 bg-gray-200 rounded animate-pulse"></div>
+          </div>
         {:else if user}
           <a
             href="/dashboard"

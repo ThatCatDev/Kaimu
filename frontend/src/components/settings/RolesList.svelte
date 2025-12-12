@@ -120,8 +120,37 @@
   {/if}
 
   {#if loading}
-    <div class="flex items-center justify-center py-12">
-      <div class="text-gray-500">Loading roles...</div>
+    <div class="space-y-6">
+      <div class="space-y-3">
+        <div class="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200 divide-y divide-gray-200">
+          {#each [1, 2] as _}
+            <div class="px-4 py-4 flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+                  <div class="h-5 w-16 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+                <div class="h-3 w-48 bg-gray-200 rounded animate-pulse mt-2"></div>
+              </div>
+            </div>
+          {/each}
+        </div>
+      </div>
+      <div class="space-y-3">
+        <div class="h-4 w-28 bg-gray-200 rounded animate-pulse"></div>
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200 divide-y divide-gray-200">
+          {#each [1, 2, 3] as _}
+            <div class="px-4 py-4 flex items-center justify-between">
+              <div class="flex-1">
+                <div class="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+                <div class="h-3 w-56 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div class="h-8 w-16 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          {/each}
+        </div>
+      </div>
     </div>
   {:else}
     <!-- System Roles -->

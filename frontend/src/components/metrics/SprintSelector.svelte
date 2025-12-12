@@ -87,7 +87,7 @@
       aria-label="Select a sprint"
     >
       {#if loading}
-        <span class="text-gray-500">Loading...</span>
+        <div class="h-4 w-28 bg-gray-200 rounded animate-pulse"></div>
       {:else if selectedSprint}
         <span class="flex items-center gap-2">
           <span class="font-medium">{selectedSprint.name}</span>

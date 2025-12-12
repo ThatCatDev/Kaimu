@@ -296,8 +296,28 @@
   <div class="h-full flex flex-col bg-gray-50">
     <div class="flex-1 overflow-auto p-6">
     {#if loading}
-      <div class="flex items-center justify-center py-12">
-        <span class="text-gray-500">Loading...</span>
+      <div class="max-w-5xl mx-auto space-y-4 py-4">
+        {#each [1, 2, 3] as _}
+          <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="h-5 w-5 bg-gray-200 rounded animate-pulse"></div>
+                <div class="h-5 w-32 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+              <div class="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+            <div class="divide-y divide-gray-100">
+              {#each [1, 2] as __}
+                <div class="px-4 py-3 flex items-center gap-4">
+                  <div class="flex-1 h-4 bg-gray-200 rounded animate-pulse"></div>
+                  <div class="h-6 w-6 bg-gray-200 rounded-full animate-pulse"></div>
+                  <div class="h-5 w-12 bg-gray-200 rounded-full animate-pulse"></div>
+                  <div class="h-4 w-12 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/each}
       </div>
     {:else}
       <div class="max-w-5xl mx-auto space-y-4">
@@ -315,7 +335,16 @@
             onToggle={(expanded) => handleSectionToggle('active', expanded)}
           >
             {#if isLoading}
-              <div class="px-4 py-8 text-center text-gray-500">Loading cards...</div>
+              <div class="divide-y divide-gray-100">
+                {#each [1, 2] as _}
+                  <div class="px-4 py-3 flex items-center gap-4">
+                    <div class="flex-1 h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div class="h-6 w-6 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div class="h-5 w-12 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div class="h-4 w-12 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                {/each}
+              </div>
             {:else if cards.length === 0}
               <div class="px-4 py-8 text-center text-gray-500">No cards in this sprint</div>
             {:else}
@@ -349,7 +378,16 @@
             onToggle={(expanded) => handleSectionToggle(sprint.id, expanded)}
           >
             {#if isLoading}
-              <div class="px-4 py-8 text-center text-gray-500">Loading cards...</div>
+              <div class="divide-y divide-gray-100">
+                {#each [1, 2] as _}
+                  <div class="px-4 py-3 flex items-center gap-4">
+                    <div class="flex-1 h-4 bg-gray-200 rounded animate-pulse"></div>
+                    <div class="h-6 w-6 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div class="h-5 w-12 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div class="h-4 w-12 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                {/each}
+              </div>
             {:else if cards.length === 0}
               <div class="px-4 py-8 text-center text-gray-500">No cards in this sprint</div>
             {:else}
@@ -434,7 +472,15 @@
                   {#if isExpanded}
                     <div class="ml-6 border-l border-gray-200">
                       {#if isLoading}
-                        <div class="px-4 py-4 text-center text-gray-500 text-sm">Loading...</div>
+                        <div class="divide-y divide-gray-100">
+                          {#each [1, 2] as _}
+                            <div class="px-4 py-3 flex items-center gap-4">
+                              <div class="flex-1 h-4 bg-gray-200 rounded animate-pulse"></div>
+                              <div class="h-6 w-6 bg-gray-200 rounded-full animate-pulse"></div>
+                              <div class="h-5 w-12 bg-gray-200 rounded-full animate-pulse"></div>
+                            </div>
+                          {/each}
+                        </div>
                       {:else if cards.length === 0}
                         <div class="px-4 py-4 text-center text-gray-500 text-sm">No cards</div>
                       {:else}

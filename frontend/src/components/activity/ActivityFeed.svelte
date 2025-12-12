@@ -198,8 +198,17 @@
 
   <!-- Activity list -->
   {#if loading}
-    <div class="flex items-center justify-center py-12">
-      <div class="text-gray-500">Loading activity...</div>
+    <div class="space-y-4 py-4">
+      {#each [1, 2, 3, 4, 5] as _}
+        <div class="flex gap-3">
+          <div class="h-8 w-8 bg-gray-200 rounded-full animate-pulse flex-shrink-0"></div>
+          <div class="flex-1">
+            <div class="h-4 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+            <div class="h-3 w-64 bg-gray-200 rounded animate-pulse mb-1"></div>
+            <div class="h-3 w-24 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+      {/each}
     </div>
   {:else if error}
     <div class="rounded-md bg-red-50 p-4">

@@ -209,8 +209,27 @@
       {/if}
 
       {#if loadingData}
-        <div class="flex items-center justify-center py-8">
-          <span class="text-gray-500">Loading...</span>
+        <div class="space-y-4 py-4">
+          <!-- Sprint summary skeleton -->
+          <div class="bg-gray-50 rounded-lg p-4">
+            <div class="h-5 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+            <div class="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <!-- Options skeleton -->
+          <div class="space-y-3">
+            <div class="h-4 w-56 bg-gray-200 rounded animate-pulse"></div>
+            {#each [1, 2, 3] as _}
+              <div class="p-3 rounded-lg border border-gray-200">
+                <div class="flex items-start gap-3">
+                  <div class="w-4 h-4 bg-gray-200 rounded-full animate-pulse mt-0.5"></div>
+                  <div class="flex-1">
+                    <div class="h-4 w-40 bg-gray-200 rounded animate-pulse mb-1"></div>
+                    <div class="h-3 w-56 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              </div>
+            {/each}
+          </div>
         </div>
       {:else}
         <div class="space-y-4">

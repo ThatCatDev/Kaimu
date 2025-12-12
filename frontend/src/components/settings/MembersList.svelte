@@ -191,8 +191,18 @@
   {/if}
 
   {#if loading}
-    <div class="flex items-center justify-center py-12">
-      <div class="text-gray-500">Loading members...</div>
+    <div class="bg-white shadow-sm rounded-lg border border-gray-200 divide-y divide-gray-200">
+      {#each [1, 2, 3] as _}
+        <div class="px-4 py-4 flex items-center gap-4">
+          <div class="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
+          <div class="flex-1">
+            <div class="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+            <div class="h-3 w-48 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+          <div class="h-6 w-20 bg-gray-200 rounded-full animate-pulse"></div>
+          <div class="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+      {/each}
     </div>
   {:else if members.length === 0}
     <div class="text-center py-12 bg-white rounded-lg border border-gray-200">

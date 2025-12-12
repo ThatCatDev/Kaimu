@@ -142,7 +142,10 @@
       <!-- Right side: user menu -->
       <div class="flex items-center gap-4">
         {#if isLoading}
-          <span class="text-sm text-gray-400">Loading...</span>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-gray-200 rounded-full animate-pulse"></div>
+            <div class="h-4 w-24 bg-gray-200 rounded animate-pulse hidden sm:block"></div>
+          </div>
         {:else if user}
           <div class="relative" data-user-menu>
             <button

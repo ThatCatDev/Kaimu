@@ -9,3 +9,4 @@ export { default as Modal } from './Modal.svelte';
 export { default as ConfirmModal } from './ConfirmModal.svelte';
 export { default as PermissionGate } from './PermissionGate.svelte';
 export { default as RichTextEditor } from './RichTextEditor.svelte';
+export { default as Skeleton } from './Skeleton.svelte';

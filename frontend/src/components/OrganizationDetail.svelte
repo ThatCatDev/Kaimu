@@ -122,8 +122,30 @@
 </script>
 
 {#if loading}
-  <div class="flex items-center justify-center min-h-64">
-    <div class="text-gray-500">Loading...</div>
+  <div class="space-y-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+        <div class="mt-1 h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+        <div class="mt-2 h-4 w-64 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="h-10 w-24 bg-gray-200 rounded-md animate-pulse"></div>
+        <div class="h-10 w-32 bg-gray-200 rounded-md animate-pulse"></div>
+      </div>
+    </div>
+    <div>
+      <div class="h-6 w-24 bg-gray-200 rounded animate-pulse mb-4"></div>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {#each [1, 2, 3] as _}
+          <div class="bg-white rounded-lg shadow p-6">
+            <div class="h-5 w-3/4 bg-gray-200 rounded animate-pulse mb-2"></div>
+            <div class="h-4 w-16 bg-gray-200 rounded animate-pulse mb-4"></div>
+            <div class="h-4 w-full bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        {/each}
+      </div>
+    </div>
   </div>
 {:else if error}
   <div class="rounded-md bg-red-50 p-4">

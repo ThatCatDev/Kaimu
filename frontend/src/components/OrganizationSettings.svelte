@@ -48,8 +48,36 @@
 </script>
 
 {#if loading}
-  <div class="flex items-center justify-center min-h-64">
-    <div class="text-gray-500">Loading...</div>
+  <div class="space-y-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <div class="flex items-center gap-2 mb-2">
+          <div class="h-4 w-24 bg-gray-200 rounded animate-pulse"></div>
+          <div class="h-4 w-4 bg-gray-200 rounded animate-pulse"></div>
+          <div class="h-4 w-16 bg-gray-200 rounded animate-pulse"></div>
+        </div>
+        <div class="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+      <div class="h-10 w-40 bg-gray-200 rounded-md animate-pulse"></div>
+    </div>
+    <div class="border-b border-gray-200">
+      <div class="flex gap-4">
+        <div class="h-10 w-24 bg-gray-200 rounded animate-pulse"></div>
+        <div class="h-10 w-16 bg-gray-200 rounded animate-pulse"></div>
+        <div class="h-10 w-20 bg-gray-200 rounded animate-pulse"></div>
+      </div>
+    </div>
+    <div class="space-y-4">
+      {#each [1, 2, 3] as _}
+        <div class="bg-white rounded-lg shadow p-4 flex items-center gap-4">
+          <div class="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
+          <div class="flex-1">
+            <div class="h-5 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+            <div class="h-4 w-48 bg-gray-200 rounded animate-pulse"></div>
+          </div>
+        </div>
+      {/each}
+    </div>
   </div>
 {:else if error}
   <div class="rounded-md bg-red-50 p-4">

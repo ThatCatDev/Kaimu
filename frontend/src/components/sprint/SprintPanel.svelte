@@ -149,7 +149,23 @@
   {#if isExpanded}
     <div class="flex-1 overflow-y-auto">
       {#if loading}
-        <div class="p-4 text-center text-gray-500">Loading...</div>
+        <div class="p-4 space-y-4">
+          <!-- Active sprint skeleton -->
+          <div class="bg-green-50 p-3 rounded">
+            <div class="h-4 w-24 bg-green-200 rounded animate-pulse mb-2"></div>
+            <div class="h-5 w-32 bg-green-200 rounded animate-pulse"></div>
+          </div>
+          <!-- Backlog skeleton -->
+          <div class="border-t border-gray-200 pt-3">
+            <div class="h-4 w-20 bg-gray-200 rounded animate-pulse mb-2"></div>
+            {#each [1, 2, 3] as _}
+              <div class="py-2">
+                <div class="h-4 w-full bg-gray-200 rounded animate-pulse mb-1"></div>
+                <div class="h-3 w-16 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+            {/each}
+          </div>
+        </div>
       {:else}
         <!-- Active Sprint Section -->
         <div class="border-b border-gray-200">
