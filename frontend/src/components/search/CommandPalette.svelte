@@ -186,6 +186,7 @@
               transition:fly={{ y: -10, duration: 200, easing: cubicOut }}
               onclick={(e) => e.stopPropagation()}
               onkeydown={handleKeydown}
+              data-command-palette
             >
               <!-- Search Input -->
               <div class="flex items-center gap-3 px-4 py-4">

@@ -328,4 +328,72 @@ test.describe('Kanban Cards - Advanced Features', () => {
     // Card should still exist
     await expect(page.getByText(`No Delete ${ctx.testId}`)).toBeVisible();
   });
+
+  test('escape closes command palette but not card panel when both are open', async ({ page }) => {
+    const ctx = await setupTestEnvironment(page, 'cards');
+    await navigateToBoard(page, ctx.projectId);
+
+    // Create a card
+    await clickAddCardInColumn(page, 'Todo');
+    await page.fill('#title', `Escape Test ${ctx.testId}`);
+    await page.getByRole('button', { name: 'Create Card' }).click();
+    await expect(page.getByText(`Escape Test ${ctx.testId}`)).toBeVisible({ timeout: 5000 });
+
+    // Open card detail panel
+    await page.getByText(`Escape Test ${ctx.testId}`).click();
+    await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
+
+    // Open command palette with Ctrl+K
+    await page.keyboard.press('Control+k');
+    await expect(page.getByPlaceholder('Search cards, projects, boards...')).toBeVisible({ timeout: 5000 });
+
+    // Press Escape - should close command palette but NOT card panel
+    await page.keyboard.press('Escape');
+
+    // Command palette should be closed
+    await expect(page.getByPlaceholder('Search cards, projects, boards...')).not.toBeVisible({ timeout: 5000 });
+
+    // Card panel should still be open
+    await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible();
+
+    // Press Escape again - now card panel should close
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('heading', { name: 'Card Details' })).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('escape closes dropdown but not card panel when dropdown is open', async ({ page }) => {
+    const ctx = await setupTestEnvironment(page, 'cards');
+    await navigateToBoard(page, ctx.projectId);
+
+    // Create a card
+    await clickAddCardInColumn(page, 'Todo');
+    await page.fill('#title', `Dropdown Escape ${ctx.testId}`);
+    await page.getByRole('button', { name: 'Create Card' }).click();
+    await expect(page.getByText(`Dropdown Escape ${ctx.testId}`)).toBeVisible({ timeout: 5000 });
+
+    // Open card detail panel
+    await page.getByText(`Dropdown Escape ${ctx.testId}`).click();
+    await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
+
+    // Open priority dropdown
+    const dialog = page.getByRole('dialog', { name: 'Card Details' });
+    await dialog.getByLabel('Priority').click();
+    await page.waitForTimeout(300);
+
+    // Verify dropdown is open (options are visible)
+    await expect(page.getByRole('option', { name: 'High' })).toBeVisible({ timeout: 3000 });
+
+    // Press Escape - should close dropdown but NOT card panel
+    await page.keyboard.press('Escape');
+
+    // Dropdown should be closed
+    await expect(page.getByRole('option', { name: 'High' })).not.toBeVisible({ timeout: 3000 });
+
+    // Card panel should still be open
+    await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible();
+
+    // Press Escape again - now card panel should close
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('heading', { name: 'Card Details' })).not.toBeVisible({ timeout: 5000 });
+  });
 });

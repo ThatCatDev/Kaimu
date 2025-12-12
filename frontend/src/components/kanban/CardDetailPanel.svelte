@@ -4,6 +4,12 @@
   import { Button, ConfirmModal, AssigneeCombobox } from '../ui';
   import CardForm from './CardForm.svelte';
   import { getActiveSprint, getFutureSprints, getClosedSprints, setCardSprints, type SprintData } from '../../lib/api/sprints';
+  import { onMount } from 'svelte';
+
+  const PANEL_WIDTH_KEY = 'cardDetailPanelWidth';
+  const DEFAULT_PANEL_WIDTH = 420;
+  const MIN_PANEL_WIDTH = 320;
+  const MAX_PANEL_WIDTH = 800;
 
   interface Props {
     card: BoardCard | null;
@@ -51,6 +57,48 @@
   // Assignee state
   let selectedAssigneeId = $state<string | null>(null);
   let savingAssignee = $state(false);
+
+  // Panel resize state
+  let panelWidth = $state(DEFAULT_PANEL_WIDTH);
+  let isResizing = $state(false);
+
+  // Load panel width from localStorage on mount
+  onMount(() => {
+    const savedWidth = localStorage.getItem(PANEL_WIDTH_KEY);
+    if (savedWidth) {
+      const width = parseInt(savedWidth, 10);
+      if (width >= MIN_PANEL_WIDTH && width <= MAX_PANEL_WIDTH) {
+        panelWidth = width;
+      }
+    }
+  });
+
+  function startResize(e: MouseEvent) {
+    e.preventDefault();
+    isResizing = true;
+    document.addEventListener('mousemove', handleResize);
+    document.addEventListener('mouseup', stopResize);
+    document.body.style.cursor = 'ew-resize';
+    document.body.style.userSelect = 'none';
+  }
+
+  function handleResize(e: MouseEvent) {
+    if (!isResizing) return;
+    const newWidth = window.innerWidth - e.clientX;
+    panelWidth = Math.max(MIN_PANEL_WIDTH, Math.min(MAX_PANEL_WIDTH, newWidth));
+  }
+
+  function stopResize() {
+    if (isResizing) {
+      isResizing = false;
+      document.removeEventListener('mousemove', handleResize);
+      document.removeEventListener('mouseup', stopResize);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      // Save to localStorage
+      localStorage.setItem(PANEL_WIDTH_KEY, panelWidth.toString());
+    }
+  }
 
   let currentCardId = $state<string | null>(null);
   let isEditing = $state(false); // Track if user has started editing
@@ -315,6 +363,19 @@
     if (!isOpen) return;
 
     if (e.key === 'Escape') {
+      // Don't close if another dialog/modal is open (command palette, dropdowns, etc.)
+      const hasOpenDialog = document.querySelector(
+        // Command palette
+        '[data-command-palette], ' +
+        // bits-ui dialog overlay (rendered when open)
+        '[data-bits-dialog-overlay], ' +
+        // bits-ui combobox/select/popover content
+        '[data-bits-combobox-content], ' +
+        '[data-bits-select-content], ' +
+        '[data-bits-popover-content]'
+      );
+      if (hasOpenDialog) return;
+
       handleClose();
     }
     if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
@@ -328,8 +389,23 @@
 
 <!-- Panel -->
 <div
-  class="fixed inset-y-0 right-0 w-[420px] bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out {isOpen ? 'translate-x-0' : 'translate-x-full'}"
+  class="fixed inset-y-0 right-0 bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out {isOpen ? 'translate-x-0' : 'translate-x-full'}"
+  style="width: {panelWidth}px;"
 >
+  <!-- Resize handle -->
+  <div
+    class="absolute left-0 top-0 bottom-0 w-1 cursor-ew-resize z-10 group"
+    onmousedown={startResize}
+    role="separator"
+    aria-orientation="vertical"
+    aria-label="Resize panel"
+  >
+    <!-- Invisible wider hit area -->
+    <div class="absolute left-0 top-0 bottom-0 w-3 -translate-x-1/2"></div>
+    <!-- Visible line on hover/drag -->
+    <div class="absolute left-0 top-0 bottom-0 w-0.5 bg-gray-200 group-hover:bg-indigo-400 transition-colors {isResizing ? 'bg-indigo-500' : ''}"></div>
+  </div>
+
   {#if card}
     <form onsubmit={handleSubmit} class="flex flex-col h-full">
       <!-- Header -->
