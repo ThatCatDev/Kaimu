@@ -148,6 +148,7 @@ const GET_SPRINT_CARDS_QUERY = `
       position
       priority
       dueDate
+      storyPoints
       createdAt
       updatedAt
       assignee {
@@ -160,6 +161,11 @@ const GET_SPRINT_CARDS_QUERY = `
         id
         name
         color
+      }
+      sprints {
+        id
+        name
+        status
       }
       column {
         id
@@ -178,6 +184,7 @@ const GET_BACKLOG_CARDS_QUERY = `
       position
       priority
       dueDate
+      storyPoints
       createdAt
       updatedAt
       assignee {
@@ -190,6 +197,11 @@ const GET_BACKLOG_CARDS_QUERY = `
         id
         name
         color
+      }
+      sprints {
+        id
+        name
+        status
       }
       column {
         id

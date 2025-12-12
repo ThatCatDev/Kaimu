@@ -73,9 +73,12 @@
     }
   });
 
-  async function loadData() {
+  async function loadData(showLoading = true) {
     try {
-      loading = true;
+      // Only show loading skeleton on initial load, not refreshes
+      if (showLoading) {
+        loading = true;
+      }
 
       // Load board, tags, sprints, and backlog in parallel
       const [boardData, tagsData, active, future, closedResult, backlog] = await Promise.all([
@@ -107,8 +110,10 @@
     }
   }
 
-  async function loadSprintCards(sprintId: string) {
-    if (sprintCards.has(sprintId) || loadingSprintCards.has(sprintId)) return;
+  async function loadSprintCards(sprintId: string, forceReload = false) {
+    // Skip if already loaded (unless forcing reload) or currently loading
+    if (!forceReload && sprintCards.has(sprintId)) return;
+    if (loadingSprintCards.has(sprintId)) return;
 
     loadingSprintCards.add(sprintId);
     loadingSprintCards = new Set(loadingSprintCards);
@@ -163,18 +168,23 @@
     try {
       await addCardToSprint(cardId, sprintId);
 
-      // Refresh data
-      await loadData();
-      // Clear cached sprint cards to force reload
-      sprintCards.clear();
-      sprintCards = new Map(sprintCards);
+      // Refresh data without showing loading skeleton
+      await loadData(false);
 
-      // Reload expanded sprints
+      // Force reload expanded sprints in parallel
+      const reloadPromises: Promise<void>[] = [];
       for (const sectionId of expandedSections) {
-        if (sectionId !== 'backlog' && sectionId !== 'closed') {
-          await loadSprintCards(sectionId);
+        if (sectionId === 'backlog' || sectionId === 'closed') continue;
+
+        if (sectionId === 'active' && activeSprint) {
+          reloadPromises.push(loadSprintCards(activeSprint.id, true));
+        } else if (sectionId.startsWith('closed-')) {
+          reloadPromises.push(loadSprintCards(sectionId.replace('closed-', ''), true));
+        } else {
+          reloadPromises.push(loadSprintCards(sectionId, true));
         }
       }
+      await Promise.all(reloadPromises);
 
       toast.success('Card moved to sprint');
     } catch (e) {
@@ -187,18 +197,23 @@
     try {
       await moveCardToBacklog(cardId);
 
-      // Refresh data
-      await loadData();
-      // Clear cached sprint cards
-      sprintCards.clear();
-      sprintCards = new Map(sprintCards);
+      // Refresh data without showing loading skeleton
+      await loadData(false);
 
-      // Reload expanded sprints
+      // Force reload expanded sprints in parallel
+      const reloadPromises: Promise<void>[] = [];
       for (const sectionId of expandedSections) {
-        if (sectionId !== 'backlog' && sectionId !== 'closed') {
-          await loadSprintCards(sectionId);
+        if (sectionId === 'backlog' || sectionId === 'closed') continue;
+
+        if (sectionId === 'active' && activeSprint) {
+          reloadPromises.push(loadSprintCards(activeSprint.id, true));
+        } else if (sectionId.startsWith('closed-')) {
+          reloadPromises.push(loadSprintCards(sectionId.replace('closed-', ''), true));
+        } else {
+          reloadPromises.push(loadSprintCards(sectionId, true));
         }
       }
+      await Promise.all(reloadPromises);
 
       toast.success('Card moved to backlog');
     } catch (e) {
@@ -214,16 +229,34 @@
   }
 
   async function handleCardUpdated() {
-    // Refresh data after card update
-    await loadData();
-    sprintCards.clear();
-    sprintCards = new Map(sprintCards);
+    // Refresh data after card update (don't show loading skeleton to avoid flash)
+    await loadData(false);
+
+    // Reload sprint cards for expanded sections with force reload
+    // Note: 'active' is a special section name - use activeSprint.id instead
+    const reloadPromises: Promise<void>[] = [];
 
     for (const sectionId of expandedSections) {
-      if (sectionId !== 'backlog' && sectionId !== 'closed') {
-        await loadSprintCards(sectionId);
+      if (sectionId === 'backlog' || sectionId === 'closed') {
+        continue;
+      }
+
+      if (sectionId === 'active') {
+        // Use actual sprint ID for active sprint
+        if (activeSprint) {
+          reloadPromises.push(loadSprintCards(activeSprint.id, true));
+        }
+      } else if (sectionId.startsWith('closed-')) {
+        // Closed sprint sections have format 'closed-{sprintId}'
+        const sprintId = sectionId.replace('closed-', '');
+        reloadPromises.push(loadSprintCards(sprintId, true));
+      } else {
+        // Future sprints use their actual ID as sectionId
+        reloadPromises.push(loadSprintCards(sectionId, true));
       }
     }
+
+    await Promise.all(reloadPromises);
   }
 
   function calculateStoryPoints(cards: SprintCard[] | BacklogCard[]): number {
@@ -286,7 +319,7 @@
   function toBoardCard(card: SprintCard | BacklogCard): BoardCard {
     return {
       ...card,
-      sprints: [], // Will be loaded by CardDetailPanel
+      // Use the card's actual sprints data (loaded from GraphQL query)
     } as BoardCard;
   }
 </script>
