@@ -37,6 +37,7 @@ func SetupServerWithContext(ctx context.Context, cfg config.Config, deps *handle
 	router.Use(middleware.CORSMiddleware([]string{"http://localhost:4321", "http://localhost:3000"}))
 	router.Use(middleware.GzipMiddleware())
 	router.Use(middleware.TracingMiddleware())
+	router.Use(middleware.AuditContextMiddleware())
 	router.Use(middleware.AuthMiddleware(deps.AuthService))
 
 	router.Handle("/ui/playground", playground.Handler("GraphQL playground", "/graphql")).Methods("GET")

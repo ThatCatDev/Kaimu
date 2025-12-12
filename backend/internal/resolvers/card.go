@@ -138,6 +138,9 @@ func CreateCard(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardSe
 	if input.DueDate != nil {
 		createInput.DueDate = input.DueDate
 	}
+	if input.StoryPoints != nil {
+		createInput.StoryPoints = input.StoryPoints
+	}
 
 	c, err := cardSvc.CreateCard(ctx, createInput)
 	if err != nil {
@@ -216,6 +219,11 @@ func UpdateCard(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardSe
 		updateInput.ClearDueDate = true
 	} else if input.DueDate != nil {
 		updateInput.DueDate = input.DueDate
+	}
+	if input.ClearStoryPoints != nil && *input.ClearStoryPoints {
+		updateInput.ClearStoryPoints = true
+	} else if input.StoryPoints != nil {
+		updateInput.StoryPoints = input.StoryPoints
 	}
 
 	c, err := cardSvc.UpdateCard(ctx, updateInput)
@@ -430,9 +438,15 @@ func cardToModel(c *card.Card) *model.Card {
 		Position:    c.Position,
 		Priority:    cardPriorityToModel(c.Priority),
 		DueDate:     dueDate,
+		StoryPoints: c.StoryPoints,
 		CreatedAt:   c.CreatedAt,
 		UpdatedAt:   c.UpdatedAt,
 	}
+}
+
+// CardToModel converts a card entity to a GraphQL model (exported for audit logging)
+func CardToModel(c *card.Card) *model.Card {
+	return cardToModel(c)
 }
 
 func cardPriorityToModel(p card.CardPriority) model.CardPriority {

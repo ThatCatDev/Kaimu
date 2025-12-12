@@ -3,13 +3,15 @@
   import { getOrganization } from '../lib/api/organizations';
   import { getMe } from '../lib/api/auth';
   import { MembersList, RolesList } from './settings';
+  import { ActivityFeed } from './activity';
   import type { OrganizationQuery, User } from '../lib/graphql/generated';
 
   interface Props {
     organizationId: string;
+    initialTab?: 'members' | 'roles' | 'activity';
   }
 
-  let { organizationId }: Props = $props();
+  let { organizationId, initialTab = 'members' }: Props = $props();
 
   type OrgData = NonNullable<OrganizationQuery['organization']>;
 
@@ -17,7 +19,8 @@
   let user = $state<User | null>(null);
   let loading = $state(true);
   let error = $state<string | null>(null);
-  let activeTab = $state<'members' | 'roles'>('members');
+
+  const activeTab = $derived(initialTab);
 
   onMount(async () => {
     try {
@@ -80,20 +83,24 @@
     <!-- Tabs -->
     <div class="border-b border-gray-200">
       <nav class="-mb-px flex space-x-8">
-        <button
-          type="button"
-          onclick={() => activeTab = 'members'}
+        <a
+          href={`/organizations/${organizationId}/settings/members`}
           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {activeTab === 'members' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
         >
           Members
-        </button>
-        <button
-          type="button"
-          onclick={() => activeTab = 'roles'}
+        </a>
+        <a
+          href={`/organizations/${organizationId}/settings/roles`}
           class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {activeTab === 'roles' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
         >
           Roles
-        </button>
+        </a>
+        <a
+          href={`/organizations/${organizationId}/settings/activity`}
+          class="whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm {activeTab === 'activity' ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
+        >
+          Activity
+        </a>
       </nav>
     </div>
 
@@ -103,6 +110,8 @@
         <MembersList {organizationId} />
       {:else if activeTab === 'roles'}
         <RolesList {organizationId} />
+      {:else if activeTab === 'activity'}
+        <ActivityFeed {organizationId} />
       {/if}
     </div>
   </div>

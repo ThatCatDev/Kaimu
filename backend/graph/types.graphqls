@@ -124,6 +124,7 @@ type BoardColumn {
     position: Int!
     isBacklog: Boolean!
     isHidden: Boolean!
+    isDone: Boolean!
     color: String
     wipLimit: Int
     cards: [Card!]!
@@ -143,6 +144,7 @@ type Card {
     assignee: User
     tags: [Tag!]!
     dueDate: Time
+    storyPoints: Int
     createdAt: Time!
     updatedAt: Time!
     createdBy: User
@@ -236,6 +238,7 @@ input UpdateColumnInput {
     color: String
     wipLimit: Int
     clearWipLimit: Boolean
+    isDone: Boolean
 }
 
 input ReorderColumnsInput {
@@ -251,6 +254,7 @@ input CreateCardInput {
     assigneeId: ID
     tagIds: [ID!]
     dueDate: Time
+    storyPoints: Int
 }
 
 input UpdateCardInput {
@@ -263,6 +267,8 @@ input UpdateCardInput {
     tagIds: [ID!]
     dueDate: Time
     clearDueDate: Boolean
+    storyPoints: Int
+    clearStoryPoints: Boolean
 }
 
 input MoveCardInput {
@@ -391,4 +397,67 @@ type SprintConnection {
 type SprintEdge {
     node: Sprint!
     cursor: String!
+}
+
+# Metrics Types
+enum MetricMode {
+    CARD_COUNT
+    STORY_POINTS
+}
+
+type DataPoint {
+    date: Time!
+    value: Float!
+}
+
+type BurnDownData {
+    sprintId: ID!
+    sprintName: String!
+    startDate: Time!
+    endDate: Time!
+    idealLine: [DataPoint!]!
+    actualLine: [DataPoint!]!
+}
+
+type BurnUpData {
+    sprintId: ID!
+    sprintName: String!
+    startDate: Time!
+    endDate: Time!
+    scopeLine: [DataPoint!]!
+    doneLine: [DataPoint!]!
+}
+
+type SprintVelocity {
+    sprintId: ID!
+    sprintName: String!
+    completedCards: Int!
+    completedPoints: Int!
+}
+
+type VelocityData {
+    sprints: [SprintVelocity!]!
+}
+
+type ColumnFlowData {
+    columnId: ID!
+    columnName: String!
+    color: String!
+    values: [Int!]!
+}
+
+type CumulativeFlowData {
+    sprintId: ID!
+    sprintName: String!
+    columns: [ColumnFlowData!]!
+    dates: [Time!]!
+}
+
+type SprintStats {
+    totalCards: Int!
+    completedCards: Int!
+    totalStoryPoints: Int!
+    completedStoryPoints: Int!
+    daysRemaining: Int!
+    daysElapsed: Int!
 }

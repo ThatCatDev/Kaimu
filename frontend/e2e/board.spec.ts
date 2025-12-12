@@ -1,6 +1,25 @@
 import { test, expect } from '@playwright/test';
 import { setupTestEnvironment, navigateToBoard, getColumn, createCard, type TestContext } from './helpers';
 
+test.describe('Board Header', () => {
+  test('board page shows board name and navigation tabs', async ({ page }) => {
+    const ctx = await setupTestEnvironment(page, 'header');
+    await navigateToBoard(page, ctx.projectId);
+
+    // Should see board name in header
+    await expect(page.locator('h1').first()).toBeVisible({ timeout: 5000 });
+
+    // Should see navigation tabs
+    // Board tab should be active (not a link)
+    const boardTab = page.locator('.bg-white.shadow-sm').filter({ hasText: 'Board' });
+    await expect(boardTab).toBeVisible({ timeout: 5000 });
+
+    // Planning and Metrics should be links
+    await expect(page.getByRole('link', { name: 'Planning' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Metrics' })).toBeVisible();
+  });
+});
+
 test.describe('Kanban Board', () => {
   test('project detail page shows kanban board link', async ({ page }) => {
     const ctx = await setupTestEnvironment(page, 'board');

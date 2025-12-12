@@ -15,6 +15,7 @@ const cardId = Astro.url.searchParams.get('card');
       <BoardWithSprints
         client:load
         boardId={boardId!}
+        projectId={projectId!}
         initialCardId={cardId}
       />
     </div>

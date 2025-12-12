@@ -255,8 +255,24 @@ const START_SPRINT_MUTATION = `
 `;
 
 const COMPLETE_SPRINT_MUTATION = `
-  mutation CompleteSprint($id: ID!, $moveIncompleteToBacklog: Boolean) {
-    completeSprint(id: $id, moveIncompleteToBacklog: $moveIncompleteToBacklog) {
+  mutation CompleteSprint($id: ID!, $moveIncompleteToNextSprint: Boolean) {
+    completeSprint(id: $id, moveIncompleteToNextSprint: $moveIncompleteToNextSprint) {
+      id
+      name
+      goal
+      startDate
+      endDate
+      status
+      position
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+const REOPEN_SPRINT_MUTATION = `
+  mutation ReopenSprint($id: ID!) {
+    reopenSprint(id: $id) {
       id
       name
       goal
@@ -412,12 +428,17 @@ export async function startSprint(id: string): Promise<SprintData> {
   return data.startSprint;
 }
 
-export async function completeSprint(id: string, moveIncompleteToBacklog: boolean = true): Promise<SprintData> {
+export async function completeSprint(id: string, moveIncompleteToNextSprint: boolean = true): Promise<SprintData> {
   const data = await graphql<CompleteSprintMutation>(COMPLETE_SPRINT_MUTATION, {
     id,
-    moveIncompleteToBacklog,
+    moveIncompleteToNextSprint,
   });
   return data.completeSprint;
+}
+
+export async function reopenSprint(id: string): Promise<SprintData> {
+  const data = await graphql<{ reopenSprint: SprintData }>(REOPEN_SPRINT_MUTATION, { id });
+  return data.reopenSprint;
 }
 
 export async function addCardToSprint(cardId: string, sprintId: string): Promise<AddCardToSprintMutation['addCardToSprint']> {

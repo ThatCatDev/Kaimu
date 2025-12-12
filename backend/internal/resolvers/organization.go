@@ -283,6 +283,11 @@ func organizationToModel(org *organization.Organization) *model.Organization {
 	}
 }
 
+// OrganizationToModel converts an organization entity to a GraphQL model (exported for audit logging)
+func OrganizationToModel(org *organization.Organization) *model.Organization {
+	return organizationToModel(org)
+}
+
 func organizationToModelWithRelations(org *organization.Organization, owner *model.User, members []*model.OrganizationMember, projects []*model.Project) *model.Organization {
 	var description *string
 	if org.Description != "" {

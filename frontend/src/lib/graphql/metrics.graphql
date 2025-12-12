@@ -1,0 +1,69 @@
+query GetBurnDownData($sprintId: ID!, $mode: MetricMode!) {
+  burnDownData(sprintId: $sprintId, mode: $mode) {
+    sprintId
+    sprintName
+    startDate
+    endDate
+    idealLine {
+      date
+      value
+    }
+    actualLine {
+      date
+      value
+    }
+  }
+}
+
+query GetBurnUpData($sprintId: ID!, $mode: MetricMode!) {
+  burnUpData(sprintId: $sprintId, mode: $mode) {
+    sprintId
+    sprintName
+    startDate
+    endDate
+    scopeLine {
+      date
+      value
+    }
+    doneLine {
+      date
+      value
+    }
+  }
+}
+
+query GetVelocityData($boardId: ID!, $mode: MetricMode!, $sprintCount: Int) {
+  velocityData(boardId: $boardId, mode: $mode, sprintCount: $sprintCount) {
+    sprints {
+      sprintId
+      sprintName
+      completedCards
+      completedPoints
+    }
+  }
+}
+
+query GetCumulativeFlowData($sprintId: ID!, $mode: MetricMode!) {
+  cumulativeFlowData(sprintId: $sprintId, mode: $mode) {
+    sprintId
+    sprintName
+    columns {
+      columnId
+      columnName
+      color
+      values
+    }
+    dates
+  }
+}
+
+query GetSprintStats($sprintId: ID!) {
+  sprintStats(sprintId: $sprintId) {
+    totalCards
+    completedCards
+    totalStoryPoints
+    completedStoryPoints
+    daysRemaining
+    daysElapsed
+  }
+}

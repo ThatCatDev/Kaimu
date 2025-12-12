@@ -32,19 +32,22 @@ type CreateCardInput struct {
 	AssigneeID  *uuid.UUID
 	TagIDs      []uuid.UUID
 	DueDate     *time.Time
+	StoryPoints *int
 	CreatedBy   *uuid.UUID
 }
 
 type UpdateCardInput struct {
-	ID            uuid.UUID
-	Title         *string
-	Description   *string
-	Priority      *card.CardPriority
-	AssigneeID    *uuid.UUID
-	ClearAssignee bool
-	TagIDs        []uuid.UUID
-	DueDate       *time.Time
-	ClearDueDate  bool
+	ID               uuid.UUID
+	Title            *string
+	Description      *string
+	Priority         *card.CardPriority
+	AssigneeID       *uuid.UUID
+	ClearAssignee    bool
+	TagIDs           []uuid.UUID
+	DueDate          *time.Time
+	ClearDueDate     bool
+	StoryPoints      *int
+	ClearStoryPoints bool
 }
 
 type Service interface {
@@ -130,6 +133,7 @@ func (s *service) CreateCard(ctx context.Context, input CreateCardInput) (*card.
 		Priority:    input.Priority,
 		AssigneeID:  input.AssigneeID,
 		DueDate:     input.DueDate,
+		StoryPoints: input.StoryPoints,
 		CreatedBy:   input.CreatedBy,
 	}
 
@@ -221,6 +225,11 @@ func (s *service) UpdateCard(ctx context.Context, input UpdateCardInput) (*card.
 		c.DueDate = nil
 	} else if input.DueDate != nil {
 		c.DueDate = input.DueDate
+	}
+	if input.ClearStoryPoints {
+		c.StoryPoints = nil
+	} else if input.StoryPoints != nil {
+		c.StoryPoints = input.StoryPoints
 	}
 
 	if err := s.cardRepo.Update(ctx, c); err != nil {

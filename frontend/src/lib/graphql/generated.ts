@@ -24,6 +24,80 @@ export type AssignProjectRoleInput = {
   userId: Scalars['ID']['input'];
 };
 
+export enum AuditAction {
+  CardAddedToSprint = 'CARD_ADDED_TO_SPRINT',
+  CardAssigned = 'CARD_ASSIGNED',
+  CardMoved = 'CARD_MOVED',
+  CardRemovedFromSprint = 'CARD_REMOVED_FROM_SPRINT',
+  CardUnassigned = 'CARD_UNASSIGNED',
+  ColumnReordered = 'COLUMN_REORDERED',
+  ColumnVisibilityToggled = 'COLUMN_VISIBILITY_TOGGLED',
+  Created = 'CREATED',
+  Deleted = 'DELETED',
+  MemberInvited = 'MEMBER_INVITED',
+  MemberJoined = 'MEMBER_JOINED',
+  MemberRemoved = 'MEMBER_REMOVED',
+  MemberRoleChanged = 'MEMBER_ROLE_CHANGED',
+  SprintCompleted = 'SPRINT_COMPLETED',
+  SprintStarted = 'SPRINT_STARTED',
+  Updated = 'UPDATED',
+  UserLoggedIn = 'USER_LOGGED_IN',
+  UserLoggedOut = 'USER_LOGGED_OUT'
+}
+
+export enum AuditEntityType {
+  Board = 'BOARD',
+  BoardColumn = 'BOARD_COLUMN',
+  Card = 'CARD',
+  Invitation = 'INVITATION',
+  Organization = 'ORGANIZATION',
+  Project = 'PROJECT',
+  Role = 'ROLE',
+  Sprint = 'SPRINT',
+  Tag = 'TAG',
+  User = 'USER'
+}
+
+export type AuditEvent = {
+  __typename?: 'AuditEvent';
+  action: AuditAction;
+  actor?: Maybe<User>;
+  board?: Maybe<Board>;
+  entityId: Scalars['ID']['output'];
+  entityType: AuditEntityType;
+  id: Scalars['ID']['output'];
+  ipAddress?: Maybe<Scalars['String']['output']>;
+  metadata?: Maybe<Scalars['String']['output']>;
+  occurredAt: Scalars['Time']['output'];
+  organization?: Maybe<Organization>;
+  project?: Maybe<Project>;
+  stateAfter?: Maybe<Scalars['String']['output']>;
+  stateBefore?: Maybe<Scalars['String']['output']>;
+  traceId?: Maybe<Scalars['String']['output']>;
+  userAgent?: Maybe<Scalars['String']['output']>;
+};
+
+export type AuditEventConnection = {
+  __typename?: 'AuditEventConnection';
+  edges: Array<AuditEventEdge>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type AuditEventEdge = {
+  __typename?: 'AuditEventEdge';
+  cursor: Scalars['String']['output'];
+  node: AuditEvent;
+};
+
+export type AuditFilters = {
+  actions?: InputMaybe<Array<AuditAction>>;
+  actorId?: InputMaybe<Scalars['ID']['input']>;
+  endDate?: InputMaybe<Scalars['Time']['input']>;
+  entityTypes?: InputMaybe<Array<AuditEntityType>>;
+  startDate?: InputMaybe<Scalars['Time']['input']>;
+};
+
 export type AuthPayload = {
   __typename?: 'AuthPayload';
   user: User;
@@ -51,11 +125,32 @@ export type BoardColumn = {
   createdAt: Scalars['Time']['output'];
   id: Scalars['ID']['output'];
   isBacklog: Scalars['Boolean']['output'];
+  isDone: Scalars['Boolean']['output'];
   isHidden: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   position: Scalars['Int']['output'];
   updatedAt: Scalars['Time']['output'];
   wipLimit?: Maybe<Scalars['Int']['output']>;
+};
+
+export type BurnDownData = {
+  __typename?: 'BurnDownData';
+  actualLine: Array<DataPoint>;
+  endDate: Scalars['Time']['output'];
+  idealLine: Array<DataPoint>;
+  sprintId: Scalars['ID']['output'];
+  sprintName: Scalars['String']['output'];
+  startDate: Scalars['Time']['output'];
+};
+
+export type BurnUpData = {
+  __typename?: 'BurnUpData';
+  doneLine: Array<DataPoint>;
+  endDate: Scalars['Time']['output'];
+  scopeLine: Array<DataPoint>;
+  sprintId: Scalars['ID']['output'];
+  sprintName: Scalars['String']['output'];
+  startDate: Scalars['Time']['output'];
 };
 
 export type Card = {
@@ -71,6 +166,7 @@ export type Card = {
   position: Scalars['Float']['output'];
   priority: CardPriority;
   sprints: Array<Sprint>;
+  storyPoints?: Maybe<Scalars['Int']['output']>;
   tags: Array<Tag>;
   title: Scalars['String']['output'];
   updatedAt: Scalars['Time']['output'];
@@ -89,6 +185,14 @@ export type ChangeMemberRoleInput = {
   userId: Scalars['ID']['input'];
 };
 
+export type ColumnFlowData = {
+  __typename?: 'ColumnFlowData';
+  color: Scalars['String']['output'];
+  columnId: Scalars['ID']['output'];
+  columnName: Scalars['String']['output'];
+  values: Array<Scalars['Int']['output']>;
+};
+
 export type CreateBoardInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
@@ -101,6 +205,7 @@ export type CreateCardInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['Time']['input']>;
   priority?: InputMaybe<CardPriority>;
+  storyPoints?: InputMaybe<Scalars['Int']['input']>;
   tagIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   title: Scalars['String']['input'];
 };
@@ -145,6 +250,20 @@ export type CreateTagInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CumulativeFlowData = {
+  __typename?: 'CumulativeFlowData';
+  columns: Array<ColumnFlowData>;
+  dates: Array<Scalars['Time']['output']>;
+  sprintId: Scalars['ID']['output'];
+  sprintName: Scalars['String']['output'];
+};
+
+export type DataPoint = {
+  __typename?: 'DataPoint';
+  date: Scalars['Time']['output'];
+  value: Scalars['Float']['output'];
+};
+
 export type Invitation = {
   __typename?: 'Invitation';
   createdAt: Scalars['Time']['output'];
@@ -167,6 +286,11 @@ export type LoginInput = {
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
 };
+
+export enum MetricMode {
+  CardCount = 'CARD_COUNT',
+  StoryPoints = 'STORY_POINTS'
+}
 
 export type MoveCardInput = {
   afterCardId?: InputMaybe<Scalars['ID']['input']>;
@@ -191,7 +315,7 @@ export type Mutation = {
   cancelInvitation: Scalars['Boolean']['output'];
   /** Change a member's role in an organization */
   changeMemberRole: OrganizationMember;
-  /** Complete a sprint (sets status to closed) */
+  /** Complete a sprint (sets status to closed). All cards remain in sprint for history. Incomplete cards (not in done columns) are automatically added to the next future sprint. */
   completeSprint: Sprint;
   /** Create a new board */
   createBoard: Board;
@@ -243,6 +367,8 @@ export type Mutation = {
   removeMember: Scalars['Boolean']['output'];
   /** Remove a member from a project */
   removeProjectMember: Scalars['Boolean']['output'];
+  /** Reopen a closed sprint (sets status to future) */
+  reopenSprint: Sprint;
   /** Reorder columns */
   reorderColumns: Array<BoardColumn>;
   /** Resend an invitation */
@@ -306,7 +432,7 @@ export type MutationChangeMemberRoleArgs = {
 
 export type MutationCompleteSprintArgs = {
   id: Scalars['ID']['input'];
-  moveIncompleteToBacklog?: InputMaybe<Scalars['Boolean']['input']>;
+  moveIncompleteToNextSprint?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -429,6 +555,11 @@ export type MutationRemoveMemberArgs = {
 export type MutationRemoveProjectMemberArgs = {
   projectId: Scalars['ID']['input'];
   userId: Scalars['ID']['input'];
+};
+
+
+export type MutationReopenSprintArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -587,12 +718,22 @@ export type Query = {
   backlogCards: Array<Card>;
   /** Get a board by ID */
   board?: Maybe<Board>;
+  /** Get activity feed for a board */
+  boardActivity: AuditEventConnection;
   /** Get all boards for a project */
   boards: Array<Board>;
+  /** Get burn down chart data for a sprint */
+  burnDownData?: Maybe<BurnDownData>;
+  /** Get burn up chart data for a sprint */
+  burnUpData?: Maybe<BurnUpData>;
   /** Get a card by ID */
   card?: Maybe<Card>;
   /** Get closed sprints for a board (paginated) */
   closedSprints: SprintConnection;
+  /** Get cumulative flow diagram data for a sprint */
+  cumulativeFlowData?: Maybe<CumulativeFlowData>;
+  /** Get history for a specific entity */
+  entityHistory: AuditEventConnection;
   /** Get future sprints for a board */
   futureSprints: Array<Sprint>;
   /** Check if current user has a specific permission */
@@ -611,6 +752,8 @@ export type Query = {
   oidcProviders: Array<OidcProvider>;
   /** Get a specific organization by ID */
   organization?: Maybe<Organization>;
+  /** Get activity feed for an organization */
+  organizationActivity: AuditEventConnection;
   /** Get organization members with roles */
   organizationMembers: Array<OrganizationMember>;
   /** Get all organizations for the current user */
@@ -619,6 +762,8 @@ export type Query = {
   permissions: Array<Permission>;
   /** Get a specific project by ID */
   project?: Maybe<Project>;
+  /** Get activity feed for a project */
+  projectActivity: AuditEventConnection;
   /** Get project members */
   projectMembers: Array<ProjectMember>;
   /** Get a specific role by ID */
@@ -631,10 +776,16 @@ export type Query = {
   sprint?: Maybe<Sprint>;
   /** Get cards in a sprint */
   sprintCards: Array<Card>;
+  /** Get current stats for a sprint */
+  sprintStats?: Maybe<SprintStats>;
   /** Get all sprints for a board */
   sprints: Array<Sprint>;
   /** Get all tags for a project */
   tags: Array<Tag>;
+  /** Get activity by a specific user */
+  userActivity: AuditEventConnection;
+  /** Get velocity data for recent sprints on a board */
+  velocityData: VelocityData;
 };
 
 
@@ -653,8 +804,27 @@ export type QueryBoardArgs = {
 };
 
 
+export type QueryBoardActivityArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  boardId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryBoardsArgs = {
   projectId: Scalars['ID']['input'];
+};
+
+
+export type QueryBurnDownDataArgs = {
+  mode: MetricMode;
+  sprintId: Scalars['ID']['input'];
+};
+
+
+export type QueryBurnUpDataArgs = {
+  mode: MetricMode;
+  sprintId: Scalars['ID']['input'];
 };
 
 
@@ -666,6 +836,20 @@ export type QueryCardArgs = {
 export type QueryClosedSprintsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   boardId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryCumulativeFlowDataArgs = {
+  mode: MetricMode;
+  sprintId: Scalars['ID']['input'];
+};
+
+
+export type QueryEntityHistoryArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  entityId: Scalars['ID']['input'];
+  entityType: AuditEntityType;
   first?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -698,6 +882,14 @@ export type QueryOrganizationArgs = {
 };
 
 
+export type QueryOrganizationActivityArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  filters?: InputMaybe<AuditFilters>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  organizationId: Scalars['ID']['input'];
+};
+
+
 export type QueryOrganizationMembersArgs = {
   organizationId: Scalars['ID']['input'];
 };
@@ -705,6 +897,13 @@ export type QueryOrganizationMembersArgs = {
 
 export type QueryProjectArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryProjectActivityArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  projectId: Scalars['ID']['input'];
 };
 
 
@@ -740,6 +939,11 @@ export type QuerySprintCardsArgs = {
 };
 
 
+export type QuerySprintStatsArgs = {
+  sprintId: Scalars['ID']['input'];
+};
+
+
 export type QuerySprintsArgs = {
   boardId: Scalars['ID']['input'];
 };
@@ -747,6 +951,20 @@ export type QuerySprintsArgs = {
 
 export type QueryTagsArgs = {
   projectId: Scalars['ID']['input'];
+};
+
+
+export type QueryUserActivityArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  userId: Scalars['ID']['input'];
+};
+
+
+export type QueryVelocityDataArgs = {
+  boardId: Scalars['ID']['input'];
+  mode: MetricMode;
+  sprintCount?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type RegisterInput = {
@@ -837,11 +1055,29 @@ export type SprintEdge = {
   node: Sprint;
 };
 
+export type SprintStats = {
+  __typename?: 'SprintStats';
+  completedCards: Scalars['Int']['output'];
+  completedStoryPoints: Scalars['Int']['output'];
+  daysElapsed: Scalars['Int']['output'];
+  daysRemaining: Scalars['Int']['output'];
+  totalCards: Scalars['Int']['output'];
+  totalStoryPoints: Scalars['Int']['output'];
+};
+
 export enum SprintStatus {
   Active = 'ACTIVE',
   Closed = 'CLOSED',
   Future = 'FUTURE'
 }
+
+export type SprintVelocity = {
+  __typename?: 'SprintVelocity';
+  completedCards: Scalars['Int']['output'];
+  completedPoints: Scalars['Int']['output'];
+  sprintId: Scalars['ID']['output'];
+  sprintName: Scalars['String']['output'];
+};
 
 export type Tag = {
   __typename?: 'Tag';
@@ -863,10 +1099,12 @@ export type UpdateCardInput = {
   assigneeId?: InputMaybe<Scalars['ID']['input']>;
   clearAssignee?: InputMaybe<Scalars['Boolean']['input']>;
   clearDueDate?: InputMaybe<Scalars['Boolean']['input']>;
+  clearStoryPoints?: InputMaybe<Scalars['Boolean']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   dueDate?: InputMaybe<Scalars['Time']['input']>;
   id: Scalars['ID']['input'];
   priority?: InputMaybe<CardPriority>;
+  storyPoints?: InputMaybe<Scalars['Int']['input']>;
   tagIds?: InputMaybe<Array<Scalars['ID']['input']>>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -875,6 +1113,7 @@ export type UpdateColumnInput = {
   clearWipLimit?: InputMaybe<Scalars['Boolean']['input']>;
   color?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['ID']['input'];
+  isDone?: InputMaybe<Scalars['Boolean']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   wipLimit?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -929,10 +1168,55 @@ export type User = {
   username: Scalars['String']['output'];
 };
 
+export type VelocityData = {
+  __typename?: 'VelocityData';
+  sprints: Array<SprintVelocity>;
+};
+
 export type _Service = {
   __typename?: '_Service';
   sdl?: Maybe<Scalars['String']['output']>;
 };
+
+export type AuditEventFieldsFragment = { __typename?: 'AuditEvent', id: string, occurredAt: string, action: AuditAction, entityType: AuditEntityType, entityId: string, stateBefore?: string | null, stateAfter?: string | null, metadata?: string | null, actor?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, organization?: { __typename?: 'Organization', id: string, name: string } | null, project?: { __typename?: 'Project', id: string, name: string } | null, board?: { __typename?: 'Board', id: string, name: string } | null };
+
+export type GetOrganizationActivityQueryVariables = Exact<{
+  organizationId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+  filters?: InputMaybe<AuditFilters>;
+}>;
+
+
+export type GetOrganizationActivityQuery = { __typename?: 'Query', organizationActivity: { __typename?: 'AuditEventConnection', totalCount: number, edges: Array<{ __typename?: 'AuditEventEdge', cursor: string, node: { __typename?: 'AuditEvent', id: string, occurredAt: string, action: AuditAction, entityType: AuditEntityType, entityId: string, stateBefore?: string | null, stateAfter?: string | null, metadata?: string | null, actor?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, organization?: { __typename?: 'Organization', id: string, name: string } | null, project?: { __typename?: 'Project', id: string, name: string } | null, board?: { __typename?: 'Board', id: string, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetProjectActivityQueryVariables = Exact<{
+  projectId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GetProjectActivityQuery = { __typename?: 'Query', projectActivity: { __typename?: 'AuditEventConnection', totalCount: number, edges: Array<{ __typename?: 'AuditEventEdge', cursor: string, node: { __typename?: 'AuditEvent', id: string, occurredAt: string, action: AuditAction, entityType: AuditEntityType, entityId: string, stateBefore?: string | null, stateAfter?: string | null, metadata?: string | null, actor?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, organization?: { __typename?: 'Organization', id: string, name: string } | null, project?: { __typename?: 'Project', id: string, name: string } | null, board?: { __typename?: 'Board', id: string, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetBoardActivityQueryVariables = Exact<{
+  boardId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GetBoardActivityQuery = { __typename?: 'Query', boardActivity: { __typename?: 'AuditEventConnection', totalCount: number, edges: Array<{ __typename?: 'AuditEventEdge', cursor: string, node: { __typename?: 'AuditEvent', id: string, occurredAt: string, action: AuditAction, entityType: AuditEntityType, entityId: string, stateBefore?: string | null, stateAfter?: string | null, metadata?: string | null, actor?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, organization?: { __typename?: 'Organization', id: string, name: string } | null, project?: { __typename?: 'Project', id: string, name: string } | null, board?: { __typename?: 'Board', id: string, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
+
+export type GetEntityHistoryQueryVariables = Exact<{
+  entityType: AuditEntityType;
+  entityId: Scalars['ID']['input'];
+  first?: InputMaybe<Scalars['Int']['input']>;
+  after?: InputMaybe<Scalars['String']['input']>;
+}>;
+
+
+export type GetEntityHistoryQuery = { __typename?: 'Query', entityHistory: { __typename?: 'AuditEventConnection', totalCount: number, edges: Array<{ __typename?: 'AuditEventEdge', cursor: string, node: { __typename?: 'AuditEvent', id: string, occurredAt: string, action: AuditAction, entityType: AuditEntityType, entityId: string, stateBefore?: string | null, stateAfter?: string | null, metadata?: string | null, actor?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, organization?: { __typename?: 'Organization', id: string, name: string } | null, project?: { __typename?: 'Project', id: string, name: string } | null, board?: { __typename?: 'Board', id: string, name: string } | null } }>, pageInfo: { __typename?: 'PageInfo', hasNextPage: boolean, hasPreviousPage: boolean, startCursor?: string | null, endCursor?: string | null } } };
 
 export type RegisterMutationVariables = Exact<{
   input: RegisterInput;
@@ -975,7 +1259,7 @@ export type BoardQueryVariables = Exact<{
 }>;
 
 
-export type BoardQuery = { __typename?: 'Query', board?: { __typename?: 'Board', id: string, name: string, description?: string | null, isDefault: boolean, createdAt: string, updatedAt: string, project: { __typename?: 'Project', id: string, name: string, key: string, organization: { __typename?: 'Organization', id: string, name: string, slug: string } }, columns: Array<{ __typename?: 'BoardColumn', id: string, name: string, position: number, isBacklog: boolean, isHidden: boolean, color?: string | null, wipLimit?: number | null, cards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null } | null }> }> } | null };
+export type BoardQuery = { __typename?: 'Query', board?: { __typename?: 'Board', id: string, name: string, description?: string | null, isDefault: boolean, createdAt: string, updatedAt: string, project: { __typename?: 'Project', id: string, name: string, key: string, organization: { __typename?: 'Organization', id: string, name: string, slug: string } }, columns: Array<{ __typename?: 'BoardColumn', id: string, name: string, position: number, isBacklog: boolean, isHidden: boolean, color?: string | null, wipLimit?: number | null, isDone: boolean, cards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, storyPoints?: number | null, createdAt: string, updatedAt: string, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null } | null, sprints: Array<{ __typename?: 'Sprint', id: string, name: string, status: SprintStatus }> }> }> } | null };
 
 export type BoardsQueryVariables = Exact<{
   projectId: Scalars['ID']['input'];
@@ -1107,6 +1391,46 @@ export type DeleteTagMutationVariables = Exact<{
 
 
 export type DeleteTagMutation = { __typename?: 'Mutation', deleteTag: boolean };
+
+export type GetBurnDownDataQueryVariables = Exact<{
+  sprintId: Scalars['ID']['input'];
+  mode: MetricMode;
+}>;
+
+
+export type GetBurnDownDataQuery = { __typename?: 'Query', burnDownData?: { __typename?: 'BurnDownData', sprintId: string, sprintName: string, startDate: string, endDate: string, idealLine: Array<{ __typename?: 'DataPoint', date: string, value: number }>, actualLine: Array<{ __typename?: 'DataPoint', date: string, value: number }> } | null };
+
+export type GetBurnUpDataQueryVariables = Exact<{
+  sprintId: Scalars['ID']['input'];
+  mode: MetricMode;
+}>;
+
+
+export type GetBurnUpDataQuery = { __typename?: 'Query', burnUpData?: { __typename?: 'BurnUpData', sprintId: string, sprintName: string, startDate: string, endDate: string, scopeLine: Array<{ __typename?: 'DataPoint', date: string, value: number }>, doneLine: Array<{ __typename?: 'DataPoint', date: string, value: number }> } | null };
+
+export type GetVelocityDataQueryVariables = Exact<{
+  boardId: Scalars['ID']['input'];
+  mode: MetricMode;
+  sprintCount?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetVelocityDataQuery = { __typename?: 'Query', velocityData: { __typename?: 'VelocityData', sprints: Array<{ __typename?: 'SprintVelocity', sprintId: string, sprintName: string, completedCards: number, completedPoints: number }> } };
+
+export type GetCumulativeFlowDataQueryVariables = Exact<{
+  sprintId: Scalars['ID']['input'];
+  mode: MetricMode;
+}>;
+
+
+export type GetCumulativeFlowDataQuery = { __typename?: 'Query', cumulativeFlowData?: { __typename?: 'CumulativeFlowData', sprintId: string, sprintName: string, dates: Array<string>, columns: Array<{ __typename?: 'ColumnFlowData', columnId: string, columnName: string, color: string, values: Array<number> }> } | null };
+
+export type GetSprintStatsQueryVariables = Exact<{
+  sprintId: Scalars['ID']['input'];
+}>;
+
+
+export type GetSprintStatsQuery = { __typename?: 'Query', sprintStats?: { __typename?: 'SprintStats', totalCards: number, completedCards: number, totalStoryPoints: number, completedStoryPoints: number, daysRemaining: number, daysElapsed: number } | null };
 
 export type CreateOrganizationMutationVariables = Exact<{
   input: CreateOrganizationInput;
@@ -1308,7 +1632,7 @@ export type RemoveProjectMemberMutation = { __typename?: 'Mutation', removeProje
 
 export type SprintFieldsFragment = { __typename?: 'Sprint', id: string, name: string, goal?: string | null, startDate?: string | null, endDate?: string | null, status: SprintStatus, position: number, createdAt: string, updatedAt: string };
 
-export type CardFieldsFragment = { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } };
+export type CardFieldsFragment = { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, storyPoints?: number | null, createdAt: string, updatedAt: string, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } };
 
 export type GetSprintQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -1352,14 +1676,14 @@ export type GetSprintCardsQueryVariables = Exact<{
 }>;
 
 
-export type GetSprintCardsQuery = { __typename?: 'Query', sprintCards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } }> };
+export type GetSprintCardsQuery = { __typename?: 'Query', sprintCards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, storyPoints?: number | null, createdAt: string, updatedAt: string, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } }> };
 
 export type GetBacklogCardsQueryVariables = Exact<{
   boardId: Scalars['ID']['input'];
 }>;
 
 
-export type GetBacklogCardsQuery = { __typename?: 'Query', backlogCards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } }> };
+export type GetBacklogCardsQuery = { __typename?: 'Query', backlogCards: Array<{ __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, storyPoints?: number | null, createdAt: string, updatedAt: string, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } }> };
 
 export type CreateSprintMutationVariables = Exact<{
   input: CreateSprintInput;
@@ -1392,7 +1716,7 @@ export type StartSprintMutation = { __typename?: 'Mutation', startSprint: { __ty
 
 export type CompleteSprintMutationVariables = Exact<{
   id: Scalars['ID']['input'];
-  moveIncompleteToBacklog?: InputMaybe<Scalars['Boolean']['input']>;
+  moveIncompleteToNextSprint?: InputMaybe<Scalars['Boolean']['input']>;
 }>;
 
 
@@ -1403,14 +1727,14 @@ export type AddCardToSprintMutationVariables = Exact<{
 }>;
 
 
-export type AddCardToSprintMutation = { __typename?: 'Mutation', addCardToSprint: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };
+export type AddCardToSprintMutation = { __typename?: 'Mutation', addCardToSprint: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, storyPoints?: number | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };
 
 export type RemoveCardFromSprintMutationVariables = Exact<{
   input: MoveCardToSprintInput;
 }>;
 
 
-export type RemoveCardFromSprintMutation = { __typename?: 'Mutation', removeCardFromSprint: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };
+export type RemoveCardFromSprintMutation = { __typename?: 'Mutation', removeCardFromSprint: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, storyPoints?: number | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };
 
 export type SetCardSprintsMutationVariables = Exact<{
   cardId: Scalars['ID']['input'];
@@ -1418,11 +1742,11 @@ export type SetCardSprintsMutationVariables = Exact<{
 }>;
 
 
-export type SetCardSprintsMutation = { __typename?: 'Mutation', setCardSprints: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };
+export type SetCardSprintsMutation = { __typename?: 'Mutation', setCardSprints: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, storyPoints?: number | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };
 
 export type MoveCardToBacklogMutationVariables = Exact<{
   cardId: Scalars['ID']['input'];
 }>;
 
 
-export type MoveCardToBacklogMutation = { __typename?: 'Mutation', moveCardToBacklog: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };
+export type MoveCardToBacklogMutation = { __typename?: 'Mutation', moveCardToBacklog: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, storyPoints?: number | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };

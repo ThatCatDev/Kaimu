@@ -11,6 +11,7 @@
   import { ConfirmModal } from '../ui';
   import type { BoardWithColumns, BoardColumn, BoardCard, Tag } from '../../lib/api/boards';
   import { getBoard, moveCard, getTags, deleteCard, reorderColumns, toggleColumnVisibility, deleteColumn, updateBoard } from '../../lib/api/boards';
+  import { moveCardToBacklog, getActiveSprint, addCardToSprint, type SprintData } from '../../lib/api/sprints';
   import EditableTitle from '../EditableTitle.svelte';
   import EditableDescription from '../EditableDescription.svelte';
   import { Permissions } from '../../lib/stores/permissions.svelte';
@@ -25,6 +26,7 @@
 
   let board = $state<BoardWithColumns | null>(null);
   let tags = $state<Tag[]>([]);
+  let activeSprint = $state<SprintData | null>(null);
   let loading = $state(true);
   let error = $state<string | null>(null);
   let showHiddenColumns = $state(false);
@@ -40,7 +42,7 @@
   // Column modal states
   let showCreateColumnModal = $state(false);
   let showEditColumnModal = $state(false);
-  let editColumnMode = $state<'rename' | 'color' | 'wipLimit'>('rename');
+  let editColumnMode = $state<'rename' | 'color' | 'wipLimit' | 'isDone'>('rename');
   let selectedColumn = $state<BoardColumn | null>(null);
   let showDeleteColumnConfirm = $state(false);
   let columnToDelete = $state<BoardColumn | null>(null);
@@ -75,14 +77,43 @@
   let canDeleteCard = $derived(permissions.includes(Permissions.CARD_DELETE));
 
 
+  // Filter cards based on sprint status:
+  // - If active sprint: only show cards in the active sprint
+  // - If no active sprint: show cards NOT in any closed sprint
+  function filterCardsBySprint(cards: BoardCard[]): BoardCard[] {
+    const currentSprint = activeSprint;
+    if (currentSprint) {
+      // Only show cards that belong to the active sprint
+      return cards.filter(card =>
+        card.sprints?.some(s => s.id === currentSprint.id) ?? false
+      );
+    } else {
+      // No active sprint: show cards that are NOT in any CLOSED sprint
+      // This includes: cards with no sprints, cards in FUTURE sprints only
+      return cards.filter(card => {
+        if (!card.sprints || card.sprints.length === 0) return true;
+        // If any sprint is CLOSED, hide the card
+        return !card.sprints.some(s => s.status === 'CLOSED');
+      });
+    }
+  }
+
   let visibleColumns = $derived(
     board?.columns.filter(col => showHiddenColumns || !col.isHidden).sort((a, b) => a.position - b.position) ?? []
   );
 
-  // Sync columnItems with visibleColumns
+  // Columns with cards filtered by sprint
+  let filteredColumns = $derived(
+    visibleColumns.map(col => ({
+      ...col,
+      cards: filterCardsBySprint(col.cards)
+    }))
+  );
+
+  // Sync columnItems with filteredColumns (cards filtered by sprint)
   $effect(() => {
     if (!isDraggingColumn) {
-      columnItems = visibleColumns.map(col => ({ ...col }));
+      columnItems = filteredColumns.map(col => ({ ...col }));
     }
   });
 
@@ -118,12 +149,14 @@
       error = null;
       board = await getBoard(boardId);
       if (board) {
-        const [projectTags, perms] = await Promise.all([
+        const [projectTags, perms, active] = await Promise.all([
           getTags(board.project.id),
-          getMyPermissions('project', board.project.id)
+          getMyPermissions('project', board.project.id),
+          getActiveSprint(boardId)
         ]);
         tags = projectTags;
         permissions = perms;
+        activeSprint = active;
 
         // If initialCardId is provided, find and open the card
         if (initialCardId) {
@@ -165,7 +198,12 @@
   // Export refreshBoard so parent components can trigger refresh
   export async function refreshBoard() {
     try {
-      board = await getBoard(boardId);
+      const [newBoard, active] = await Promise.all([
+        getBoard(boardId),
+        getActiveSprint(boardId)
+      ]);
+      board = newBoard;
+      activeSprint = active;
       if (board) {
         tags = await getTags(board.project.id);
       }
@@ -197,34 +235,54 @@
   }
 
   async function handleCardMove(cardId: string, columnId: string, afterCardId: string | null) {
+    if (!board) return;
+
+    // Find source and destination columns
+    const card = findCardById(cardId);
+    const sourceColumn = board.columns.find(col => col.cards.some(c => c.id === cardId));
+    const destColumn = board.columns.find(col => col.id === columnId);
+
     // Optimistically update board state so column reordering doesn't lose card positions
-    if (board) {
-      const card = findCardById(cardId);
-      if (card) {
-        board = {
-          ...board,
-          columns: board.columns.map(col => {
-            // Remove card from its current column
-            const filteredCards = col.cards.filter(c => c.id !== cardId);
+    if (card) {
+      board = {
+        ...board,
+        columns: board.columns.map(col => {
+          // Remove card from its current column
+          const filteredCards = col.cards.filter(c => c.id !== cardId);
 
-            if (col.id === columnId) {
-              // Add card to destination column at the right position
-              const insertIndex = afterCardId
-                ? filteredCards.findIndex(c => c.id === afterCardId) + 1
-                : 0;
-              const newCards = [...filteredCards];
-              newCards.splice(insertIndex, 0, card);
-              return { ...col, cards: newCards };
-            }
+          if (col.id === columnId) {
+            // Add card to destination column at the right position
+            const insertIndex = afterCardId
+              ? filteredCards.findIndex(c => c.id === afterCardId) + 1
+              : 0;
+            const newCards = [...filteredCards];
+            newCards.splice(insertIndex, 0, card);
+            return { ...col, cards: newCards };
+          }
 
-            return { ...col, cards: filteredCards };
-          })
-        };
-      }
+          return { ...col, cards: filteredCards };
+        })
+      };
     }
 
     try {
       await moveCard(cardId, columnId, afterCardId ?? undefined);
+
+      // Handle sprint changes based on column transitions
+      if (sourceColumn && destColumn) {
+        // Moving TO backlog column -> remove from all sprints
+        if (destColumn.isBacklog && !sourceColumn.isBacklog) {
+          await moveCardToBacklog(cardId);
+        }
+        // Moving FROM backlog column to non-backlog -> add to active sprint
+        else if (!destColumn.isBacklog && sourceColumn.isBacklog) {
+          const activeSprint = await getActiveSprint(board.id);
+          if (activeSprint) {
+            await addCardToSprint(cardId, activeSprint.id);
+          }
+        }
+      }
+
       // Don't refresh - the UI is already updated optimistically
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to move card';
@@ -286,6 +344,12 @@
     showEditColumnModal = true;
   }
 
+  function handleColumnEditIsDone(column: BoardColumn) {
+    selectedColumn = column;
+    editColumnMode = 'isDone';
+    showEditColumnModal = true;
+  }
+
   async function handleColumnToggleVisibility(column: BoardColumn) {
     try {
       await toggleColumnVisibility(column.id);
@@ -297,6 +361,11 @@
   }
 
   function handleColumnDelete(column: BoardColumn) {
+    // Prevent deleting backlog column
+    if (column.isBacklog) {
+      toast.error('Cannot delete the backlog column. You can hide it instead.');
+      return;
+    }
     columnToDelete = column;
     showDeleteColumnConfirm = true;
   }
@@ -415,26 +484,8 @@
   </div>
 {:else if board}
   <div class="h-full flex flex-col">
-    <!-- Board header -->
-    <div class="flex items-center justify-between mb-4">
-      <div class="flex-1 min-w-0 mr-4">
-        <h1 class="text-2xl font-bold text-gray-900">
-          {#if canManageBoard}
-            <EditableTitle value={board.name} onSave={handleUpdateBoardName} />
-          {:else}
-            {board.name}
-          {/if}
-        </h1>
-        {#if canManageBoard}
-          <EditableDescription
-            value={board.description}
-            onSave={handleUpdateBoardDescription}
-            placeholder="Add description..."
-          />
-        {:else if board.description}
-          <p class="text-sm text-gray-500 mt-1">{board.description}</p>
-        {/if}
-      </div>
+    <!-- Board controls -->
+    <div class="flex items-center justify-end py-3">
       <div class="flex items-center gap-4">
         <!-- Priority style toggle -->
         <div class="flex items-center gap-2 text-sm text-gray-600">
@@ -493,6 +544,7 @@
             onRename={canManageBoard ? () => handleColumnRename(column) : undefined}
             onEditColor={canManageBoard ? () => handleColumnEditColor(column) : undefined}
             onEditWipLimit={canManageBoard ? () => handleColumnEditWipLimit(column) : undefined}
+            onEditIsDone={canManageBoard ? () => handleColumnEditIsDone(column) : undefined}
             onToggleVisibility={canManageBoard ? () => handleColumnToggleVisibility(column) : undefined}
             onDelete={canManageBoard ? () => handleColumnDelete(column) : undefined}
             onQuickDelete={canDeleteCard ? handleQuickDelete : undefined}
@@ -527,6 +579,8 @@
       open={showCreateCardModal && createCardColumnId !== null}
       columnId={createCardColumnId ?? ''}
       projectId={board.project.id}
+      boardId={board.id}
+      isBacklogColumn={board.columns.find(c => c.id === createCardColumnId)?.isBacklog ?? false}
       {tags}
       onClose={closeCreateCardModal}
       onCreated={handleCardCreated}

@@ -292,6 +292,7 @@ func setupRBACTestServer(t *testing.T) *RBACTestServer {
 		memberRepository,
 		projectMemberRepository,
 		projectRepository,
+		boardRepository,
 		userRepository,
 	)
 	invSvc := invitationSvc.NewService(
@@ -300,6 +301,8 @@ func setupRBACTestServer(t *testing.T) *RBACTestServer {
 		memberRepository,
 		userRepository,
 		roleRepository,
+		nil, // mail service not needed for tests
+		config.EmailConfig{},
 	)
 
 	// Create resolver

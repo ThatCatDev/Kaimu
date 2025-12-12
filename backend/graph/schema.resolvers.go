@@ -12,7 +12,9 @@ import (
 	"github.com/thatcatdev/kaimu/backend/graph/generated"
 	"github.com/thatcatdev/kaimu/backend/graph/model"
 	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	auditrepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/audit"
 	"github.com/thatcatdev/kaimu/backend/internal/resolvers"
+	"github.com/thatcatdev/kaimu/backend/internal/services/audit"
 )
 
 // Register is the resolver for the register field.
@@ -233,11 +235,52 @@ func (r *mutationResolver) CreateCard(ctx context.Context, input model.CreateCar
 		r.SearchIndexer.IndexCardAsync(ctx, cardID)
 	}
 
+	// Audit logging
+	if r.AuditService != nil {
+		cardID, _ := uuid.Parse(card.ID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		// Get board and project info for audit context
+		board, _ := r.CardService.GetBoardByCardID(ctx, cardID)
+		var boardID, projectID, orgID *uuid.UUID
+		if board != nil {
+			boardID = &board.ID
+			if proj, err := r.BoardService.GetProject(ctx, board.ID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+		}
+
+		r.AuditService.LogEventAsync(ctx, audit.EventInput{
+			ActorID:        userID,
+			Action:         auditrepo.ActionCreated,
+			EntityType:     auditrepo.EntityCard,
+			EntityID:       cardID,
+			OrganizationID: orgID,
+			ProjectID:      projectID,
+			BoardID:        boardID,
+			StateAfter:     card,
+			Metadata: map[string]interface{}{
+				"column_id": input.ColumnID,
+				"title":     input.Title,
+			},
+		})
+	}
+
 	return card, nil
 }
 
 // UpdateCard is the resolver for the updateCard field.
 func (r *mutationResolver) UpdateCard(ctx context.Context, input model.UpdateCardInput) (*model.Card, error) {
+	// Get card before update for audit
+	var cardBefore *model.Card
+	if r.AuditService != nil {
+		cardID, _ := uuid.Parse(input.ID)
+		if existingCard, err := r.CardService.GetCard(ctx, cardID); err == nil {
+			cardBefore = resolvers.CardToModel(existingCard)
+		}
+	}
+
 	card, err := resolvers.UpdateCard(ctx, r.RBACService, r.CardService, r.BoardService, input)
 	if err != nil {
 		return nil, err
@@ -249,11 +292,56 @@ func (r *mutationResolver) UpdateCard(ctx context.Context, input model.UpdateCar
 		r.SearchIndexer.IndexCardAsync(ctx, cardID)
 	}
 
+	// Audit logging
+	if r.AuditService != nil {
+		cardID, _ := uuid.Parse(card.ID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		// Get board and project info for audit context
+		board, _ := r.CardService.GetBoardByCardID(ctx, cardID)
+		var boardID, projectID, orgID *uuid.UUID
+		if board != nil {
+			boardID = &board.ID
+			if proj, err := r.BoardService.GetProject(ctx, board.ID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+		}
+
+		r.AuditService.LogEventAsync(ctx, audit.EventInput{
+			ActorID:        userID,
+			Action:         auditrepo.ActionUpdated,
+			EntityType:     auditrepo.EntityCard,
+			EntityID:       cardID,
+			OrganizationID: orgID,
+			ProjectID:      projectID,
+			BoardID:        boardID,
+			StateBefore:    cardBefore,
+			StateAfter:     card,
+		})
+	}
+
 	return card, nil
 }
 
 // MoveCard is the resolver for the moveCard field.
 func (r *mutationResolver) MoveCard(ctx context.Context, input model.MoveCardInput) (*model.Card, error) {
+	// Get card before move for audit
+	var cardBefore *model.Card
+	var fromColumnID *uuid.UUID
+	var fromColumnName string
+	if r.AuditService != nil {
+		cardID, _ := uuid.Parse(input.CardID)
+		if existingCard, err := r.CardService.GetCard(ctx, cardID); err == nil {
+			cardBefore = resolvers.CardToModel(existingCard)
+		}
+		// Get current column with name
+		if col, err := r.CardService.GetColumnByCardID(ctx, cardID); err == nil {
+			fromColumnID = &col.ID
+			fromColumnName = col.Name
+		}
+	}
+
 	card, err := resolvers.MoveCard(ctx, r.RBACService, r.CardService, r.BoardService, input)
 	if err != nil {
 		return nil, err
@@ -265,11 +353,75 @@ func (r *mutationResolver) MoveCard(ctx context.Context, input model.MoveCardInp
 		r.SearchIndexer.IndexCardAsync(ctx, cardID)
 	}
 
+	// Audit logging
+	if r.AuditService != nil {
+		cardID, _ := uuid.Parse(card.ID)
+		userID := middleware.GetUserIDFromContext(ctx)
+		targetColID, _ := uuid.Parse(input.TargetColumnID)
+
+		// Get board and project info for audit context
+		board, _ := r.CardService.GetBoardByCardID(ctx, cardID)
+		var boardID, projectID, orgID *uuid.UUID
+		if board != nil {
+			boardID = &board.ID
+			if proj, err := r.BoardService.GetProject(ctx, board.ID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+		}
+
+		// Get target column name
+		var toColumnName string
+		if toCol, err := r.BoardService.GetColumn(ctx, targetColID); err == nil {
+			toColumnName = toCol.Name
+		}
+
+		metadata := map[string]interface{}{
+			"to_column_id":   targetColID.String(),
+			"to_column_name": toColumnName,
+		}
+		if fromColumnID != nil {
+			metadata["from_column_id"] = fromColumnID.String()
+			metadata["from_column_name"] = fromColumnName
+		}
+
+		r.AuditService.LogEventAsync(ctx, audit.EventInput{
+			ActorID:        userID,
+			Action:         auditrepo.ActionCardMoved,
+			EntityType:     auditrepo.EntityCard,
+			EntityID:       cardID,
+			OrganizationID: orgID,
+			ProjectID:      projectID,
+			BoardID:        boardID,
+			StateBefore:    cardBefore,
+			StateAfter:     card,
+			Metadata:       metadata,
+		})
+	}
+
 	return card, nil
 }
 
 // DeleteCard is the resolver for the deleteCard field.
 func (r *mutationResolver) DeleteCard(ctx context.Context, id string) (bool, error) {
+	// Get card before delete for audit
+	cardID, _ := uuid.Parse(id)
+	var cardBefore *model.Card
+	var boardID, projectID, orgID *uuid.UUID
+	if r.AuditService != nil {
+		if existingCard, err := r.CardService.GetCard(ctx, cardID); err == nil {
+			cardBefore = resolvers.CardToModel(existingCard)
+		}
+		// Get board and project info before deletion
+		if board, err := r.CardService.GetBoardByCardID(ctx, cardID); err == nil {
+			boardID = &board.ID
+			if proj, err := r.BoardService.GetProject(ctx, board.ID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+		}
+	}
+
 	result, err := resolvers.DeleteCard(ctx, r.RBACService, r.CardService, r.BoardService, id)
 	if err != nil {
 		return false, err
@@ -278,6 +430,22 @@ func (r *mutationResolver) DeleteCard(ctx context.Context, id string) (bool, err
 	// Remove from search index
 	if r.SearchIndexer != nil {
 		r.SearchIndexer.DeleteCardAsync(ctx, id)
+	}
+
+	// Audit logging
+	if r.AuditService != nil {
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		r.AuditService.LogEventAsync(ctx, audit.EventInput{
+			ActorID:        userID,
+			Action:         auditrepo.ActionDeleted,
+			EntityType:     auditrepo.EntityCard,
+			EntityID:       cardID,
+			OrganizationID: orgID,
+			ProjectID:      projectID,
+			BoardID:        boardID,
+			StateBefore:    cardBefore,
+		})
 	}
 
 	return result, nil
@@ -355,51 +523,366 @@ func (r *mutationResolver) RemoveProjectMember(ctx context.Context, projectID st
 
 // CreateSprint is the resolver for the createSprint field.
 func (r *mutationResolver) CreateSprint(ctx context.Context, input model.CreateSprintInput) (*model.Sprint, error) {
-	return resolvers.CreateSprint(ctx, r.RBACService, r.SprintService, input)
+	sprint, err := resolvers.CreateSprint(ctx, r.RBACService, r.SprintService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil {
+		sprintID, _ := uuid.Parse(sprint.ID)
+		boardID, _ := uuid.Parse(input.BoardID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		var projectID, orgID *uuid.UUID
+		if proj, err := r.BoardService.GetProject(ctx, boardID); err == nil {
+			projectID = &proj.ID
+			orgID = &proj.OrganizationID
+		}
+
+		r.AuditService.LogEventAsync(ctx, audit.EventInput{
+			ActorID:        userID,
+			Action:         auditrepo.ActionCreated,
+			EntityType:     auditrepo.EntitySprint,
+			EntityID:       sprintID,
+			OrganizationID: orgID,
+			ProjectID:      projectID,
+			BoardID:        &boardID,
+			StateAfter:     sprint,
+		})
+	}
+
+	return sprint, nil
 }
 
 // UpdateSprint is the resolver for the updateSprint field.
 func (r *mutationResolver) UpdateSprint(ctx context.Context, id string, input model.UpdateSprintInput) (*model.Sprint, error) {
-	return resolvers.UpdateSprint(ctx, r.RBACService, r.SprintService, id, input)
+	sprint, err := resolvers.UpdateSprint(ctx, r.RBACService, r.SprintService, id, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil {
+		sprintID, _ := uuid.Parse(sprint.ID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		// Get board info
+		if board, err := r.SprintService.GetBoard(ctx, sprintID); err == nil {
+			boardID := board.ID
+			var projectID, orgID *uuid.UUID
+			if proj, err := r.BoardService.GetProject(ctx, boardID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+
+			r.AuditService.LogEventAsync(ctx, audit.EventInput{
+				ActorID:        userID,
+				Action:         auditrepo.ActionUpdated,
+				EntityType:     auditrepo.EntitySprint,
+				EntityID:       sprintID,
+				OrganizationID: orgID,
+				ProjectID:      projectID,
+				BoardID:        &boardID,
+				StateAfter:     sprint,
+			})
+		}
+	}
+
+	return sprint, nil
 }
 
 // DeleteSprint is the resolver for the deleteSprint field.
 func (r *mutationResolver) DeleteSprint(ctx context.Context, id string) (bool, error) {
-	return resolvers.DeleteSprint(ctx, r.RBACService, r.SprintService, id)
+	sprintID, _ := uuid.Parse(id)
+
+	// Get board info before deletion for audit
+	var boardID *uuid.UUID
+	var projectID, orgID *uuid.UUID
+	if r.AuditService != nil {
+		if board, err := r.SprintService.GetBoard(ctx, sprintID); err == nil {
+			boardID = &board.ID
+			if proj, err := r.BoardService.GetProject(ctx, board.ID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+		}
+	}
+
+	result, err := resolvers.DeleteSprint(ctx, r.RBACService, r.SprintService, id)
+	if err != nil {
+		return false, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil {
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		r.AuditService.LogEventAsync(ctx, audit.EventInput{
+			ActorID:        userID,
+			Action:         auditrepo.ActionDeleted,
+			EntityType:     auditrepo.EntitySprint,
+			EntityID:       sprintID,
+			OrganizationID: orgID,
+			ProjectID:      projectID,
+			BoardID:        boardID,
+		})
+	}
+
+	return result, nil
 }
 
 // StartSprint is the resolver for the startSprint field.
 func (r *mutationResolver) StartSprint(ctx context.Context, id string) (*model.Sprint, error) {
-	return resolvers.StartSprint(ctx, r.RBACService, r.SprintService, id)
+	sprint, err := resolvers.StartSprint(ctx, r.RBACService, r.SprintService, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil {
+		sprintID, _ := uuid.Parse(sprint.ID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		// Get board info
+		if board, err := r.SprintService.GetBoard(ctx, sprintID); err == nil {
+			boardID := board.ID
+			var projectID, orgID *uuid.UUID
+			if proj, err := r.BoardService.GetProject(ctx, boardID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+
+			r.AuditService.LogEventAsync(ctx, audit.EventInput{
+				ActorID:        userID,
+				Action:         auditrepo.ActionSprintStarted,
+				EntityType:     auditrepo.EntitySprint,
+				EntityID:       sprintID,
+				OrganizationID: orgID,
+				ProjectID:      projectID,
+				BoardID:        &boardID,
+				StateAfter:     sprint,
+			})
+		}
+	}
+
+	return sprint, nil
 }
 
 // CompleteSprint is the resolver for the completeSprint field.
-func (r *mutationResolver) CompleteSprint(ctx context.Context, id string, moveIncompleteToBacklog *bool) (*model.Sprint, error) {
-	moveToBacklog := true
-	if moveIncompleteToBacklog != nil {
-		moveToBacklog = *moveIncompleteToBacklog
+func (r *mutationResolver) CompleteSprint(ctx context.Context, id string, moveIncompleteToNextSprint *bool) (*model.Sprint, error) {
+	moveToNext := true
+	if moveIncompleteToNextSprint != nil {
+		moveToNext = *moveIncompleteToNextSprint
 	}
-	return resolvers.CompleteSprint(ctx, r.RBACService, r.SprintService, id, moveToBacklog)
+
+	sprint, err := resolvers.CompleteSprint(ctx, r.RBACService, r.SprintService, id, moveToNext)
+	if err != nil {
+		return nil, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil {
+		sprintID, _ := uuid.Parse(sprint.ID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		// Get board info
+		if board, err := r.SprintService.GetBoard(ctx, sprintID); err == nil {
+			boardID := board.ID
+			var projectID, orgID *uuid.UUID
+			if proj, err := r.BoardService.GetProject(ctx, boardID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+
+			r.AuditService.LogEventAsync(ctx, audit.EventInput{
+				ActorID:        userID,
+				Action:         auditrepo.ActionSprintCompleted,
+				EntityType:     auditrepo.EntitySprint,
+				EntityID:       sprintID,
+				OrganizationID: orgID,
+				ProjectID:      projectID,
+				BoardID:        &boardID,
+				StateAfter:     sprint,
+				Metadata: map[string]interface{}{
+					"move_incomplete_to_next_sprint": moveToNext,
+				},
+			})
+		}
+	}
+
+	return sprint, nil
+}
+
+// ReopenSprint is the resolver for the reopenSprint field.
+func (r *mutationResolver) ReopenSprint(ctx context.Context, id string) (*model.Sprint, error) {
+	sprint, err := resolvers.ReopenSprint(ctx, r.RBACService, r.SprintService, id)
+	if err != nil {
+		return nil, err
+	}
+	return sprint, nil
 }
 
 // AddCardToSprint is the resolver for the addCardToSprint field.
 func (r *mutationResolver) AddCardToSprint(ctx context.Context, input model.MoveCardToSprintInput) (*model.Card, error) {
-	return resolvers.AddCardToSprint(ctx, r.RBACService, r.SprintService, input)
+	card, err := resolvers.AddCardToSprint(ctx, r.RBACService, r.SprintService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil {
+		cardID, _ := uuid.Parse(card.ID)
+		sprintID, _ := uuid.Parse(input.SprintID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		// Get board and project info
+		if board, err := r.CardService.GetBoardByCardID(ctx, cardID); err == nil {
+			boardID := board.ID
+			var projectID, orgID *uuid.UUID
+			if proj, err := r.BoardService.GetProject(ctx, boardID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+
+			r.AuditService.LogEventAsync(ctx, audit.EventInput{
+				ActorID:        userID,
+				Action:         auditrepo.ActionCardAddedToSprint,
+				EntityType:     auditrepo.EntityCard,
+				EntityID:       cardID,
+				OrganizationID: orgID,
+				ProjectID:      projectID,
+				BoardID:        &boardID,
+				StateAfter:     card,
+				Metadata: map[string]interface{}{
+					"sprint_id": sprintID.String(),
+				},
+			})
+		}
+	}
+
+	return card, nil
 }
 
 // RemoveCardFromSprint is the resolver for the removeCardFromSprint field.
 func (r *mutationResolver) RemoveCardFromSprint(ctx context.Context, input model.MoveCardToSprintInput) (*model.Card, error) {
-	return resolvers.RemoveCardFromSprint(ctx, r.RBACService, r.SprintService, input)
+	card, err := resolvers.RemoveCardFromSprint(ctx, r.RBACService, r.SprintService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil {
+		cardID, _ := uuid.Parse(card.ID)
+		sprintID, _ := uuid.Parse(input.SprintID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		// Get board and project info
+		if board, err := r.CardService.GetBoardByCardID(ctx, cardID); err == nil {
+			boardID := board.ID
+			var projectID, orgID *uuid.UUID
+			if proj, err := r.BoardService.GetProject(ctx, boardID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+
+			r.AuditService.LogEventAsync(ctx, audit.EventInput{
+				ActorID:        userID,
+				Action:         auditrepo.ActionCardRemovedFromSprint,
+				EntityType:     auditrepo.EntityCard,
+				EntityID:       cardID,
+				OrganizationID: orgID,
+				ProjectID:      projectID,
+				BoardID:        &boardID,
+				StateAfter:     card,
+				Metadata: map[string]interface{}{
+					"sprint_id": sprintID.String(),
+				},
+			})
+		}
+	}
+
+	return card, nil
 }
 
 // SetCardSprints is the resolver for the setCardSprints field.
 func (r *mutationResolver) SetCardSprints(ctx context.Context, cardID string, sprintIds []string) (*model.Card, error) {
-	return resolvers.SetCardSprints(ctx, r.RBACService, r.SprintService, cardID, sprintIds)
+	card, err := resolvers.SetCardSprints(ctx, r.RBACService, r.SprintService, cardID, sprintIds)
+	if err != nil {
+		return nil, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil {
+		cID, _ := uuid.Parse(card.ID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		// Get board and project info
+		if board, err := r.CardService.GetBoardByCardID(ctx, cID); err == nil {
+			boardID := board.ID
+			var projectID, orgID *uuid.UUID
+			if proj, err := r.BoardService.GetProject(ctx, boardID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+
+			r.AuditService.LogEventAsync(ctx, audit.EventInput{
+				ActorID:        userID,
+				Action:         auditrepo.ActionUpdated,
+				EntityType:     auditrepo.EntityCard,
+				EntityID:       cID,
+				OrganizationID: orgID,
+				ProjectID:      projectID,
+				BoardID:        &boardID,
+				StateAfter:     card,
+				Metadata: map[string]interface{}{
+					"sprint_ids": sprintIds,
+				},
+			})
+		}
+	}
+
+	return card, nil
 }
 
 // MoveCardToBacklog is the resolver for the moveCardToBacklog field.
 func (r *mutationResolver) MoveCardToBacklog(ctx context.Context, cardID string) (*model.Card, error) {
-	return resolvers.MoveCardToBacklog(ctx, r.RBACService, r.SprintService, r.BoardService, cardID)
+	card, err := resolvers.MoveCardToBacklog(ctx, r.RBACService, r.SprintService, r.BoardService, cardID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil {
+		cID, _ := uuid.Parse(card.ID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		// Get board and project info
+		if board, err := r.CardService.GetBoardByCardID(ctx, cID); err == nil {
+			boardID := board.ID
+			var projectID, orgID *uuid.UUID
+			if proj, err := r.BoardService.GetProject(ctx, boardID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+
+			r.AuditService.LogEventAsync(ctx, audit.EventInput{
+				ActorID:        userID,
+				Action:         auditrepo.ActionCardRemovedFromSprint,
+				EntityType:     auditrepo.EntityCard,
+				EntityID:       cID,
+				OrganizationID: orgID,
+				ProjectID:      projectID,
+				BoardID:        &boardID,
+				StateAfter:     card,
+				Metadata: map[string]interface{}{
+					"moved_to_backlog": true,
+				},
+			})
+		}
+	}
+
+	return card, nil
 }
 
 // HelloWorld is the resolver for the helloWorld field.
@@ -550,6 +1033,36 @@ func (r *queryResolver) SprintCards(ctx context.Context, sprintID string) ([]*mo
 // BacklogCards is the resolver for the backlogCards field.
 func (r *queryResolver) BacklogCards(ctx context.Context, boardID string) ([]*model.Card, error) {
 	return resolvers.BacklogCards(ctx, r.RBACService, r.SprintService, r.BoardService, boardID)
+}
+
+// BurnDownData is the resolver for the burnDownData field.
+func (r *queryResolver) BurnDownData(ctx context.Context, sprintID string, mode model.MetricMode) (*model.BurnDownData, error) {
+	resolver := resolvers.NewMetricsResolver(r.MetricsService)
+	return resolver.BurnDownData(ctx, sprintID, mode)
+}
+
+// BurnUpData is the resolver for the burnUpData field.
+func (r *queryResolver) BurnUpData(ctx context.Context, sprintID string, mode model.MetricMode) (*model.BurnUpData, error) {
+	resolver := resolvers.NewMetricsResolver(r.MetricsService)
+	return resolver.BurnUpData(ctx, sprintID, mode)
+}
+
+// VelocityData is the resolver for the velocityData field.
+func (r *queryResolver) VelocityData(ctx context.Context, boardID string, sprintCount *int, mode model.MetricMode) (*model.VelocityData, error) {
+	resolver := resolvers.NewMetricsResolver(r.MetricsService)
+	return resolver.VelocityData(ctx, boardID, sprintCount, mode)
+}
+
+// CumulativeFlowData is the resolver for the cumulativeFlowData field.
+func (r *queryResolver) CumulativeFlowData(ctx context.Context, sprintID string, mode model.MetricMode) (*model.CumulativeFlowData, error) {
+	resolver := resolvers.NewMetricsResolver(r.MetricsService)
+	return resolver.CumulativeFlowData(ctx, sprintID, mode)
+}
+
+// SprintStats is the resolver for the sprintStats field.
+func (r *queryResolver) SprintStats(ctx context.Context, sprintID string) (*model.SprintStats, error) {
+	resolver := resolvers.NewMetricsResolver(r.MetricsService)
+	return resolver.SprintStats(ctx, sprintID)
 }
 
 // Mutation returns generated.MutationResolver implementation.

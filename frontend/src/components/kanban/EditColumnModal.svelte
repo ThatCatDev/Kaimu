@@ -3,7 +3,7 @@
   import type { BoardColumn } from '../../lib/api/boards';
   import { Input, Button, Modal } from '../ui';
 
-  type EditMode = 'rename' | 'color' | 'wipLimit';
+  type EditMode = 'rename' | 'color' | 'wipLimit' | 'isDone';
 
   interface Props {
     open: boolean;
@@ -18,6 +18,7 @@
   let name = $state('');
   let color = $state('');
   let wipLimit = $state<number | undefined>(undefined);
+  let isDone = $state(false);
   let loading = $state(false);
   let error = $state<string | null>(null);
 
@@ -31,6 +32,7 @@
     rename: 'Rename Column',
     color: 'Change Column Color',
     wipLimit: 'Set WIP Limit',
+    isDone: 'Mark as Done Column',
   };
 
   // Initialize form when modal opens or column changes
@@ -39,6 +41,7 @@
       name = column.name;
       color = column.color ?? '';
       wipLimit = column.wipLimit ?? undefined;
+      isDone = column.isDone ?? false;
       error = null;
     }
   });
@@ -59,6 +62,8 @@
       } else if (mode === 'wipLimit') {
         const shouldClear = wipLimit === undefined;
         await updateColumn(column.id, undefined, undefined, wipLimit, shouldClear);
+      } else if (mode === 'isDone') {
+        await updateColumn(column.id, undefined, undefined, undefined, undefined, isDone);
       }
 
       onUpdated();
@@ -163,6 +168,34 @@
                 Current cards: <span class="font-medium">{column.cards.length}</span> / {wipLimit}
               </p>
             {/if}
+          </div>
+        {:else if mode === 'isDone'}
+          <div>
+            <label class="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                bind:checked={isDone}
+                disabled={loading}
+                class="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer disabled:opacity-50"
+              />
+              <div>
+                <span class="text-sm font-medium text-gray-900">Mark as "Done" column</span>
+                <p class="text-sm text-gray-500">
+                  Cards in this column will be counted as completed for metrics
+                </p>
+              </div>
+            </label>
+            <div class="mt-4 p-3 bg-gray-50 rounded-md">
+              <p class="text-xs text-gray-600">
+                The "Done" column is used for calculating:
+              </p>
+              <ul class="mt-1 text-xs text-gray-500 list-disc list-inside space-y-0.5">
+                <li>Burn down chart (remaining work)</li>
+                <li>Burn up chart (completed work)</li>
+                <li>Velocity (completed per sprint)</li>
+                <li>Sprint completion statistics</li>
+              </ul>
+            </div>
           </div>
         {/if}
       </div>

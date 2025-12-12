@@ -26,6 +26,7 @@ query Board($id: ID!) {
       isHidden
       color
       wipLimit
+      isDone
       cards {
         id
         title
@@ -33,6 +34,7 @@ query Board($id: ID!) {
         position
         priority
         dueDate
+        storyPoints
         createdAt
         updatedAt
         tags {
@@ -44,6 +46,11 @@ query Board($id: ID!) {
           id
           username
           displayName
+        }
+        sprints {
+          id
+          name
+          status
         }
       }
     }

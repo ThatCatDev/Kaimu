@@ -25,6 +25,7 @@
     description: string;
     priority: CardPriority;
     dueDate: string;
+    storyPoints: number | null;
     selectedTagIds: string[];
     projectId: string;
     tags: Tag[];
@@ -32,6 +33,7 @@
     onDescriptionChange: (value: string) => void;
     onPriorityChange: (value: CardPriority) => void;
     onDueDateChange: (value: string) => void;
+    onStoryPointsChange: (value: number | null) => void;
     onTagSelectionChange: (ids: string[]) => void;
     onTagsChanged?: () => void;
     error?: string | null;
@@ -46,6 +48,7 @@
     description,
     priority,
     dueDate,
+    storyPoints,
     selectedTagIds,
     projectId,
     tags,
@@ -53,6 +56,7 @@
     onDescriptionChange,
     onPriorityChange,
     onDueDateChange,
+    onStoryPointsChange,
     onTagSelectionChange,
     onTagsChanged,
     error = null,
@@ -101,7 +105,7 @@
     onUpdate={onDescriptionChange}
   />
 
-  <div class="grid grid-cols-2 gap-4">
+  <div class="grid grid-cols-3 gap-4">
     <BitsSelect
       id="{idPrefix}priority"
       label="Priority"
@@ -121,6 +125,32 @@
       disabled={disabled}
       {readOnly}
     />
+
+    <div>
+      <label for="{idPrefix}storyPoints" class="block text-sm font-medium text-gray-700 mb-1">
+        Story Points
+      </label>
+      {#if readOnly}
+        <div class="py-2 px-3 bg-gray-50 rounded-md text-sm text-gray-700 min-h-[38px] flex items-center">
+          {storyPoints ?? '-'}
+        </div>
+      {:else}
+        <input
+          type="number"
+          id="{idPrefix}storyPoints"
+          value={storyPoints ?? ''}
+          oninput={(e) => {
+            const val = e.currentTarget.value;
+            onStoryPointsChange(val ? parseInt(val, 10) : null);
+          }}
+          min="0"
+          max="100"
+          placeholder="0"
+          {disabled}
+          class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:bg-gray-50 disabled:text-gray-500"
+        />
+      {/if}
+    </div>
   </div>
 
   <TagPicker

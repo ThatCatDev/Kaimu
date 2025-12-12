@@ -482,6 +482,40 @@ func CompleteSprint(ctx context.Context, rbacSvc rbacService.Service, sprintSvc 
 	return sprintToModel(sp), nil
 }
 
+// ReopenSprint reopens a closed sprint (sets status to future)
+func ReopenSprint(ctx context.Context, rbacSvc rbacService.Service, sprintSvc sprintService.Service, id string) (*model.Sprint, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return nil, ErrUnauthorized
+	}
+
+	sprintID, err := uuid.Parse(id)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get board to check permission
+	board, err := sprintSvc.GetBoard(ctx, sprintID)
+	if err != nil {
+		return nil, err
+	}
+
+	hasPermission, err := rbacSvc.HasBoardPermission(ctx, *userID, board.ID, "sprint:manage")
+	if err != nil {
+		return nil, err
+	}
+	if !hasPermission {
+		return nil, ErrUnauthorized
+	}
+
+	sp, err := sprintSvc.ReopenSprint(ctx, sprintID)
+	if err != nil {
+		return nil, err
+	}
+
+	return sprintToModel(sp), nil
+}
+
 // AddCardToSprint adds a card to a sprint (cards can be in multiple sprints)
 func AddCardToSprint(ctx context.Context, rbacSvc rbacService.Service, sprintSvc sprintService.Service, input model.MoveCardToSprintInput) (*model.Card, error) {
 	userID := middleware.GetUserIDFromContext(ctx)

@@ -26,6 +26,7 @@
     "@tiptap/starter-kit": "^3.13.0",
     "astro": "^5.16.4",
     "bits-ui": "^2.14.4",
+    "chart.js": "^4.5.1",
     "dompurify": "^3.3.1",
     "lowlight": "^3.3.0",
     "sswr": "^2.2.0",

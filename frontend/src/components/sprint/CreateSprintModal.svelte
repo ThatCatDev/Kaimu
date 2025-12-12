@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Modal, Button, Input, Textarea } from '../ui';
-  import { createSprint } from '../../lib/api/sprints';
+  import { createSprint, getSprints } from '../../lib/api/sprints';
   import { toast } from 'svelte-sonner';
 
   interface Props {
@@ -19,16 +19,61 @@
   let loading = $state(false);
   let error = $state<string | null>(null);
 
-  // Reset form when modal opens
+  // Try to guess the next sprint name from the previous sprint
+  function guessNextSprintName(previousName: string): string {
+    // Try to find a number at the end of the name
+    // e.g., "Sprint 1" -> "Sprint 2", "Week 10" -> "Week 11"
+    const endNumberMatch = previousName.match(/^(.+?)(\d+)$/);
+    if (endNumberMatch) {
+      const prefix = endNumberMatch[1];
+      const number = parseInt(endNumberMatch[2], 10);
+      return `${prefix}${number + 1}`;
+    }
+
+    // Try to find a number anywhere in the name
+    // e.g., "Sprint 1 - Q4" -> "Sprint 2 - Q4"
+    const anyNumberMatch = previousName.match(/^(.+?)(\d+)(.*)$/);
+    if (anyNumberMatch) {
+      const prefix = anyNumberMatch[1];
+      const number = parseInt(anyNumberMatch[2], 10);
+      const suffix = anyNumberMatch[3];
+      return `${prefix}${number + 1}${suffix}`;
+    }
+
+    // No number found, just append " 2"
+    return `${previousName} 2`;
+  }
+
+  // Reset form when modal opens and suggest next sprint name
   $effect(() => {
     if (open) {
-      name = '';
       goal = '';
       startDate = '';
       endDate = '';
       error = null;
+
+      // Fetch sprints to suggest next name
+      loadSuggestedName();
     }
   });
+
+  async function loadSuggestedName() {
+    try {
+      const sprints = await getSprints(boardId);
+      if (sprints.length > 0) {
+        // Sort by position (most recent/highest position first) or createdAt
+        const sortedSprints = [...sprints].sort((a, b) => b.position - a.position);
+        const lastSprint = sortedSprints[0];
+        name = guessNextSprintName(lastSprint.name);
+      } else {
+        // No sprints yet, suggest "Sprint 1"
+        name = 'Sprint 1';
+      }
+    } catch {
+      // If we can't fetch sprints, just leave the name empty
+      name = '';
+    }
+  }
 
   // Convert date string (YYYY-MM-DD) to RFC3339 format
   function toRFC3339(dateStr: string): string | undefined {

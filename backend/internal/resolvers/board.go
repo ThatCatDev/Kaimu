@@ -281,6 +281,9 @@ func UpdateColumn(ctx context.Context, rbacSvc rbacService.Service, boardSvc boa
 	} else if input.WipLimit != nil {
 		col.WipLimit = input.WipLimit
 	}
+	if input.IsDone != nil {
+		col.IsDone = *input.IsDone
+	}
 
 	updated, err := boardSvc.UpdateColumn(ctx, col)
 	if err != nil {
@@ -541,6 +544,11 @@ func boardToModel(b *board.Board) *model.Board {
 	}
 }
 
+// BoardToModel converts a board entity to a GraphQL model (exported for audit logging)
+func BoardToModel(b *board.Board) *model.Board {
+	return boardToModel(b)
+}
+
 func columnToModel(col *board_column.BoardColumn) *model.BoardColumn {
 	var color *string
 	if col.Color != "" {
@@ -552,6 +560,7 @@ func columnToModel(col *board_column.BoardColumn) *model.BoardColumn {
 		Position:  col.Position,
 		IsBacklog: col.IsBacklog,
 		IsHidden:  col.IsHidden,
+		IsDone:    col.IsDone,
 		Color:     color,
 		WipLimit:  col.WipLimit,
 		CreatedAt: col.CreatedAt,

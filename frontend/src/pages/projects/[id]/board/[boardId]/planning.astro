@@ -1,0 +1,23 @@
+---
+import Layout from '../../../../../layouts/Layout.astro';
+import AppShell from '../../../../../components/AppShell.svelte';
+import SprintPlanningView from '../../../../../components/sprint/SprintPlanningView.svelte';
+
+export const prerender = false;
+
+const { id: projectId, boardId } = Astro.params;
+const cardId = Astro.url.searchParams.get('card');
+---
+
+<Layout title="Sprint Planning - Kaimu">
+  <AppShell client:load currentPath={`/projects/${projectId}/board/${boardId}/planning`}>
+    <div class="h-full overflow-hidden">
+      <SprintPlanningView
+        client:load
+        boardId={boardId!}
+        projectId={projectId!}
+        initialCardId={cardId}
+      />
+    </div>
+  </AppShell>
+</Layout>

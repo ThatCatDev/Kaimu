@@ -26,6 +26,7 @@ type Card struct {
 	Priority    CardPriority `gorm:"type:card_priority;not null;default:'none'"`
 	AssigneeID  *uuid.UUID   `gorm:"type:uuid"`
 	DueDate     *time.Time   `gorm:"type:timestamptz"`
+	StoryPoints *int         `gorm:"type:integer"`
 	CreatedAt   time.Time    `gorm:"autoCreateTime"`
 	UpdatedAt   time.Time    `gorm:"autoUpdateTime"`
 	CreatedBy   *uuid.UUID   `gorm:"type:uuid"`

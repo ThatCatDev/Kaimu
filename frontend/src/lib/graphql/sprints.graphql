@@ -19,6 +19,7 @@ fragment CardFields on Card {
   position
   priority
   dueDate
+  storyPoints
   createdAt
   updatedAt
   assignee {
@@ -118,8 +119,8 @@ mutation StartSprint($id: ID!) {
   }
 }
 
-mutation CompleteSprint($id: ID!, $moveIncompleteToBacklog: Boolean) {
-  completeSprint(id: $id, moveIncompleteToBacklog: $moveIncompleteToBacklog) {
+mutation CompleteSprint($id: ID!, $moveIncompleteToNextSprint: Boolean) {
+  completeSprint(id: $id, moveIncompleteToNextSprint: $moveIncompleteToNextSprint) {
     ...SprintFields
   }
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/board"
+	boardColumn "github.com/thatcatdev/kaimu/backend/internal/db/repositories/board_column"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/card"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/sprint"
 	"github.com/thatcatdev/kaimu/backend/tracing"
@@ -23,6 +24,7 @@ var (
 	ErrSprintAlreadyClosed       = errors.New("sprint is already closed")
 	ErrCannotStartClosedSprint   = errors.New("cannot start a closed sprint")
 	ErrCannotCloseInactiveSprint = errors.New("can only close an active sprint")
+	ErrSprintNotClosed           = errors.New("can only reopen a closed sprint")
 )
 
 type UpdateSprintInput struct {
@@ -47,6 +49,7 @@ type Service interface {
 	// Sprint lifecycle operations
 	StartSprint(ctx context.Context, id uuid.UUID) (*sprint.Sprint, error)
 	CompleteSprint(ctx context.Context, id uuid.UUID, moveIncompleteToBacklog bool) (*sprint.Sprint, error)
+	ReopenSprint(ctx context.Context, id uuid.UUID) (*sprint.Sprint, error)
 
 	// Card-Sprint operations (many-to-many)
 	GetSprintCards(ctx context.Context, sprintID uuid.UUID) ([]*card.Card, error)
@@ -63,16 +66,18 @@ type Service interface {
 }
 
 type service struct {
-	sprintRepo sprint.Repository
-	cardRepo   card.Repository
-	boardRepo  board.Repository
+	sprintRepo      sprint.Repository
+	cardRepo        card.Repository
+	boardRepo       board.Repository
+	boardColumnRepo boardColumn.Repository
 }
 
-func NewService(sprintRepo sprint.Repository, cardRepo card.Repository, boardRepo board.Repository) Service {
+func NewService(sprintRepo sprint.Repository, cardRepo card.Repository, boardRepo board.Repository, boardColumnRepo boardColumn.Repository) Service {
 	return &service{
-		sprintRepo: sprintRepo,
-		cardRepo:   cardRepo,
-		boardRepo:  boardRepo,
+		sprintRepo:      sprintRepo,
+		cardRepo:        cardRepo,
+		boardRepo:       boardRepo,
+		boardColumnRepo: boardColumnRepo,
 	}
 }
 
@@ -310,7 +315,7 @@ func (s *service) StartSprint(ctx context.Context, id uuid.UUID) (*sprint.Sprint
 	return sp, nil
 }
 
-func (s *service) CompleteSprint(ctx context.Context, id uuid.UUID, moveIncompleteToBacklog bool) (*sprint.Sprint, error) {
+func (s *service) CompleteSprint(ctx context.Context, id uuid.UUID, moveIncompleteToNextSprint bool) (*sprint.Sprint, error) {
 	ctx, span := s.startServiceSpan(ctx, "CompleteSprint")
 	span.SetAttributes(attribute.String("sprint.id", id.String()))
 	defer span.End()
@@ -333,28 +338,79 @@ func (s *service) CompleteSprint(ctx context.Context, id uuid.UUID, moveIncomple
 		return nil, ErrCannotCloseInactiveSprint
 	}
 
-	// If moveIncompleteToBacklog is true, remove cards from this sprint
-	// (they may still be in other sprints if they carried over)
-	if moveIncompleteToBacklog {
-		cards, err := s.cardRepo.GetBySprintID(ctx, id)
+	// Get all cards in this sprint
+	cards, err := s.cardRepo.GetBySprintID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// If moveIncompleteToNextSprint is true, move incomplete cards to next sprint
+	if moveIncompleteToNextSprint && len(cards) > 0 {
+		// Get the next future sprint (if any)
+		futureSprints, err := s.sprintRepo.GetFutureByBoardID(ctx, sp.BoardID)
 		if err != nil {
 			return nil, err
 		}
 
+		var nextSprint *sprint.Sprint
+		if len(futureSprints) > 0 {
+			nextSprint = futureSprints[0] // First future sprint (sorted by position)
+		}
+
+		// For each card, check if it's in a "done" column
 		for _, c := range cards {
-			// Remove card from this sprint
-			if err := s.cardRepo.RemoveCardFromSprint(ctx, c.ID, id); err != nil {
-				return nil, err
+			// Get the card's column to check if it's marked as done
+			col, err := s.boardColumnRepo.GetByID(ctx, c.ColumnID)
+			if err != nil {
+				// If we can't get the column, skip this card
+				continue
+			}
+
+			// If the column is NOT a done column, add the card to the next sprint
+			if !col.IsDone && nextSprint != nil {
+				// Add card to next sprint (it stays in closed sprint for history)
+				if err := s.cardRepo.AddCardToSprint(ctx, c.ID, nextSprint.ID); err != nil {
+					// Log error but continue - don't fail the whole operation
+					continue
+				}
 			}
 		}
 	}
 
-	// Close the sprint
+	// Close the sprint (all cards remain in it for historical tracking)
 	sp.Status = sprint.SprintStatusClosed
 	if sp.EndDate == nil {
 		now := time.Now()
 		sp.EndDate = &now
 	}
+
+	if err := s.sprintRepo.Update(ctx, sp); err != nil {
+		return nil, err
+	}
+
+	return sp, nil
+}
+
+func (s *service) ReopenSprint(ctx context.Context, id uuid.UUID) (*sprint.Sprint, error) {
+	ctx, span := s.startServiceSpan(ctx, "ReopenSprint")
+	span.SetAttributes(attribute.String("sprint.id", id.String()))
+	defer span.End()
+
+	sp, err := s.sprintRepo.GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrSprintNotFound
+		}
+		return nil, err
+	}
+
+	// Only closed sprints can be reopened
+	if sp.Status != sprint.SprintStatusClosed {
+		return nil, ErrSprintNotClosed
+	}
+
+	// Reopen the sprint (set to future status)
+	sp.Status = sprint.SprintStatusFuture
 
 	if err := s.sprintRepo.Update(ctx, sp); err != nil {
 		return nil, err

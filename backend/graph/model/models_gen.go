@@ -15,6 +15,43 @@ type AssignProjectRoleInput struct {
 	RoleID    *string `json:"roleId,omitempty"`
 }
 
+type AuditEvent struct {
+	ID           string          `json:"id"`
+	OccurredAt   time.Time       `json:"occurredAt"`
+	Actor        *User           `json:"actor,omitempty"`
+	Action       AuditAction     `json:"action"`
+	EntityType   AuditEntityType `json:"entityType"`
+	EntityID     string          `json:"entityId"`
+	Organization *Organization   `json:"organization,omitempty"`
+	Project      *Project        `json:"project,omitempty"`
+	Board        *Board          `json:"board,omitempty"`
+	StateBefore  *string         `json:"stateBefore,omitempty"`
+	StateAfter   *string         `json:"stateAfter,omitempty"`
+	Metadata     *string         `json:"metadata,omitempty"`
+	IPAddress    *string         `json:"ipAddress,omitempty"`
+	UserAgent    *string         `json:"userAgent,omitempty"`
+	TraceID      *string         `json:"traceId,omitempty"`
+}
+
+type AuditEventConnection struct {
+	Edges      []*AuditEventEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+	TotalCount int               `json:"totalCount"`
+}
+
+type AuditEventEdge struct {
+	Node   *AuditEvent `json:"node"`
+	Cursor string      `json:"cursor"`
+}
+
+type AuditFilters struct {
+	Actions     []AuditAction     `json:"actions,omitempty"`
+	EntityTypes []AuditEntityType `json:"entityTypes,omitempty"`
+	ActorID     *string           `json:"actorId,omitempty"`
+	StartDate   *time.Time        `json:"startDate,omitempty"`
+	EndDate     *time.Time        `json:"endDate,omitempty"`
+}
+
 type AuthPayload struct {
 	User *User `json:"user"`
 }
@@ -39,11 +76,30 @@ type BoardColumn struct {
 	Position  int       `json:"position"`
 	IsBacklog bool      `json:"isBacklog"`
 	IsHidden  bool      `json:"isHidden"`
+	IsDone    bool      `json:"isDone"`
 	Color     *string   `json:"color,omitempty"`
 	WipLimit  *int      `json:"wipLimit,omitempty"`
 	Cards     []*Card   `json:"cards"`
 	CreatedAt time.Time `json:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt"`
+}
+
+type BurnDownData struct {
+	SprintID   string       `json:"sprintId"`
+	SprintName string       `json:"sprintName"`
+	StartDate  time.Time    `json:"startDate"`
+	EndDate    time.Time    `json:"endDate"`
+	IdealLine  []*DataPoint `json:"idealLine"`
+	ActualLine []*DataPoint `json:"actualLine"`
+}
+
+type BurnUpData struct {
+	SprintID   string       `json:"sprintId"`
+	SprintName string       `json:"sprintName"`
+	StartDate  time.Time    `json:"startDate"`
+	EndDate    time.Time    `json:"endDate"`
+	ScopeLine  []*DataPoint `json:"scopeLine"`
+	DoneLine   []*DataPoint `json:"doneLine"`
 }
 
 type Card struct {
@@ -58,6 +114,7 @@ type Card struct {
 	Assignee    *User        `json:"assignee,omitempty"`
 	Tags        []*Tag       `json:"tags"`
 	DueDate     *time.Time   `json:"dueDate,omitempty"`
+	StoryPoints *int         `json:"storyPoints,omitempty"`
 	CreatedAt   time.Time    `json:"createdAt"`
 	UpdatedAt   time.Time    `json:"updatedAt"`
 	CreatedBy   *User        `json:"createdBy,omitempty"`
@@ -66,6 +123,13 @@ type Card struct {
 type ChangeMemberRoleInput struct {
 	UserID string `json:"userId"`
 	RoleID string `json:"roleId"`
+}
+
+type ColumnFlowData struct {
+	ColumnID   string `json:"columnId"`
+	ColumnName string `json:"columnName"`
+	Color      string `json:"color"`
+	Values     []int  `json:"values"`
 }
 
 type CreateBoardInput struct {
@@ -82,6 +146,7 @@ type CreateCardInput struct {
 	AssigneeID  *string       `json:"assigneeId,omitempty"`
 	TagIds      []string      `json:"tagIds,omitempty"`
 	DueDate     *time.Time    `json:"dueDate,omitempty"`
+	StoryPoints *int          `json:"storyPoints,omitempty"`
 }
 
 type CreateColumnInput struct {
@@ -122,6 +187,18 @@ type CreateTagInput struct {
 	Name        string  `json:"name"`
 	Color       string  `json:"color"`
 	Description *string `json:"description,omitempty"`
+}
+
+type CumulativeFlowData struct {
+	SprintID   string            `json:"sprintId"`
+	SprintName string            `json:"sprintName"`
+	Columns    []*ColumnFlowData `json:"columns"`
+	Dates      []*time.Time      `json:"dates"`
+}
+
+type DataPoint struct {
+	Date  time.Time `json:"date"`
+	Value float64   `json:"value"`
 }
 
 type Invitation struct {
@@ -293,6 +370,22 @@ type SprintEdge struct {
 	Cursor string  `json:"cursor"`
 }
 
+type SprintStats struct {
+	TotalCards           int `json:"totalCards"`
+	CompletedCards       int `json:"completedCards"`
+	TotalStoryPoints     int `json:"totalStoryPoints"`
+	CompletedStoryPoints int `json:"completedStoryPoints"`
+	DaysRemaining        int `json:"daysRemaining"`
+	DaysElapsed          int `json:"daysElapsed"`
+}
+
+type SprintVelocity struct {
+	SprintID        string `json:"sprintId"`
+	SprintName      string `json:"sprintName"`
+	CompletedCards  int    `json:"completedCards"`
+	CompletedPoints int    `json:"completedPoints"`
+}
+
 type Tag struct {
 	ID          string    `json:"id"`
 	Project     *Project  `json:"project"`
@@ -309,15 +402,17 @@ type UpdateBoardInput struct {
 }
 
 type UpdateCardInput struct {
-	ID            string        `json:"id"`
-	Title         *string       `json:"title,omitempty"`
-	Description   *string       `json:"description,omitempty"`
-	Priority      *CardPriority `json:"priority,omitempty"`
-	AssigneeID    *string       `json:"assigneeId,omitempty"`
-	ClearAssignee *bool         `json:"clearAssignee,omitempty"`
-	TagIds        []string      `json:"tagIds,omitempty"`
-	DueDate       *time.Time    `json:"dueDate,omitempty"`
-	ClearDueDate  *bool         `json:"clearDueDate,omitempty"`
+	ID               string        `json:"id"`
+	Title            *string       `json:"title,omitempty"`
+	Description      *string       `json:"description,omitempty"`
+	Priority         *CardPriority `json:"priority,omitempty"`
+	AssigneeID       *string       `json:"assigneeId,omitempty"`
+	ClearAssignee    *bool         `json:"clearAssignee,omitempty"`
+	TagIds           []string      `json:"tagIds,omitempty"`
+	DueDate          *time.Time    `json:"dueDate,omitempty"`
+	ClearDueDate     *bool         `json:"clearDueDate,omitempty"`
+	StoryPoints      *int          `json:"storyPoints,omitempty"`
+	ClearStoryPoints *bool         `json:"clearStoryPoints,omitempty"`
 }
 
 type UpdateColumnInput struct {
@@ -326,6 +421,7 @@ type UpdateColumnInput struct {
 	Color         *string `json:"color,omitempty"`
 	WipLimit      *int    `json:"wipLimit,omitempty"`
 	ClearWipLimit *bool   `json:"clearWipLimit,omitempty"`
+	IsDone        *bool   `json:"isDone,omitempty"`
 }
 
 type UpdateMeInput struct {
@@ -377,6 +473,140 @@ type User struct {
 	CreatedAt     time.Time `json:"createdAt"`
 }
 
+type VelocityData struct {
+	Sprints []*SprintVelocity `json:"sprints"`
+}
+
+type AuditAction string
+
+const (
+	AuditActionCreated                 AuditAction = "CREATED"
+	AuditActionUpdated                 AuditAction = "UPDATED"
+	AuditActionDeleted                 AuditAction = "DELETED"
+	AuditActionCardMoved               AuditAction = "CARD_MOVED"
+	AuditActionCardAssigned            AuditAction = "CARD_ASSIGNED"
+	AuditActionCardUnassigned          AuditAction = "CARD_UNASSIGNED"
+	AuditActionSprintStarted           AuditAction = "SPRINT_STARTED"
+	AuditActionSprintCompleted         AuditAction = "SPRINT_COMPLETED"
+	AuditActionCardAddedToSprint       AuditAction = "CARD_ADDED_TO_SPRINT"
+	AuditActionCardRemovedFromSprint   AuditAction = "CARD_REMOVED_FROM_SPRINT"
+	AuditActionMemberInvited           AuditAction = "MEMBER_INVITED"
+	AuditActionMemberJoined            AuditAction = "MEMBER_JOINED"
+	AuditActionMemberRemoved           AuditAction = "MEMBER_REMOVED"
+	AuditActionMemberRoleChanged       AuditAction = "MEMBER_ROLE_CHANGED"
+	AuditActionColumnReordered         AuditAction = "COLUMN_REORDERED"
+	AuditActionColumnVisibilityToggled AuditAction = "COLUMN_VISIBILITY_TOGGLED"
+	AuditActionUserLoggedIn            AuditAction = "USER_LOGGED_IN"
+	AuditActionUserLoggedOut           AuditAction = "USER_LOGGED_OUT"
+)
+
+var AllAuditAction = []AuditAction{
+	AuditActionCreated,
+	AuditActionUpdated,
+	AuditActionDeleted,
+	AuditActionCardMoved,
+	AuditActionCardAssigned,
+	AuditActionCardUnassigned,
+	AuditActionSprintStarted,
+	AuditActionSprintCompleted,
+	AuditActionCardAddedToSprint,
+	AuditActionCardRemovedFromSprint,
+	AuditActionMemberInvited,
+	AuditActionMemberJoined,
+	AuditActionMemberRemoved,
+	AuditActionMemberRoleChanged,
+	AuditActionColumnReordered,
+	AuditActionColumnVisibilityToggled,
+	AuditActionUserLoggedIn,
+	AuditActionUserLoggedOut,
+}
+
+func (e AuditAction) IsValid() bool {
+	switch e {
+	case AuditActionCreated, AuditActionUpdated, AuditActionDeleted, AuditActionCardMoved, AuditActionCardAssigned, AuditActionCardUnassigned, AuditActionSprintStarted, AuditActionSprintCompleted, AuditActionCardAddedToSprint, AuditActionCardRemovedFromSprint, AuditActionMemberInvited, AuditActionMemberJoined, AuditActionMemberRemoved, AuditActionMemberRoleChanged, AuditActionColumnReordered, AuditActionColumnVisibilityToggled, AuditActionUserLoggedIn, AuditActionUserLoggedOut:
+		return true
+	}
+	return false
+}
+
+func (e AuditAction) String() string {
+	return string(e)
+}
+
+func (e *AuditAction) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AuditAction(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AuditAction", str)
+	}
+	return nil
+}
+
+func (e AuditAction) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type AuditEntityType string
+
+const (
+	AuditEntityTypeUser         AuditEntityType = "USER"
+	AuditEntityTypeOrganization AuditEntityType = "ORGANIZATION"
+	AuditEntityTypeProject      AuditEntityType = "PROJECT"
+	AuditEntityTypeBoard        AuditEntityType = "BOARD"
+	AuditEntityTypeBoardColumn  AuditEntityType = "BOARD_COLUMN"
+	AuditEntityTypeCard         AuditEntityType = "CARD"
+	AuditEntityTypeSprint       AuditEntityType = "SPRINT"
+	AuditEntityTypeTag          AuditEntityType = "TAG"
+	AuditEntityTypeRole         AuditEntityType = "ROLE"
+	AuditEntityTypeInvitation   AuditEntityType = "INVITATION"
+)
+
+var AllAuditEntityType = []AuditEntityType{
+	AuditEntityTypeUser,
+	AuditEntityTypeOrganization,
+	AuditEntityTypeProject,
+	AuditEntityTypeBoard,
+	AuditEntityTypeBoardColumn,
+	AuditEntityTypeCard,
+	AuditEntityTypeSprint,
+	AuditEntityTypeTag,
+	AuditEntityTypeRole,
+	AuditEntityTypeInvitation,
+}
+
+func (e AuditEntityType) IsValid() bool {
+	switch e {
+	case AuditEntityTypeUser, AuditEntityTypeOrganization, AuditEntityTypeProject, AuditEntityTypeBoard, AuditEntityTypeBoardColumn, AuditEntityTypeCard, AuditEntityTypeSprint, AuditEntityTypeTag, AuditEntityTypeRole, AuditEntityTypeInvitation:
+		return true
+	}
+	return false
+}
+
+func (e AuditEntityType) String() string {
+	return string(e)
+}
+
+func (e *AuditEntityType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = AuditEntityType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid AuditEntityType", str)
+	}
+	return nil
+}
+
+func (e AuditEntityType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type CardPriority string
 
 const (
@@ -421,6 +651,47 @@ func (e *CardPriority) UnmarshalGQL(v interface{}) error {
 }
 
 func (e CardPriority) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type MetricMode string
+
+const (
+	MetricModeCardCount   MetricMode = "CARD_COUNT"
+	MetricModeStoryPoints MetricMode = "STORY_POINTS"
+)
+
+var AllMetricMode = []MetricMode{
+	MetricModeCardCount,
+	MetricModeStoryPoints,
+}
+
+func (e MetricMode) IsValid() bool {
+	switch e {
+	case MetricModeCardCount, MetricModeStoryPoints:
+		return true
+	}
+	return false
+}
+
+func (e MetricMode) String() string {
+	return string(e)
+}
+
+func (e *MetricMode) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = MetricMode(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid MetricMode", str)
+	}
+	return nil
+}
+
+func (e MetricMode) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 

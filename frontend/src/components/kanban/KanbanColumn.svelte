@@ -13,6 +13,7 @@
     onRename?: () => void;
     onEditColor?: () => void;
     onEditWipLimit?: () => void;
+    onEditIsDone?: () => void;
     onToggleVisibility?: () => void;
     onDelete?: () => void;
     onQuickDelete?: (card: BoardCard) => void;
@@ -33,6 +34,7 @@
     onRename,
     onEditColor,
     onEditWipLimit,
+    onEditIsDone,
     onToggleVisibility,
     onDelete,
     onQuickDelete,
@@ -95,6 +97,7 @@
         onRename={onRename ?? (() => {})}
         onEditColor={onEditColor ?? (() => {})}
         onEditWipLimit={onEditWipLimit ?? (() => {})}
+        onEditIsDone={onEditIsDone ?? (() => {})}
         onToggleVisibility={onToggleVisibility ?? (() => {})}
         onDelete={onDelete ?? (() => {})}
       />

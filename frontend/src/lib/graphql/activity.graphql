@@ -1,0 +1,102 @@
+# Activity/Audit queries
+
+fragment AuditEventFields on AuditEvent {
+  id
+  occurredAt
+  action
+  entityType
+  entityId
+  stateBefore
+  stateAfter
+  metadata
+  actor {
+    id
+    username
+    displayName
+    avatarUrl
+  }
+  organization {
+    id
+    name
+  }
+  project {
+    id
+    name
+  }
+  board {
+    id
+    name
+  }
+}
+
+query GetOrganizationActivity($organizationId: ID!, $first: Int, $after: String, $filters: AuditFilters) {
+  organizationActivity(organizationId: $organizationId, first: $first, after: $after, filters: $filters) {
+    edges {
+      node {
+        ...AuditEventFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query GetProjectActivity($projectId: ID!, $first: Int, $after: String) {
+  projectActivity(projectId: $projectId, first: $first, after: $after) {
+    edges {
+      node {
+        ...AuditEventFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query GetBoardActivity($boardId: ID!, $first: Int, $after: String) {
+  boardActivity(boardId: $boardId, first: $first, after: $after) {
+    edges {
+      node {
+        ...AuditEventFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+query GetEntityHistory($entityType: AuditEntityType!, $entityId: ID!, $first: Int, $after: String) {
+  entityHistory(entityType: $entityType, entityId: $entityId, first: $first, after: $after) {
+    edges {
+      node {
+        ...AuditEventFields
+      }
+      cursor
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}

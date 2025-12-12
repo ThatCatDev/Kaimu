@@ -40,7 +40,7 @@
   async function loadData() {
     try {
       loading = true;
-      const [active, future, closed, backlog] = await Promise.all([
+      const [active, future, closedResult, backlog] = await Promise.all([
         getActiveSprint(boardId),
         getFutureSprints(boardId),
         getClosedSprints(boardId),
@@ -48,7 +48,7 @@
       ]);
       activeSprint = active;
       futureSprints = future;
-      closedSprints = closed;
+      closedSprints = closedResult.sprints;
       backlogCards = backlog;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'Failed to load sprint data';

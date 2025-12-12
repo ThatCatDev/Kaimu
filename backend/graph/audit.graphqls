@@ -1,0 +1,90 @@
+# Audit Event Types
+
+enum AuditAction {
+    CREATED
+    UPDATED
+    DELETED
+    CARD_MOVED
+    CARD_ASSIGNED
+    CARD_UNASSIGNED
+    SPRINT_STARTED
+    SPRINT_COMPLETED
+    CARD_ADDED_TO_SPRINT
+    CARD_REMOVED_FROM_SPRINT
+    MEMBER_INVITED
+    MEMBER_JOINED
+    MEMBER_REMOVED
+    MEMBER_ROLE_CHANGED
+    COLUMN_REORDERED
+    COLUMN_VISIBILITY_TOGGLED
+    USER_LOGGED_IN
+    USER_LOGGED_OUT
+}
+
+enum AuditEntityType {
+    USER
+    ORGANIZATION
+    PROJECT
+    BOARD
+    BOARD_COLUMN
+    CARD
+    SPRINT
+    TAG
+    ROLE
+    INVITATION
+}
+
+type AuditEvent {
+    id: ID!
+    occurredAt: Time!
+    actor: User
+    action: AuditAction!
+    entityType: AuditEntityType!
+    entityId: ID!
+    organization: Organization
+    project: Project
+    board: Board
+    stateBefore: String
+    stateAfter: String
+    metadata: String
+    ipAddress: String
+    userAgent: String
+    traceId: String
+}
+
+type AuditEventConnection {
+    edges: [AuditEventEdge!]!
+    pageInfo: PageInfo!
+    totalCount: Int!
+}
+
+type AuditEventEdge {
+    node: AuditEvent!
+    cursor: String!
+}
+
+input AuditFilters {
+    actions: [AuditAction!]
+    entityTypes: [AuditEntityType!]
+    actorId: ID
+    startDate: Time
+    endDate: Time
+}
+
+extend type Query {
+    # Activity feeds
+    "Get activity feed for an organization"
+    organizationActivity(organizationId: ID!, first: Int, after: String, filters: AuditFilters): AuditEventConnection!
+    "Get activity feed for a project"
+    projectActivity(projectId: ID!, first: Int, after: String): AuditEventConnection!
+    "Get activity feed for a board"
+    boardActivity(boardId: ID!, first: Int, after: String): AuditEventConnection!
+
+    # Entity history
+    "Get history for a specific entity"
+    entityHistory(entityType: AuditEntityType!, entityId: ID!, first: Int, after: String): AuditEventConnection!
+
+    # User activity
+    "Get activity by a specific user"
+    userActivity(userId: ID!, first: Int, after: String): AuditEventConnection!
+}

@@ -7,11 +7,12 @@
     onRename: () => void;
     onEditColor: () => void;
     onEditWipLimit: () => void;
+    onEditIsDone: () => void;
     onToggleVisibility: () => void;
     onDelete: () => void;
   }
 
-  let { column, onRename, onEditColor, onEditWipLimit, onToggleVisibility, onDelete }: Props = $props();
+  let { column, onRename, onEditColor, onEditWipLimit, onEditIsDone, onToggleVisibility, onDelete }: Props = $props();
 
   let open = $state(false);
 
@@ -70,6 +71,17 @@
       Set WIP Limit
     </button>
 
+    <button
+      type="button"
+      class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+      onclick={() => handleAction(onEditIsDone)}
+    >
+      <svg class="w-4 h-4 {column.isDone ? 'text-green-500' : 'text-gray-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      {column.isDone ? 'Done Column' : 'Mark as Done'}
+    </button>
+
     <div class="border-t border-gray-100 my-1"></div>
 
     <button
@@ -91,17 +103,19 @@
       {/if}
     </button>
 
-    <div class="border-t border-gray-100 my-1"></div>
+    {#if !column.isBacklog}
+      <div class="border-t border-gray-100 my-1"></div>
 
-    <button
-      type="button"
-      class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
-      onclick={() => handleAction(onDelete)}
-    >
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-      </svg>
-      Delete Column
-    </button>
+      <button
+        type="button"
+        class="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+        onclick={() => handleAction(onDelete)}
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        Delete Column
+      </button>
+    {/if}
   </Popover.Content>
 </Popover.Root>

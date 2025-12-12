@@ -286,15 +286,12 @@ test.describe('Card Sprint Assignment', () => {
     // Find the Sprints section in the dialog and click on the active sprint
     const dialog = page.getByRole('dialog');
     await expect(dialog.getByText('Sprints', { exact: true })).toBeVisible({ timeout: 5000 });
-    await dialog.getByRole('button', { name: `Active Sprint ${ctx.testId}` }).click();
-
-    // Wait for save
-    await expect(page.getByText('Saving...')).toBeVisible({ timeout: 2000 });
-    await expect(page.getByText('Saving...')).not.toBeVisible({ timeout: 5000 });
-
-    // Verify the sprint is now selected (has checkmark styling)
     const sprintButton = dialog.getByRole('button', { name: `Active Sprint ${ctx.testId}` });
-    await expect(sprintButton).toHaveClass(/bg-indigo-50/);
+    await sprintButton.click();
+
+    // Wait for the sprint to be selected (class changes to bg-indigo-50 when selected)
+    // The save happens in the background, we verify selection state directly
+    await expect(sprintButton).toHaveClass(/bg-indigo-50/, { timeout: 10000 });
 
     // Close the modal
     await page.getByRole('button', { name: 'Close' }).click();
@@ -599,6 +596,133 @@ test.describe('Closed Sprint Pagination', () => {
     await expect(dialog.getByRole('button', { name: /Show \d+ more loaded/i })).toBeVisible({ timeout: 3000 });
 
     // Close the modal
+    await page.getByRole('button', { name: 'Close' }).click();
+  });
+});
+
+test.describe('Backlog Functionality', () => {
+
+  test('moving card to backlog removes from sprint', async ({ page }) => {
+    const ctx = await setupTestEnvironment(page, 'backlog');
+    await navigateToBoard(page, ctx.projectId);
+
+    // Create and start a sprint
+    await createSprint(page, `Backlog Sprint ${ctx.testId}`);
+    await startSprint(page, `Backlog Sprint ${ctx.testId}`);
+
+    // Create a card in Todo
+    await createCard(page, 'Todo', `Backlog Test Card ${ctx.testId}`);
+
+    // Open card detail and assign to sprint
+    await page.getByText(`Backlog Test Card ${ctx.testId}`).click();
+    await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
+
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: `Backlog Sprint ${ctx.testId}` }).click();
+    await page.waitForTimeout(500);
+
+    // Close the dialog
+    await page.getByRole('button', { name: 'Close' }).click();
+    await expect(dialog).not.toBeVisible({ timeout: 5000 });
+
+    // Show backlog column - click the "Show hidden columns" checkbox/label
+    const showHiddenLabel = page.getByText('Show hidden columns');
+    await expect(showHiddenLabel).toBeVisible({ timeout: 10000 });
+    await showHiddenLabel.click();
+    await page.waitForTimeout(1000);
+
+    // Find the Backlog column
+    const backlogColumn = page.locator('.w-72').filter({ hasText: 'Backlog' }).first();
+    await expect(backlogColumn).toBeVisible({ timeout: 10000 });
+
+    // Drag the card to backlog column
+    const cardElement = page.getByText(`Backlog Test Card ${ctx.testId}`);
+    await cardElement.dragTo(backlogColumn);
+
+    // Wait for the drag operation to complete
+    await page.waitForTimeout(1000);
+
+    // Open the card again and verify it's no longer in the sprint
+    await page.getByText(`Backlog Test Card ${ctx.testId}`).click();
+    await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
+
+    // The sprint button should NOT be selected (no bg-indigo-50 class)
+    const sprintButton = page.getByRole('dialog').getByRole('button', { name: `Backlog Sprint ${ctx.testId}` });
+    await expect(sprintButton).not.toHaveClass(/bg-indigo-50/);
+
+    // Close dialog
+    await page.getByRole('button', { name: 'Close' }).click();
+  });
+
+  test('cannot delete backlog column', async ({ page }) => {
+    const ctx = await setupTestEnvironment(page, 'backlog');
+    await navigateToBoard(page, ctx.projectId);
+
+    // Show hidden columns - it's a checkbox labeled "Show hidden columns"
+    const showHiddenLabel = page.getByText('Show hidden columns');
+    await expect(showHiddenLabel).toBeVisible({ timeout: 10000 });
+    await showHiddenLabel.click();
+    await page.waitForTimeout(1000);
+
+    // Find the Backlog column by looking for the h3 with text "Backlog"
+    const backlogHeader = page.locator('h3').filter({ hasText: 'Backlog' });
+    await expect(backlogHeader).toBeVisible({ timeout: 10000 });
+
+    // Get the parent column container (go up the DOM tree)
+    const backlogColumn = page.locator('.w-72').filter({ hasText: 'Backlog' }).first();
+
+    // Click the column settings button (look for the three-dot menu)
+    const settingsButton = backlogColumn.locator('button[title="Column settings"]');
+    await expect(settingsButton).toBeVisible({ timeout: 5000 });
+    await settingsButton.click();
+
+    // Wait for the popover/menu to appear
+    await page.waitForTimeout(500);
+
+    // The "Delete Column" option should NOT be visible for backlog columns
+    const deleteOption = page.getByText('Delete Column');
+    await expect(deleteOption).not.toBeVisible({ timeout: 3000 });
+
+    // Close the menu by pressing Escape
+    await page.keyboard.press('Escape');
+  });
+});
+
+test.describe('Story Points', () => {
+
+  test('can add story points to a card', async ({ page }) => {
+    const ctx = await setupTestEnvironment(page, 'points');
+    await navigateToBoard(page, ctx.projectId);
+
+    // Create a card
+    await createCard(page, 'Todo', `Story Points Card ${ctx.testId}`);
+
+    // Open card detail
+    await page.getByText(`Story Points Card ${ctx.testId}`).click();
+    await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
+
+    // Find and fill the story points input using the ID pattern (label and input are siblings)
+    const storyPointsInput = page.locator('input[id$="storyPoints"]');
+    await expect(storyPointsInput).toBeVisible({ timeout: 5000 });
+    await storyPointsInput.fill('5');
+
+    // Wait for auto-save (800ms debounce + API call time)
+    // The save may happen quickly, so just wait for enough time to complete
+    await page.waitForTimeout(2000);
+
+    // Close and reopen to verify save
+    await page.getByRole('button', { name: 'Close' }).click();
+    await page.waitForTimeout(500);
+
+    // Reopen and verify value persisted
+    await page.getByText(`Story Points Card ${ctx.testId}`).click();
+    await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
+
+    // Get the story points value displayed using the ID pattern
+    const storyPointsInputReopened = page.locator('input[id$="storyPoints"]');
+    const value = await storyPointsInputReopened.inputValue();
+    expect(value).toBe('5');
+
     await page.getByRole('button', { name: 'Close' }).click();
   });
 });

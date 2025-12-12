@@ -36,6 +36,7 @@ import (
 	"github.com/thatcatdev/kaimu/backend/internal/services/search"
 	tagService "github.com/thatcatdev/kaimu/backend/internal/services/tag"
 	"github.com/typesense/typesense-go/v2/typesense"
+	"github.com/typesense/typesense-go/v2/typesense/api"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -307,8 +308,8 @@ func (s *SearchTestServer) cleanup() {
 	collections := []string{"organizations", "users", "projects", "boards", "cards"}
 	for _, col := range collections {
 		// Delete all documents from collection
-		s.tsClient.Collection(col).Documents().Delete(ctx, &typesense.DeleteDocumentsParams{
-			FilterBy: "id:!=''",
+		s.tsClient.Collection(col).Documents().Delete(ctx, &api.DeleteDocumentsParams{
+			FilterBy: strPtr("id:!=''"),
 		})
 	}
 }
@@ -974,4 +975,9 @@ func TestSearchIntegration_SearchWithLimit(t *testing.T) {
 	// TotalCount should be 5 (all matching), but results should be limited to 2
 	assert.Equal(t, 5, searchData.Search.TotalCount, "Total count should include all matching cards")
 	assert.LessOrEqual(t, len(searchData.Search.Results), 2, "Results should be limited to 2")
+}
+
+// Helper function to create a string pointer
+func strPtr(s string) *string {
+	return &s
 }

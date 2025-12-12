@@ -4,15 +4,19 @@
   import { toast } from 'svelte-sonner';
   import { Button } from '../ui';
   import CreateSprintModal from './CreateSprintModal.svelte';
+  import EditSprintModal from './EditSprintModal.svelte';
+  import CompleteSprintModal from './CompleteSprintModal.svelte';
   import {
     getActiveSprint,
     getFutureSprints,
     getClosedSprints,
+    getSprintCards,
     startSprint,
-    completeSprint,
+    reopenSprint,
     updateSprint,
     type SprintData,
   } from '../../lib/api/sprints';
+  import { getBoard } from '../../lib/api/boards';
 
   interface Props {
     boardId: string;
@@ -29,6 +33,10 @@
   let loading = $state(true);
   let open = $state(false);
   let showCreateModal = $state(false);
+  let showEditModal = $state(false);
+  let showCompleteModal = $state(false);
+  let incompleteCardCount = $state(0);
+  let editingSprint = $state<SprintData | null>(null);
   let actionLoading = $state(false);
   let editingSprintId = $state<string | null>(null);
   let editingName = $state('');
@@ -94,15 +102,56 @@
 
   async function handleCompleteSprint() {
     if (!activeSprint) return;
+
     try {
       actionLoading = true;
-      await completeSprint(activeSprint.id, true);
-      toast.success(`Completed ${activeSprint.name}`);
+
+      // Calculate incomplete card count
+      const [sprintCards, board] = await Promise.all([
+        getSprintCards(activeSprint.id),
+        getBoard(boardId),
+      ]);
+
+      if (board) {
+        // Get done column IDs
+        const doneColumnIds = new Set(
+          board.columns.filter(col => col.isDone).map(col => col.id)
+        );
+
+        // Count cards not in done columns
+        incompleteCardCount = sprintCards.filter(card =>
+          card.column && !doneColumnIds.has(card.column.id)
+        ).length;
+      } else {
+        incompleteCardCount = 0;
+      }
+
+      // Open the complete sprint modal
       open = false;
+      showCompleteModal = true;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to load sprint data';
+      toast.error(message);
+    } finally {
+      actionLoading = false;
+    }
+  }
+
+  async function handleSprintCompleted() {
+    showCompleteModal = false;
+    await loadSprints();
+    onSprintChange?.();
+  }
+
+  async function handleReopenSprint(sprint: SprintData) {
+    try {
+      actionLoading = true;
+      await reopenSprint(sprint.id);
+      toast.success(`Reopened ${sprint.name}`);
       await loadSprints();
       onSprintChange?.();
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Failed to complete sprint';
+      const message = e instanceof Error ? e.message : 'Failed to reopen sprint';
       toast.error(message);
     } finally {
       actionLoading = false;
@@ -154,6 +203,24 @@
     } else if (e.key === 'Escape') {
       cancelEditing();
     }
+  }
+
+  function openEditModal(sprint: SprintData, e: Event) {
+    e.stopPropagation();
+    editingSprint = sprint;
+    showEditModal = true;
+  }
+
+  function handleSprintUpdated(updated: SprintData) {
+    // Update the sprint in the appropriate list
+    if (activeSprint?.id === updated.id) {
+      activeSprint = updated;
+    }
+    futureSprints = futureSprints.map(s => s.id === updated.id ? updated : s);
+    closedSprints = closedSprints.map(s => s.id === updated.id ? updated : s);
+    showEditModal = false;
+    editingSprint = null;
+    onSprintChange?.();
   }
 
   function formatDateRange(sprint: SprintData): string {
@@ -212,6 +279,7 @@
     <div class="max-h-80 overflow-y-auto">
       <!-- Active Sprint -->
       {#if activeSprint}
+        {@const sprint = activeSprint}
         <div class="p-3 bg-green-50 border-b border-gray-100">
           <div class="flex items-start justify-between gap-2">
             <div class="flex-1 min-w-0">
@@ -219,31 +287,41 @@
                 <span class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                   Active
                 </span>
-                {#if editingSprintId === activeSprint.id}
+                {#if editingSprintId === sprint.id}
                   <input
                     type="text"
                     bind:value={editingName}
-                    onkeydown={(e) => handleEditKeydown(e, activeSprint.id)}
-                    onblur={() => saveSprintName(activeSprint.id)}
+                    onkeydown={(e) => handleEditKeydown(e, sprint.id)}
+                    onblur={() => saveSprintName(sprint.id)}
                     class="text-sm font-medium text-gray-900 border border-gray-300 rounded px-1.5 py-0.5 w-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
                     autofocus
                   />
                 {:else}
                   <button
                     type="button"
-                    onclick={(e) => startEditingSprint(activeSprint, e)}
+                    onclick={(e) => startEditingSprint(sprint, e)}
                     class="text-sm font-medium text-gray-900 truncate hover:text-indigo-600 text-left"
                     title="Click to rename"
                   >
-                    {activeSprint.name}
+                    {sprint.name}
                   </button>
                 {/if}
+                <button
+                  type="button"
+                  onclick={(e) => openEditModal(sprint, e)}
+                  class="p-0.5 text-gray-400 hover:text-gray-600 rounded"
+                  title="Edit sprint details"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
               </div>
-              {#if activeSprint.goal}
-                <p class="text-xs text-gray-600 mt-1 line-clamp-2">{activeSprint.goal}</p>
+              {#if sprint.goal}
+                <p class="text-xs text-gray-600 mt-1 line-clamp-2">{sprint.goal}</p>
               {/if}
-              {#if formatDateRange(activeSprint)}
-                <p class="text-xs text-gray-500 mt-1">{formatDateRange(activeSprint)}</p>
+              {#if formatDateRange(sprint)}
+                <p class="text-xs text-gray-500 mt-1">{formatDateRange(sprint)}</p>
               {/if}
             </div>
             <Button
@@ -268,25 +346,37 @@
             <div class="px-3 py-2 hover:bg-gray-50">
               <div class="flex items-start justify-between gap-2">
                 <div class="flex-1 min-w-0">
-                  {#if editingSprintId === sprint.id}
-                    <input
-                      type="text"
-                      bind:value={editingName}
-                      onkeydown={(e) => handleEditKeydown(e, sprint.id)}
-                      onblur={() => saveSprintName(sprint.id)}
-                      class="text-sm font-medium text-gray-900 border border-gray-300 rounded px-1.5 py-0.5 w-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                      autofocus
-                    />
-                  {:else}
+                  <div class="flex items-center gap-1.5">
+                    {#if editingSprintId === sprint.id}
+                      <input
+                        type="text"
+                        bind:value={editingName}
+                        onkeydown={(e) => handleEditKeydown(e, sprint.id)}
+                        onblur={() => saveSprintName(sprint.id)}
+                        class="text-sm font-medium text-gray-900 border border-gray-300 rounded px-1.5 py-0.5 w-full focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                        autofocus
+                      />
+                    {:else}
+                      <button
+                        type="button"
+                        onclick={(e) => startEditingSprint(sprint, e)}
+                        class="text-sm font-medium text-gray-900 truncate hover:text-indigo-600 text-left"
+                        title="Click to rename"
+                      >
+                        {sprint.name}
+                      </button>
+                    {/if}
                     <button
                       type="button"
-                      onclick={(e) => startEditingSprint(sprint, e)}
-                      class="text-sm font-medium text-gray-900 truncate hover:text-indigo-600 text-left"
-                      title="Click to rename"
+                      onclick={(e) => openEditModal(sprint, e)}
+                      class="p-0.5 text-gray-400 hover:text-gray-600 rounded"
+                      title="Edit sprint details"
                     >
-                      {sprint.name}
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
                     </button>
-                  {/if}
+                  </div>
                   {#if sprint.goal}
                     <p class="text-xs text-gray-500 mt-0.5 line-clamp-1">{sprint.goal}</p>
                   {/if}
@@ -340,6 +430,16 @@
                         {sprint.name}
                       </button>
                     {/if}
+                    <button
+                      type="button"
+                      onclick={(e) => openEditModal(sprint, e)}
+                      class="p-0.5 text-gray-400 hover:text-gray-600 rounded"
+                      title="Edit sprint details"
+                    >
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                      </svg>
+                    </button>
                     <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 flex-shrink-0">Closed</span>
                   </div>
                   {#if sprint.goal}
@@ -349,6 +449,14 @@
                     <p class="text-xs text-gray-400 mt-0.5">{formatDateRange(sprint)}</p>
                   {/if}
                 </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onclick={() => handleReopenSprint(sprint)}
+                  disabled={actionLoading}
+                >
+                  Reopen
+                </Button>
               </div>
             </div>
           {/each}
@@ -398,4 +506,20 @@
   {boardId}
   onClose={() => showCreateModal = false}
   onCreated={handleSprintCreated}
+/>
+
+<EditSprintModal
+  open={showEditModal}
+  sprint={editingSprint}
+  onClose={() => { showEditModal = false; editingSprint = null; }}
+  onUpdated={handleSprintUpdated}
+/>
+
+<CompleteSprintModal
+  open={showCompleteModal}
+  sprint={activeSprint}
+  {boardId}
+  {incompleteCardCount}
+  onClose={() => showCompleteModal = false}
+  onCompleted={handleSprintCompleted}
 />

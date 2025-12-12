@@ -1,0 +1,21 @@
+---
+import Layout from '../../../../../layouts/Layout.astro';
+import AppShell from '../../../../../components/AppShell.svelte';
+import MetricsDashboard from '../../../../../components/metrics/MetricsDashboard.svelte';
+
+export const prerender = false;
+
+const { id: projectId, boardId } = Astro.params;
+---
+
+<Layout title="Sprint Metrics - Kaimu">
+  <AppShell client:load currentPath={`/projects/${projectId}/board/${boardId}/metrics`}>
+    <div class="h-full overflow-hidden">
+      <MetricsDashboard
+        client:load
+        boardId={boardId!}
+        projectId={projectId!}
+      />
+    </div>
+  </AppShell>
+</Layout>

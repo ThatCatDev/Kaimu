@@ -31,6 +31,7 @@
   let priority = $state<CardPriority>(CardPriority.None);
   let selectedTagIds = $state<string[]>([]);
   let dueDate = $state('');
+  let storyPoints = $state<number | null>(null);
   let saving = $state(false);
   let deleting = $state(false);
   let error = $state<string | null>(null);
@@ -55,7 +56,7 @@
   let savingAssignee = $state(false);
 
   // Use derived instead of function call in template to avoid re-render triggers
-  const currentDataHash = $derived(JSON.stringify({ title, description, priority, selectedTagIds, dueDate }));
+  const currentDataHash = $derived(JSON.stringify({ title, description, priority, selectedTagIds, dueDate, storyPoints }));
   const isSaved = $derived(currentDataHash === lastSavedData);
 
   // Sprint UI state
@@ -146,10 +147,11 @@
       selectedSprintIds = card.sprints?.map(s => s.id) ?? [];
       selectedAssigneeId = card.assignee?.id ?? null;
       dueDate = card.dueDate ? card.dueDate.split('T')[0] : '';
+      storyPoints = card.storyPoints ?? null;
       error = null;
       isEditing = false;
       // Set lastSavedData to current values so isSaved shows correctly
-      lastSavedData = JSON.stringify({ title, description, priority, selectedTagIds, dueDate });
+      lastSavedData = JSON.stringify({ title, description, priority, selectedTagIds, dueDate, storyPoints });
     }
   });
 
@@ -184,7 +186,8 @@
         priority,
         undefined,
         selectedTagIds,
-        dueDateRfc3339
+        dueDateRfc3339,
+        storyPoints
       );
       lastSavedData = currentDataHash;
 
@@ -194,6 +197,7 @@
         description: description.trim() || undefined,
         priority,
         dueDate: dueDateRfc3339,
+        storyPoints,
         tags: tags.filter(t => selectedTagIds.includes(t.id))
       });
     } catch (e) {
@@ -252,6 +256,7 @@
   function handleDescriptionChange(v: string) { description = v; }
   function handlePriorityChange(v: typeof priority) { priority = v; }
   function handleDueDateChange(v: string) { dueDate = v; }
+  function handleStoryPointsChange(v: number | null) { storyPoints = v; }
   function handleTagSelectionChange(ids: string[]) { selectedTagIds = ids; }
 
   // Handle assignee selection changes
@@ -327,6 +332,7 @@
           {description}
           {priority}
           {dueDate}
+          {storyPoints}
           {selectedTagIds}
           {projectId}
           {tags}
@@ -334,6 +340,7 @@
           onDescriptionChange={handleDescriptionChange}
           onPriorityChange={handlePriorityChange}
           onDueDateChange={handleDueDateChange}
+          onStoryPointsChange={handleStoryPointsChange}
           onTagSelectionChange={handleTagSelectionChange}
           {onTagsChanged}
           {error}

@@ -16,6 +16,7 @@ import (
 	cardTagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/card_tag"
 	emailVerificationTokenRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/email_verification_token"
 	invitationRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/invitation"
+	metricsHistoryRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/metrics_history"
 	oidcIdentityRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/oidc_identity"
 	orgRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization"
 	orgMemberRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization_member"
@@ -27,13 +28,16 @@ import (
 	sprintRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/sprint"
 	tagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
+	auditRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/audit"
 	"github.com/thatcatdev/kaimu/backend/internal/directives"
+	"github.com/thatcatdev/kaimu/backend/internal/services/audit"
 	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
 	"github.com/thatcatdev/kaimu/backend/internal/services/board"
 	"github.com/thatcatdev/kaimu/backend/internal/services/card"
 	"github.com/thatcatdev/kaimu/backend/internal/services/email"
 	"github.com/thatcatdev/kaimu/backend/internal/services/invitation"
 	"github.com/thatcatdev/kaimu/backend/internal/services/mail"
+	"github.com/thatcatdev/kaimu/backend/internal/services/metrics"
 	"github.com/thatcatdev/kaimu/backend/internal/services/mjml"
 	"github.com/thatcatdev/kaimu/backend/internal/services/oidc"
 	"github.com/thatcatdev/kaimu/backend/internal/services/organization"
@@ -49,6 +53,7 @@ import (
 // Dependencies holds all initialized dependencies for the application
 type Dependencies struct {
 	AuthService              auth.Service
+	AuditService             audit.Service
 	OIDCService              oidc.Service
 	OrganizationService      organization.Service
 	ProjectService           project.Service
@@ -62,6 +67,7 @@ type Dependencies struct {
 	SearchService            search.Service
 	SearchIndexer            *resolvers.SearchIndexer
 	SprintService            sprint.Service
+	MetricsService           metrics.Service
 	OIDCHandler              *OIDCHandler
 }
 
@@ -158,6 +164,21 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		sprintRepository,
 		cardRepository,
 		boardRepository,
+		boardColumnRepository,
+	)
+
+	// Initialize audit repository and service (needed by metrics service)
+	auditRepository := auditRepo.NewRepository(database.DB)
+	auditService := audit.NewService(auditRepository)
+
+	// Initialize metrics repository and service
+	metricsHistoryRepository := metricsHistoryRepo.NewRepository(database.DB)
+	metricsService := metrics.NewService(
+		sprintRepository,
+		cardRepository,
+		boardColumnRepository,
+		metricsHistoryRepository,
+		auditRepository,
 	)
 
 	// Initialize email verification service (uses same mail service)
@@ -208,6 +229,7 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 
 	return &Dependencies{
 		AuthService:              authService,
+		AuditService:             auditService,
 		OIDCService:              oidcService,
 		OrganizationService:      organizationService,
 		ProjectService:           projectService,
@@ -221,6 +243,7 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		SearchService:            searchService,
 		SearchIndexer:            searchIndexer,
 		SprintService:            sprintService,
+		MetricsService:           metricsService,
 		OIDCHandler:              oidcHandler,
 	}
 }
@@ -244,6 +267,7 @@ func BuildRootHandlerWithContext(ctx context.Context, conf config.Config, deps *
 	resolvers := &graph.Resolver{
 		Config:                   conf,
 		AuthService:              deps.AuthService,
+		AuditService:             deps.AuditService,
 		OIDCService:              deps.OIDCService,
 		OrganizationService:      deps.OrganizationService,
 		ProjectService:           deps.ProjectService,
@@ -257,6 +281,7 @@ func BuildRootHandlerWithContext(ctx context.Context, conf config.Config, deps *
 		SearchService:            deps.SearchService,
 		SearchIndexer:            deps.SearchIndexer,
 		SprintService:            deps.SprintService,
+		MetricsService:           deps.MetricsService,
 	}
 
 	cfg := generated.Config{Resolvers: resolvers, Directives: directives.GetDirectives()}

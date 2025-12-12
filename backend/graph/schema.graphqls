@@ -57,6 +57,18 @@ type Query {
     sprintCards(sprintId: ID!): [Card!]!
     "Get backlog cards (cards not assigned to any sprint)"
     backlogCards(boardId: ID!): [Card!]!
+
+    # Metrics Queries
+    "Get burn down chart data for a sprint"
+    burnDownData(sprintId: ID!, mode: MetricMode!): BurnDownData
+    "Get burn up chart data for a sprint"
+    burnUpData(sprintId: ID!, mode: MetricMode!): BurnUpData
+    "Get velocity data for recent sprints on a board"
+    velocityData(boardId: ID!, sprintCount: Int = 10, mode: MetricMode!): VelocityData!
+    "Get cumulative flow diagram data for a sprint"
+    cumulativeFlowData(sprintId: ID!, mode: MetricMode!): CumulativeFlowData
+    "Get current stats for a sprint"
+    sprintStats(sprintId: ID!): SprintStats
 }
 
 type Mutation {
@@ -152,8 +164,10 @@ type Mutation {
     deleteSprint(id: ID!): Boolean!
     "Start a sprint (sets status to active)"
     startSprint(id: ID!): Sprint!
-    "Complete a sprint (sets status to closed)"
-    completeSprint(id: ID!, moveIncompleteToBacklog: Boolean = true): Sprint!
+    "Complete a sprint (sets status to closed). All cards remain in sprint for history. Incomplete cards (not in done columns) are automatically added to the next future sprint."
+    completeSprint(id: ID!, moveIncompleteToNextSprint: Boolean = true): Sprint!
+    "Reopen a closed sprint (sets status to future)"
+    reopenSprint(id: ID!): Sprint!
     "Add a card to a sprint (cards can be in multiple sprints)"
     addCardToSprint(input: MoveCardToSprintInput!): Card!
     "Remove a card from a sprint"

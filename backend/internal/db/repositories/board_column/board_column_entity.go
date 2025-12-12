@@ -13,6 +13,7 @@ type BoardColumn struct {
 	Position  int       `gorm:"type:integer;not null;default:0"`
 	IsBacklog bool      `gorm:"type:boolean;not null;default:false"`
 	IsHidden  bool      `gorm:"type:boolean;not null;default:false"`
+	IsDone    bool      `gorm:"type:boolean;not null;default:false"`
 	Color     string    `gorm:"type:varchar(7);default:'#6B7280'"`
 	WipLimit  *int      `gorm:"type:integer"`
 	CreatedAt time.Time `gorm:"autoCreateTime"`

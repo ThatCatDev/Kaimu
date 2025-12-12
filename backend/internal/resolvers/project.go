@@ -208,6 +208,11 @@ func projectToModel(proj *project.Project) *model.Project {
 	}
 }
 
+// ProjectToModel converts a project entity to a GraphQL model (exported for audit logging)
+func ProjectToModel(proj *project.Project) *model.Project {
+	return projectToModel(proj)
+}
+
 func projectToModelWithOrg(proj *project.Project, org *model.Organization) *model.Project {
 	var description *string
 	if proj.Description != "" {
