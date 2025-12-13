@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { setupTestEnvironment, navigateToBoard, getColumn, createCard, clickAddCardInColumn } from './helpers';
+import { setupTestEnvironment, navigateToBoard, getColumn, createCard, clickAddCardInColumn, fillRichTextEditor } from './helpers';
 
 // Helper function to select priority from Bits UI Select component
 async function selectPriority(page: Page, priorityLabel: string) {
@@ -21,7 +21,7 @@ test.describe('Kanban Cards - Advanced Features', () => {
     // Fill in all fields
     await expect(page.getByRole('heading', { name: 'Create Card' })).toBeVisible({ timeout: 5000 });
     await page.fill('#title', `Full Card ${ctx.testId}`);
-    await page.fill('#description', 'This card has all fields filled');
+    await fillRichTextEditor(page, 'This card has all fields filled');
     await selectPriority(page, 'Urgent');
 
     // Set due date using Bits UI DatePicker - click trigger to open calendar, then select a date
@@ -145,7 +145,8 @@ test.describe('Kanban Cards - Advanced Features', () => {
     await page.getByText(`No Desc Card ${ctx.testId}`).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
-    await page.fill('#detail-description', 'Description added later');
+    // Use rich text editor helper to fill description
+    await fillRichTextEditor(page, 'Description added later');
     await expect(page.getByText('Saved')).toBeVisible({ timeout: 10000 });
     await page.getByRole('button', { name: 'Close' }).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).not.toBeVisible({ timeout: 5000 });
@@ -158,7 +159,8 @@ test.describe('Kanban Cards - Advanced Features', () => {
     // Verify description is saved
     await page.getByText(`No Desc Card ${ctx.testId}`).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('#detail-description')).toHaveValue('Description added later', { timeout: 10000 });
+    // Check the rich text editor content contains our text
+    await expect(page.locator('.ProseMirror').first()).toContainText('Description added later', { timeout: 10000 });
     await page.getByRole('button', { name: 'Close' }).click();
   });
 

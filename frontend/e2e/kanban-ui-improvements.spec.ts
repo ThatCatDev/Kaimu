@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { setupTestEnvironment, navigateToBoard, getColumn, clickAddCardInColumn, createCard } from './helpers';
+import { setupTestEnvironment, navigateToBoard, getColumn, clickAddCardInColumn, createCard, fillRichTextEditor } from './helpers';
 
 test.describe('Kanban UI Improvements', () => {
   test.describe('Add Card Button Location', () => {
@@ -75,8 +75,8 @@ test.describe('Kanban UI Improvements', () => {
       await page.getByText(`Saving Indicator ${ctx.testId}`).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
-      // Make a change and check for saving/saved indicator
-      await page.fill('#detail-description', 'Testing auto save indicator');
+      // Make a change and check for saving/saved indicator - use rich text editor
+      await fillRichTextEditor(page, 'Testing auto save indicator');
 
       // Should eventually show "Saved"
       await expect(page.getByText('Saved')).toBeVisible({ timeout: 5000 });

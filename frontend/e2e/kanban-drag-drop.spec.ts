@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { setupTestEnvironment, navigateToBoard, getColumn, createCard, clickAddCardInColumn } from './helpers';
+import { setupTestEnvironment, navigateToBoard, getColumn, createCard, clickAddCardInColumn, fillRichTextEditor } from './helpers';
 
 test.describe('Kanban Drag and Drop', () => {
   // Helper to perform drag and drop using Playwright's built-in method
@@ -103,7 +103,7 @@ test.describe('Kanban Drag and Drop', () => {
     // Create a card with description and priority
     await getColumn(page, 'Todo').getByRole('button', { name: 'Add card' }).click();
     await page.fill('#title', `Preserve Data Card ${ctx.testId}`);
-    await page.fill('#description', 'This description should persist');
+    await fillRichTextEditor(page, 'This description should persist');
     // Select priority using Bits UI Select component
     await page.locator('#priority').click();
     await page.getByRole('option', { name: 'High' }).click();
@@ -119,8 +119,8 @@ test.describe('Kanban Drag and Drop', () => {
     await inProgressColumn.getByText(`Preserve Data Card ${ctx.testId}`).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
-    // Verify description and priority - check textarea value and priority trigger text
-    await expect(page.locator('#detail-description')).toHaveValue('This description should persist');
+    // Verify description and priority - check rich text editor content and priority trigger text
+    await expect(page.locator('.ProseMirror').first()).toContainText('This description should persist');
     await expect(page.locator('#detail-priority')).toContainText('High');
 
     await page.getByRole('button', { name: 'Close' }).click();

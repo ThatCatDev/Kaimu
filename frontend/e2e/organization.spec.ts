@@ -7,11 +7,13 @@ test.describe('Organization Management', () => {
     // Register a fresh user without creating an organization
     const testId = randomId();
     const username = `org_empty_${testId}`;
+    const email = `${username}@test.local`;
     const password = 'testpassword123';
 
     await page.goto('/register');
     await page.waitForTimeout(300);
     await page.fill('#username', username);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -29,11 +31,13 @@ test.describe('Organization Management', () => {
     // Register a fresh user
     const testId = randomId();
     const username = `org_nav_${testId}`;
+    const email = `${username}@test.local`;
     const password = 'testpassword123';
 
     await page.goto('/register');
     await page.waitForTimeout(300);
     await page.fill('#username', username);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -53,11 +57,13 @@ test.describe('Organization Management', () => {
     // Register a fresh user
     const testId = randomId();
     const username = `org_valid_${testId}`;
+    const email = `${username}@test.local`;
     const password = 'testpassword123';
 
     await page.goto('/register');
     await page.waitForTimeout(300);
     await page.fill('#username', username);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -77,12 +83,14 @@ test.describe('Organization Management', () => {
     // Register a fresh user
     const testId = randomId();
     const username = `org_create_${testId}`;
+    const email = `${username}@test.local`;
     const password = 'testpassword123';
     const orgName = `Test Org ${testId}`;
 
     await page.goto('/register');
     await page.waitForTimeout(300);
     await page.fill('#username', username);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -107,12 +115,14 @@ test.describe('Organization Management', () => {
     // Register a fresh user
     const testId = randomId();
     const username = `org_dash_${testId}`;
+    const email = `${username}@test.local`;
     const password = 'testpassword123';
     const orgName = `Dashboard Org ${testId}`;
 
     await page.goto('/register');
     await page.waitForTimeout(300);
     await page.fill('#username', username);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -139,12 +149,14 @@ test.describe('Organization Management', () => {
     // Register a fresh user
     const testId = randomId();
     const username = `org_detail_${testId}`;
+    const email = `${username}@test.local`;
     const password = 'testpassword123';
     const orgName = `Detail Org ${testId}`;
 
     await page.goto('/register');
     await page.waitForTimeout(300);
     await page.fill('#username', username);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -169,12 +181,14 @@ test.describe('Organization Management', () => {
     // Register a fresh user
     const testId = randomId();
     const username = `org_empty_proj_${testId}`;
+    const email = `${username}@test.local`;
     const password = 'testpassword123';
     const orgName = `Empty Projects Org ${testId}`;
 
     await page.goto('/register');
     await page.waitForTimeout(300);
     await page.fill('#username', username);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -197,12 +211,14 @@ test.describe('Organization Management', () => {
     // Register a fresh user
     const testId = randomId();
     const username = `org_nav_dash_${testId}`;
+    const email = `${username}@test.local`;
     const password = 'testpassword123';
     const orgName = `Navigate Org ${testId}`;
 
     await page.goto('/register');
     await page.waitForTimeout(300);
     await page.fill('#username', username);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -231,11 +247,13 @@ test.describe('Organization Management', () => {
     // Register a fresh user
     const testId = randomId();
     const username = `org_cancel_${testId}`;
+    const email = `${username}@test.local`;
     const password = 'testpassword123';
 
     await page.goto('/register');
     await page.waitForTimeout(300);
     await page.fill('#username', username);
+    await page.fill('#email', email);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();

@@ -15,6 +15,7 @@ test.describe('Complete User Journey', () => {
   // Generate unique identifiers for this test run
   const randomId = Math.random().toString(36).substring(2, 10);
   const testUser = `journey_${randomId}`;
+  const testEmail = `${testUser}@test.local`;
   const password = 'journeypassword123';
 
   test('full user journey: register -> create org -> create project -> logout -> login', async ({
@@ -29,6 +30,7 @@ test.describe('Complete User Journey', () => {
 
       // Fill registration form
       await page.fill('#username', testUser);
+      await page.fill('#email', testEmail);
       await page.fill('#password', password);
       await page.fill('#confirmPassword', password);
 
@@ -227,6 +229,7 @@ test.describe('Complete User Journey', () => {
 
   test('user can access their projects after page refresh', async ({ page }) => {
     const user2 = `refresh_${randomId}`;
+    const email2 = `${user2}@test.local`;
     const org2Name = `Refresh Org ${randomId}`;
     const project2Name = `Refresh Project ${randomId}`;
 
@@ -234,6 +237,7 @@ test.describe('Complete User Journey', () => {
     await page.goto('/register');
     await page.waitForLoadState('networkidle');
     await page.fill('#username', user2);
+    await page.fill('#email', email2);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();
@@ -284,6 +288,7 @@ test.describe('Complete User Journey', () => {
 
   test('multiple organizations workflow', async ({ page }) => {
     const multiUser = `multi_${randomId}`;
+    const multiEmail = `${multiUser}@test.local`;
     const org1 = `Multi Org 1 ${randomId}`;
     const org2 = `Multi Org 2 ${randomId}`;
     const org3 = `Multi Org 3 ${randomId}`;
@@ -292,6 +297,7 @@ test.describe('Complete User Journey', () => {
     await page.goto('/register');
     await page.waitForLoadState('networkidle');
     await page.fill('#username', multiUser);
+    await page.fill('#email', multiEmail);
     await page.fill('#password', password);
     await page.fill('#confirmPassword', password);
     await page.getByRole('button', { name: 'Register' }).click();

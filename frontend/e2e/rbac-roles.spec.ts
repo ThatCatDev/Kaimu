@@ -33,11 +33,13 @@ interface TestSetup {
 async function registerUser(page: any, prefix: string): Promise<TestUser> {
   const testId = randomId();
   const username = `${prefix}_${testId}`;
+  const email = `${username}@test.local`;
   const password = 'testpassword123';
 
   await page.goto('/register');
   await page.waitForLoadState('networkidle');
   await page.fill('#username', username);
+  await page.fill('#email', email);
   await page.fill('#password', password);
   await page.fill('#confirmPassword', password);
   await page.getByRole('button', { name: 'Register' }).click();
@@ -95,9 +97,25 @@ async function setupTestEnvironment(page: any): Promise<TestSetup> {
   const projectMatch = projectUrl.match(/\/projects\/([a-f0-9-]+)/);
   const projectId = projectMatch ? projectMatch[1] : '';
 
-  // Navigate to board and get board ID
+  // Create a board first (boards are not auto-created)
   await page.waitForLoadState('networkidle');
-  await page.getByRole('link', { name: /Kanban Board/ }).click();
+
+  // Check if there are any boards - look for "No boards" text
+  const noBoardsVisible = await page.getByText('No boards').isVisible().catch(() => false);
+
+  if (noBoardsVisible) {
+    // Create a board first
+    await page.getByRole('button', { name: 'New Board' }).click();
+    await expect(page.getByRole('heading', { name: 'Create Board' })).toBeVisible({ timeout: 5000 });
+    await page.fill('#boardName', 'Kanban Board');
+    await page.getByRole('button', { name: 'Create Board', exact: true }).click();
+    await expect(page.getByRole('heading', { name: 'Create Board' })).not.toBeVisible({ timeout: 5000 });
+    // Wait for board to appear
+    await expect(page.getByText('Kanban Board')).toBeVisible({ timeout: 5000 });
+  }
+
+  // Click on the board link
+  await page.locator('a[href*="/board/"]').first().click();
   await expect(page).toHaveURL(/\/projects\/[a-f0-9-]+\/board\/[a-f0-9-]+/, { timeout: 15000 });
 
   const boardUrl = page.url();
@@ -195,7 +213,7 @@ async function inviteUserAsRole(
   await page.waitForLoadState('networkidle');
 
   // Click Members tab
-  await page.getByRole('button', { name: 'Members' }).click();
+  await page.getByRole('link', { name: 'Members' }).click();
   await page.waitForTimeout(500);
 
   // Click Invite Member button
@@ -244,9 +262,9 @@ test.describe('RBAC Role Permissions', () => {
       await page.goto(`/organizations/${setup.orgId}/settings`);
       await page.waitForLoadState('networkidle');
 
-      // Owner should see both tabs: Members and Roles
-      await expect(page.getByRole('button', { name: 'Members' })).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Roles' })).toBeVisible();
+      // Owner should see both tabs: Members and Roles (these are links, not buttons)
+      await expect(page.getByRole('link', { name: 'Members' })).toBeVisible();
+      await expect(page.getByRole('link', { name: 'Roles' })).toBeVisible();
     });
 
     test('owner can create and delete projects', async ({ page }) => {
@@ -389,7 +407,7 @@ test.describe('RBAC Role Permissions', () => {
         await viewerPage.waitForLoadState('networkidle');
 
         // Viewer should NOT see Roles tab
-        await expect(viewerPage.getByRole('button', { name: 'Roles' })).toBeHidden();
+        await expect(viewerPage.getByRole('link', { name: 'Roles' })).toBeHidden();
       }
 
       await viewerPage.close();
@@ -480,13 +498,13 @@ test.describe('RBAC Role Permissions', () => {
       await adminPage.waitForLoadState('networkidle');
 
       // Admin should see Members tab
-      await expect(adminPage.getByRole('button', { name: 'Members' })).toBeVisible();
+      await expect(adminPage.getByRole('link', { name: 'Members' })).toBeVisible();
 
       // Admin can see Roles tab (UI doesn't hide based on permissions yet, but API will enforce)
-      await expect(adminPage.getByRole('button', { name: 'Roles' })).toBeVisible();
+      await expect(adminPage.getByRole('link', { name: 'Roles' })).toBeVisible();
 
       // Verify admin can view members list
-      await adminPage.getByRole('button', { name: 'Members' }).click();
+      await adminPage.getByRole('link', { name: 'Members' }).click();
       await adminPage.waitForTimeout(500);
       // Should see at least one member (the owner)
       await expect(adminPage.getByText('Owner')).toBeVisible();

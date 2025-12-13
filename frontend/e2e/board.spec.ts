@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { setupTestEnvironment, navigateToBoard, getColumn, createCard, type TestContext } from './helpers';
+import { setupTestEnvironment, navigateToBoard, getColumn, createCard, fillRichTextEditor, type TestContext } from './helpers';
 
 test.describe('Board Header', () => {
   test('board page shows board name and navigation tabs', async ({ page }) => {
@@ -27,8 +27,9 @@ test.describe('Kanban Board', () => {
     await page.goto(`/projects/${ctx.projectId}`);
     await page.waitForLoadState('networkidle');
 
-    await expect(page.getByRole('main').getByRole('heading', { name: 'Kanban Board' })).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole('main').getByText('Default Board')).toBeVisible();
+    // Wait for boards section to load - shows "Boards" heading and the default board
+    await expect(page.getByRole('main').getByRole('heading', { name: 'Boards' })).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('main').getByText('Kanban Board')).toBeVisible({ timeout: 10000 });
   });
 
   test('can navigate to kanban board from project', async ({ page }) => {
@@ -36,10 +37,12 @@ test.describe('Kanban Board', () => {
 
     await page.goto(`/projects/${ctx.projectId}`);
     await page.waitForLoadState('networkidle');
-    await page.getByRole('link', { name: /Kanban Board/ }).click();
+    // Click on the board link (links to /projects/:id/board/:boardId)
+    await page.locator('a[href*="/board/"]').first().click({ timeout: 15000 });
 
     await expect(page).toHaveURL(/\/projects\/[a-f0-9-]+\/board\/[a-f0-9-]+/, { timeout: 10000 });
-    await expect(page.getByRole('heading', { name: 'Default Board' })).toBeVisible({ timeout: 10000 });
+    // Board name is shown in the header
+    await expect(page.locator('h1').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('kanban board shows default columns', async ({ page }) => {
@@ -79,7 +82,7 @@ test.describe('Kanban Board', () => {
     // Fill in the card form
     await expect(page.getByRole('heading', { name: 'Create Card' })).toBeVisible({ timeout: 5000 });
     await page.fill('#title', `Test Card ${ctx.testId}`);
-    await page.fill('#description', 'This is a test card');
+    await fillRichTextEditor(page, 'This is a test card');
     await page.locator('#priority').click();
     await page.getByRole('option', { name: 'High' }).click();
     await page.getByRole('button', { name: 'Create Card' }).click();

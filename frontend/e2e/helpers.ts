@@ -303,13 +303,37 @@ export async function clickAddCardInColumn(page: Page, columnName: string) {
 }
 
 /**
+ * Fills a TipTap rich text editor with text.
+ * The editor uses a .ProseMirror contenteditable element.
+ * @param page - Playwright page
+ * @param containerSelector - Selector for the container that holds the RichTextEditor (optional, defaults to first .ProseMirror)
+ * @param text - Text to enter
+ */
+export async function fillRichTextEditor(page: Page, text: string, containerSelector?: string) {
+  // Find the ProseMirror editor element
+  const editorLocator = containerSelector
+    ? page.locator(containerSelector).locator('.ProseMirror')
+    : page.locator('.ProseMirror').first();
+
+  // Click to focus
+  await editorLocator.click();
+
+  // Select all and delete (to clear any existing content)
+  await page.keyboard.press('Meta+a');
+  await page.keyboard.press('Backspace');
+
+  // Type the new text
+  await page.keyboard.type(text);
+}
+
+/**
  * Creates a card in a specific column and waits for it to appear
  */
 export async function createCard(page: Page, columnName: string, title: string, description?: string) {
   await clickAddCardInColumn(page, columnName);
   await page.fill('#title', title);
   if (description) {
-    await page.fill('#description', description);
+    await fillRichTextEditor(page, description);
   }
   await page.getByRole('button', { name: 'Create Card' }).click();
   await expect(page.getByLabel('Create Card')).toBeHidden({ timeout: 5000 });
