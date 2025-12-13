@@ -39,7 +39,7 @@ func TestAuthMiddleware_WithValidCookie(t *testing.T) {
 	}))
 
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.AddCookie(&http.Cookie{Name: "pulse_token", Value: "valid-token"})
+	req.AddCookie(&http.Cookie{Name: AccessTokenCookie, Value: "valid-token"})
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
@@ -66,7 +66,7 @@ func TestAuthMiddleware_WithInvalidCookie(t *testing.T) {
 	}))
 
 	req := httptest.NewRequest("GET", "/test", nil)
-	req.AddCookie(&http.Cookie{Name: "pulse_token", Value: "invalid-token"})
+	req.AddCookie(&http.Cookie{Name: AccessTokenCookie, Value: "invalid-token"})
 	rr := httptest.NewRecorder()
 
 	handler.ServeHTTP(rr, req)
@@ -124,7 +124,7 @@ func TestSetAuthCookie(t *testing.T) {
 	assert.Len(t, cookies, 1)
 
 	cookie := cookies[0]
-	assert.Equal(t, "pulse_token", cookie.Name)
+	assert.Equal(t, AccessTokenCookie, cookie.Name)
 	assert.Equal(t, "test-token", cookie.Value)
 	assert.True(t, cookie.HttpOnly)
 	assert.Equal(t, "/", cookie.Path)
@@ -147,12 +147,19 @@ func TestClearAuthCookie(t *testing.T) {
 	ClearAuthCookie(rr)
 
 	cookies := rr.Result().Cookies()
-	assert.Len(t, cookies, 1)
+	assert.Len(t, cookies, 2) // Both access and refresh cookies are cleared
 
-	cookie := cookies[0]
-	assert.Equal(t, "pulse_token", cookie.Name)
-	assert.Equal(t, "", cookie.Value)
-	assert.Equal(t, -1, cookie.MaxAge)
+	// Find the access token cookie
+	var accessCookie *http.Cookie
+	for _, c := range cookies {
+		if c.Name == AccessTokenCookie {
+			accessCookie = c
+			break
+		}
+	}
+	assert.NotNil(t, accessCookie)
+	assert.Equal(t, "", accessCookie.Value)
+	assert.Equal(t, -1, accessCookie.MaxAge)
 }
 
 func TestGetResponseWriter(t *testing.T) {

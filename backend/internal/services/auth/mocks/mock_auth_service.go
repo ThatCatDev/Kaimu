@@ -43,6 +43,21 @@ func (m *MockService) EXPECT() *MockServiceMockRecorder {
 	return m.recorder
 }
 
+// GenerateTokenPair mocks base method.
+func (m *MockService) GenerateTokenPair(ctx context.Context, userID uuid.UUID, userAgent, ipAddress string) (*auth.TokenPair, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateTokenPair", ctx, userID, userAgent, ipAddress)
+	ret0, _ := ret[0].(*auth.TokenPair)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GenerateTokenPair indicates an expected call of GenerateTokenPair.
+func (mr *MockServiceMockRecorder) GenerateTokenPair(ctx, userID, userAgent, ipAddress any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateTokenPair", reflect.TypeOf((*MockService)(nil).GenerateTokenPair), ctx, userID, userAgent, ipAddress)
+}
+
 // GetUserByID mocks base method.
 func (m *MockService) GetUserByID(ctx context.Context, id uuid.UUID) (*user.User, error) {
 	m.ctrl.T.Helper()
@@ -59,35 +74,78 @@ func (mr *MockServiceMockRecorder) GetUserByID(ctx, id any) *gomock.Call {
 }
 
 // Login mocks base method.
-func (m *MockService) Login(ctx context.Context, username, password string) (*user.User, string, error) {
+func (m *MockService) Login(ctx context.Context, username, password, userAgent, ipAddress string) (*user.User, *auth.TokenPair, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Login", ctx, username, password)
+	ret := m.ctrl.Call(m, "Login", ctx, username, password, userAgent, ipAddress)
 	ret0, _ := ret[0].(*user.User)
-	ret1, _ := ret[1].(string)
+	ret1, _ := ret[1].(*auth.TokenPair)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
 // Login indicates an expected call of Login.
-func (mr *MockServiceMockRecorder) Login(ctx, username, password any) *gomock.Call {
+func (mr *MockServiceMockRecorder) Login(ctx, username, password, userAgent, ipAddress any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockService)(nil).Login), ctx, username, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockService)(nil).Login), ctx, username, password, userAgent, ipAddress)
+}
+
+// RefreshTokens mocks base method.
+func (m *MockService) RefreshTokens(ctx context.Context, refreshToken, userAgent, ipAddress string) (*auth.TokenPair, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RefreshTokens", ctx, refreshToken, userAgent, ipAddress)
+	ret0, _ := ret[0].(*auth.TokenPair)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RefreshTokens indicates an expected call of RefreshTokens.
+func (mr *MockServiceMockRecorder) RefreshTokens(ctx, refreshToken, userAgent, ipAddress any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RefreshTokens", reflect.TypeOf((*MockService)(nil).RefreshTokens), ctx, refreshToken, userAgent, ipAddress)
 }
 
 // Register mocks base method.
-func (m *MockService) Register(ctx context.Context, username, password string) (*user.User, string, error) {
+func (m *MockService) Register(ctx context.Context, username, email, password, userAgent, ipAddress string) (*user.User, *auth.TokenPair, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Register", ctx, username, password)
+	ret := m.ctrl.Call(m, "Register", ctx, username, email, password, userAgent, ipAddress)
 	ret0, _ := ret[0].(*user.User)
-	ret1, _ := ret[1].(string)
+	ret1, _ := ret[1].(*auth.TokenPair)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
 // Register indicates an expected call of Register.
-func (mr *MockServiceMockRecorder) Register(ctx, username, password any) *gomock.Call {
+func (mr *MockServiceMockRecorder) Register(ctx, username, email, password, userAgent, ipAddress any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockService)(nil).Register), ctx, username, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Register", reflect.TypeOf((*MockService)(nil).Register), ctx, username, email, password, userAgent, ipAddress)
+}
+
+// RevokeAllUserTokens mocks base method.
+func (m *MockService) RevokeAllUserTokens(ctx context.Context, userID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RevokeAllUserTokens", ctx, userID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RevokeAllUserTokens indicates an expected call of RevokeAllUserTokens.
+func (mr *MockServiceMockRecorder) RevokeAllUserTokens(ctx, userID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeAllUserTokens", reflect.TypeOf((*MockService)(nil).RevokeAllUserTokens), ctx, userID)
+}
+
+// RevokeRefreshToken mocks base method.
+func (m *MockService) RevokeRefreshToken(ctx context.Context, refreshToken string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RevokeRefreshToken", ctx, refreshToken)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RevokeRefreshToken indicates an expected call of RevokeRefreshToken.
+func (mr *MockServiceMockRecorder) RevokeRefreshToken(ctx, refreshToken any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RevokeRefreshToken", reflect.TypeOf((*MockService)(nil).RevokeRefreshToken), ctx, refreshToken)
 }
 
 // ValidateToken mocks base method.

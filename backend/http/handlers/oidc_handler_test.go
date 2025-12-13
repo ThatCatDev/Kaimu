@@ -10,9 +10,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/thatcatdev/kaimu/backend/http/middleware"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
+	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
+	authMocks "github.com/thatcatdev/kaimu/backend/internal/services/auth/mocks"
 	"github.com/thatcatdev/kaimu/backend/internal/services/oidc"
-	"github.com/thatcatdev/kaimu/backend/internal/services/oidc/mocks"
+	oidcMocks "github.com/thatcatdev/kaimu/backend/internal/services/oidc/mocks"
 	"go.uber.org/mock/gomock"
 )
 
@@ -20,15 +23,16 @@ func TestListProviders_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
 	providers := []oidc.ProviderInfo{
 		{Slug: "dex", Name: "Dex"},
 		{Slug: "google", Name: "Google"},
 	}
 
-	mockService.EXPECT().GetProviders(gomock.Any()).Return(providers, nil)
+	mockOIDCService.EXPECT().GetProviders(gomock.Any()).Return(providers, nil)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/providers", nil)
 	w := httptest.NewRecorder()
@@ -50,10 +54,11 @@ func TestListProviders_Empty(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
-	mockService.EXPECT().GetProviders(gomock.Any()).Return([]oidc.ProviderInfo{}, nil)
+	mockOIDCService.EXPECT().GetProviders(gomock.Any()).Return([]oidc.ProviderInfo{}, nil)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/providers", nil)
 	w := httptest.NewRecorder()
@@ -72,10 +77,11 @@ func TestListProviders_Error(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
-	mockService.EXPECT().GetProviders(gomock.Any()).Return(nil, assert.AnError)
+	mockOIDCService.EXPECT().GetProviders(gomock.Any()).Return(nil, assert.AnError)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/providers", nil)
 	w := httptest.NewRecorder()
@@ -89,8 +95,9 @@ func TestAuthorize_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
 	authResponse := &oidc.AuthorizationResponse{
 		AuthURL:      "https://idp.example.com/auth?client_id=test&state=abc123",
@@ -98,7 +105,7 @@ func TestAuthorize_Success(t *testing.T) {
 		CodeVerifier: "code-verifier",
 	}
 
-	mockService.EXPECT().GetAuthorizationURL(gomock.Any(), "dex", "http://localhost:4321/dashboard").Return(authResponse, nil)
+	mockOIDCService.EXPECT().GetAuthorizationURL(gomock.Any(), "dex", "http://localhost:4321/dashboard").Return(authResponse, nil)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/authorize", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -114,8 +121,9 @@ func TestAuthorize_WithCustomRedirectURI(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
 	authResponse := &oidc.AuthorizationResponse{
 		AuthURL:      "https://idp.example.com/auth?client_id=test&state=abc123",
@@ -123,7 +131,7 @@ func TestAuthorize_WithCustomRedirectURI(t *testing.T) {
 		CodeVerifier: "code-verifier",
 	}
 
-	mockService.EXPECT().GetAuthorizationURL(gomock.Any(), "dex", "http://localhost:4321/custom").Return(authResponse, nil)
+	mockOIDCService.EXPECT().GetAuthorizationURL(gomock.Any(), "dex", "http://localhost:4321/custom").Return(authResponse, nil)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/authorize?redirect_uri=http://localhost:4321/custom", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -138,8 +146,9 @@ func TestAuthorize_NoProvider(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
 	req := httptest.NewRequest("GET", "/auth/oidc//authorize", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": ""})
@@ -154,10 +163,11 @@ func TestAuthorize_ProviderNotFound(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
-	mockService.EXPECT().GetAuthorizationURL(gomock.Any(), "nonexistent", gomock.Any()).Return(nil, oidc.ErrProviderNotFound)
+	mockOIDCService.EXPECT().GetAuthorizationURL(gomock.Any(), "nonexistent", gomock.Any()).Return(nil, oidc.ErrProviderNotFound)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/nonexistent/authorize", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "nonexistent"})
@@ -172,10 +182,11 @@ func TestAuthorize_ProviderDisabled(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
-	mockService.EXPECT().GetAuthorizationURL(gomock.Any(), "disabled", gomock.Any()).Return(nil, oidc.ErrProviderDisabled)
+	mockOIDCService.EXPECT().GetAuthorizationURL(gomock.Any(), "disabled", gomock.Any()).Return(nil, oidc.ErrProviderDisabled)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/disabled/authorize", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "disabled"})
@@ -190,8 +201,9 @@ func TestCallback_Success(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
 	userID := uuid.New()
 	testUser := &user.User{
@@ -205,7 +217,14 @@ func TestCallback_Success(t *testing.T) {
 		LinkedToExisting: false,
 	}
 
-	mockService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(callbackResult, "jwt-token", nil)
+	tokenPair := &auth.TokenPair{
+		AccessToken:  "access-token",
+		RefreshToken: "refresh-token",
+		ExpiresIn:    300,
+	}
+
+	mockOIDCService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(callbackResult, nil)
+	mockAuthService.EXPECT().GenerateTokenPair(gomock.Any(), userID, gomock.Any(), gomock.Any()).Return(tokenPair, nil)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?code=auth-code&state=state-123", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -216,24 +235,30 @@ func TestCallback_Success(t *testing.T) {
 	assert.Equal(t, http.StatusFound, w.Code)
 	assert.Equal(t, "http://localhost:4321/dashboard", w.Header().Get("Location"))
 
-	// Check cookie is set
+	// Check cookies are set
 	cookies := w.Result().Cookies()
-	var foundCookie bool
+	var foundAccessCookie, foundRefreshCookie bool
 	for _, c := range cookies {
-		if c.Name == "pulse_token" {
-			foundCookie = true
-			assert.Equal(t, "jwt-token", c.Value)
+		if c.Name == middleware.AccessTokenCookie {
+			foundAccessCookie = true
+			assert.Equal(t, "access-token", c.Value)
+		}
+		if c.Name == middleware.RefreshTokenCookie {
+			foundRefreshCookie = true
+			assert.Equal(t, "refresh-token", c.Value)
 		}
 	}
-	assert.True(t, foundCookie, "Expected pulse_token cookie to be set")
+	assert.True(t, foundAccessCookie, "Expected access token cookie to be set")
+	assert.True(t, foundRefreshCookie, "Expected refresh token cookie to be set")
 }
 
 func TestCallback_NewUser(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
 	userID := uuid.New()
 	testUser := &user.User{
@@ -247,7 +272,14 @@ func TestCallback_NewUser(t *testing.T) {
 		LinkedToExisting: false,
 	}
 
-	mockService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(callbackResult, "jwt-token", nil)
+	tokenPair := &auth.TokenPair{
+		AccessToken:  "access-token",
+		RefreshToken: "refresh-token",
+		ExpiresIn:    300,
+	}
+
+	mockOIDCService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(callbackResult, nil)
+	mockAuthService.EXPECT().GenerateTokenPair(gomock.Any(), userID, gomock.Any(), gomock.Any()).Return(tokenPair, nil)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?code=auth-code&state=state-123", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -263,8 +295,9 @@ func TestCallback_NoProvider(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
 	req := httptest.NewRequest("GET", "/auth/oidc//callback?code=auth-code&state=state-123", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": ""})
@@ -280,8 +313,9 @@ func TestCallback_MissingCode(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?state=state-123", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -297,8 +331,9 @@ func TestCallback_MissingState(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?code=auth-code", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -314,8 +349,9 @@ func TestCallback_ProviderError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
 	// Simulate OIDC provider returning an error
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?error=access_denied&error_description=User%20denied%20access", nil)
@@ -332,10 +368,11 @@ func TestCallback_InvalidState(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
-	mockService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "invalid-state").Return(nil, "", oidc.ErrInvalidState)
+	mockOIDCService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "invalid-state").Return(nil, oidc.ErrInvalidState)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?code=auth-code&state=invalid-state", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -352,10 +389,11 @@ func TestCallback_StateExpired(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
-	mockService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "expired-state").Return(nil, "", oidc.ErrStateExpired)
+	mockOIDCService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "expired-state").Return(nil, oidc.ErrStateExpired)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?code=auth-code&state=expired-state", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -372,10 +410,11 @@ func TestCallback_TokenExchangeFailed(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
-	mockService.EXPECT().HandleCallback(gomock.Any(), "dex", "bad-code", "state-123").Return(nil, "", oidc.ErrTokenExchangeFailed)
+	mockOIDCService.EXPECT().HandleCallback(gomock.Any(), "dex", "bad-code", "state-123").Return(nil, oidc.ErrTokenExchangeFailed)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?code=bad-code&state=state-123", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -392,10 +431,11 @@ func TestCallback_InvalidIDToken(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
-	mockService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(nil, "", oidc.ErrInvalidIDToken)
+	mockOIDCService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(nil, oidc.ErrInvalidIDToken)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?code=auth-code&state=state-123", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -412,10 +452,11 @@ func TestCallback_NonceMismatch(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
-	mockService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(nil, "", oidc.ErrNonceMismatch)
+	mockOIDCService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(nil, oidc.ErrNonceMismatch)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?code=auth-code&state=state-123", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -432,10 +473,11 @@ func TestCallback_GenericError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", false)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
 
-	mockService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(nil, "", assert.AnError)
+	mockOIDCService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(nil, assert.AnError)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?code=auth-code&state=state-123", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -452,9 +494,10 @@ func TestCallback_SecureCookie(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockService := mocks.NewMockService(ctrl)
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
 	// isSecure = true for HTTPS
-	handler := NewOIDCHandler(mockService, "http://localhost:4321", true)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", true)
 
 	userID := uuid.New()
 	testUser := &user.User{
@@ -468,7 +511,14 @@ func TestCallback_SecureCookie(t *testing.T) {
 		LinkedToExisting: false,
 	}
 
-	mockService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(callbackResult, "jwt-token", nil)
+	tokenPair := &auth.TokenPair{
+		AccessToken:  "access-token",
+		RefreshToken: "refresh-token",
+		ExpiresIn:    300,
+	}
+
+	mockOIDCService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(callbackResult, nil)
+	mockAuthService.EXPECT().GenerateTokenPair(gomock.Any(), userID, gomock.Any(), gomock.Any()).Return(tokenPair, nil)
 
 	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?code=auth-code&state=state-123", nil)
 	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
@@ -478,14 +528,47 @@ func TestCallback_SecureCookie(t *testing.T) {
 
 	assert.Equal(t, http.StatusFound, w.Code)
 
-	// Check cookie is set with Secure flag
+	// Check cookies are set with Secure flag
 	cookies := w.Result().Cookies()
 	var foundCookie bool
 	for _, c := range cookies {
-		if c.Name == "pulse_token" {
+		if c.Name == middleware.AccessTokenCookie {
 			foundCookie = true
 			assert.True(t, c.Secure, "Expected Secure flag to be set")
 		}
 	}
-	assert.True(t, foundCookie, "Expected pulse_token cookie to be set")
+	assert.True(t, foundCookie, "Expected access token cookie to be set")
+}
+
+func TestCallback_TokenGenerationFailed(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockOIDCService := oidcMocks.NewMockService(ctrl)
+	mockAuthService := authMocks.NewMockService(ctrl)
+	handler := NewOIDCHandler(mockOIDCService, mockAuthService, "http://localhost:4321", false)
+
+	userID := uuid.New()
+	testUser := &user.User{
+		ID:       userID,
+		Username: "testuser",
+	}
+
+	callbackResult := &oidc.CallbackResult{
+		User:             testUser,
+		IsNewUser:        false,
+		LinkedToExisting: false,
+	}
+
+	mockOIDCService.EXPECT().HandleCallback(gomock.Any(), "dex", "auth-code", "state-123").Return(callbackResult, nil)
+	mockAuthService.EXPECT().GenerateTokenPair(gomock.Any(), userID, gomock.Any(), gomock.Any()).Return(nil, assert.AnError)
+
+	req := httptest.NewRequest("GET", "/auth/oidc/dex/callback?code=auth-code&state=state-123", nil)
+	req = mux.SetURLVars(req, map[string]string{"provider": "dex"})
+	w := httptest.NewRecorder()
+
+	handler.Callback(w, req)
+
+	assert.Equal(t, http.StatusFound, w.Code)
+	assert.Contains(t, w.Header().Get("Location"), "/login?error=")
 }
