@@ -30,10 +30,10 @@ interface TestSetup {
 /**
  * Register a new user
  */
-async function registerUser(page: any, prefix: string): Promise<TestUser> {
+async function registerUser(page: any, prefix: string, specificEmail?: string): Promise<TestUser> {
   const testId = randomId();
   const username = `${prefix}_${testId}`;
-  const email = `${username}@test.local`;
+  const email = specificEmail || `${username}@test.local`;
   const password = 'testpassword123';
 
   await page.goto('/register');
@@ -331,8 +331,8 @@ test.describe('RBAC Role Permissions', () => {
       // Create a new browser context for the viewer
       const viewerPage = await context.newPage();
 
-      // Register viewer and accept invitation
-      const viewer = await registerUser(viewerPage, 'viewer');
+      // Register viewer with the same email as the invitation and accept
+      const viewer = await registerUser(viewerPage, 'viewer', viewerEmail);
       await acceptInvitation(viewerPage, token);
 
       // Navigate to board as viewer
@@ -366,7 +366,7 @@ test.describe('RBAC Role Permissions', () => {
 
       // Create a new browser context for the viewer
       const viewerPage = await context.newPage();
-      const viewer = await registerUser(viewerPage, 'viewer_nc');
+      const viewer = await registerUser(viewerPage, 'viewer_nc', viewerEmail);
       await acceptInvitation(viewerPage, token);
 
       // Navigate to board as viewer
@@ -390,7 +390,7 @@ test.describe('RBAC Role Permissions', () => {
 
       // Create a new browser context for the viewer
       const viewerPage = await context.newPage();
-      const viewer = await registerUser(viewerPage, 'viewer_ns');
+      const viewer = await registerUser(viewerPage, 'viewer_ns', viewerEmail);
       await acceptInvitation(viewerPage, token);
 
       // Navigate to organization
@@ -425,7 +425,7 @@ test.describe('RBAC Role Permissions', () => {
 
       // Create a new browser context for the member
       const memberPage = await context.newPage();
-      const member = await registerUser(memberPage, 'member');
+      const member = await registerUser(memberPage, 'member', memberEmail);
       await acceptInvitation(memberPage, token);
 
       // Navigate to board as member
@@ -465,7 +465,7 @@ test.describe('RBAC Role Permissions', () => {
 
       // Create a new browser context for the member
       const memberPage = await context.newPage();
-      const member = await registerUser(memberPage, 'member_nc');
+      const member = await registerUser(memberPage, 'member_nc', memberEmail);
       await acceptInvitation(memberPage, token);
 
       // Navigate to board as member
@@ -490,7 +490,7 @@ test.describe('RBAC Role Permissions', () => {
 
       // Create a new browser context for the admin
       const adminPage = await context.newPage();
-      const admin = await registerUser(adminPage, 'admin');
+      const admin = await registerUser(adminPage, 'admin', adminEmail);
       await acceptInvitation(adminPage, token);
 
       // Navigate to organization settings
@@ -503,11 +503,10 @@ test.describe('RBAC Role Permissions', () => {
       // Admin can see Roles tab (UI doesn't hide based on permissions yet, but API will enforce)
       await expect(adminPage.getByRole('link', { name: 'Roles' })).toBeVisible();
 
-      // Verify admin can view members list
-      await adminPage.getByRole('link', { name: 'Members' }).click();
-      await adminPage.waitForTimeout(500);
-      // Should see at least one member (the owner)
-      await expect(adminPage.getByText('Owner')).toBeVisible();
+      // Verify admin can view members list (already on members page due to redirect)
+      await adminPage.waitForLoadState('networkidle');
+      // Should see at least one member with a role displayed (use exact to avoid matching username containing "owner")
+      await expect(adminPage.getByText('Owner', { exact: true })).toBeVisible({ timeout: 10000 });
 
       await adminPage.close();
     });
@@ -522,7 +521,7 @@ test.describe('RBAC Role Permissions', () => {
 
       // Create a new browser context for the admin
       const adminPage = await context.newPage();
-      const admin = await registerUser(adminPage, 'admin_c');
+      const admin = await registerUser(adminPage, 'admin_c', adminEmail);
       await acceptInvitation(adminPage, token);
 
       // Navigate to board
@@ -552,7 +551,7 @@ test.describe('RBAC Role Permissions', () => {
 
       // Create a new browser context for the admin
       const adminPage = await context.newPage();
-      const admin = await registerUser(adminPage, 'admin_cols');
+      const admin = await registerUser(adminPage, 'admin_cols', adminEmail);
       await acceptInvitation(adminPage, token);
 
       // Navigate to board
