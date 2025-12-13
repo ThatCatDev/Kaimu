@@ -92,10 +92,14 @@ jobs:
         working-directory: frontend
         run: bunx playwright install --with-deps chromium
 
-      - name: Start frontend dev server
+      - name: Build frontend
+        working-directory: frontend
+        run: bun run build
+
+      - name: Start frontend preview server
         working-directory: frontend
         run: |
-          bun run dev &
+          bun run preview --host 0.0.0.0 &
           echo "Waiting for frontend to be ready..."
           for i in {1..60}; do
             if curl -s http://localhost:4321 > /dev/null 2>&1; then

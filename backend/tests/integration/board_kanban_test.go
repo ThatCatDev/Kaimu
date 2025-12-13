@@ -23,6 +23,7 @@ import (
 	orgRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization"
 	memberRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization_member"
 	projectRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/project"
+	refreshTokenRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/refreshtoken"
 	tagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
 	"github.com/thatcatdev/kaimu/backend/internal/directives"
@@ -174,6 +175,18 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 			PRIMARY KEY (card_id, tag_id)
 		);
+
+		CREATE TABLE IF NOT EXISTS refresh_tokens (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			token_hash VARCHAR(255) NOT NULL UNIQUE,
+			expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+			revoked_at TIMESTAMP WITH TIME ZONE,
+			replaced_by UUID,
+			user_agent TEXT,
+			ip_address VARCHAR(45),
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		);
 	`).Error
 	if err != nil {
 		t.Fatalf("Failed to run migrations: %v", err)
@@ -188,6 +201,7 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 	testDB.Exec("DELETE FROM projects")
 	testDB.Exec("DELETE FROM organization_members")
 	testDB.Exec("DELETE FROM organizations")
+	testDB.Exec("DELETE FROM refresh_tokens")
 	testDB.Exec("DELETE FROM users")
 
 	// Create repositories
@@ -202,7 +216,8 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 	cardTagRepository := cardTagRepo.NewRepository(testDB)
 
 	// Create services
-	authSvc := auth.NewService(userRepository, "test-jwt-secret", 24)
+	refreshRepository := refreshTokenRepo.NewRepository(testDB)
+	authSvc := auth.NewService(userRepository, refreshRepository, "test-jwt-secret", 15, 7)
 	orgSvc := orgService.NewService(orgRepository, memberRepository, userRepository)
 	projSvc := projectService.NewService(projectRepository, orgRepository)
 	boardSvc := boardService.NewService(boardRepository, columnRepository, projectRepository)

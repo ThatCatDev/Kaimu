@@ -21,10 +21,12 @@ import (
 	columnRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/board_column"
 	cardRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/card"
 	cardTagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/card_tag"
+	auditRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/audit"
 	metricsHistoryRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/metrics_history"
 	orgRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization"
 	memberRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization_member"
 	projectRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/project"
+	refreshTokenRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/refreshtoken"
 	sprintRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/sprint"
 	tagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
@@ -222,12 +224,36 @@ func setupSprintTestServer(t *testing.T) *SprintTestServer {
 			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 			UNIQUE(sprint_id, recorded_date)
 		);
+
+		CREATE TABLE IF NOT EXISTS refresh_tokens (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			token_hash VARCHAR(255) NOT NULL UNIQUE,
+			expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+			revoked_at TIMESTAMP WITH TIME ZONE,
+			replaced_by UUID,
+			user_agent TEXT,
+			ip_address VARCHAR(45),
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		);
+
+		CREATE TABLE IF NOT EXISTS audit_log (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			entity_type VARCHAR(50) NOT NULL,
+			entity_id UUID NOT NULL,
+			action VARCHAR(50) NOT NULL,
+			user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+			old_values JSONB,
+			new_values JSONB,
+			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+		);
 	`).Error
 	if err != nil {
 		t.Fatalf("Failed to run migrations: %v", err)
 	}
 
 	// Clean up tables before test (order matters due to foreign keys)
+	testDB.Exec("DELETE FROM audit_log")
 	testDB.Exec("DELETE FROM metrics_history")
 	testDB.Exec("DELETE FROM card_sprints")
 	testDB.Exec("DELETE FROM sprints")
@@ -239,6 +265,7 @@ func setupSprintTestServer(t *testing.T) *SprintTestServer {
 	testDB.Exec("DELETE FROM projects")
 	testDB.Exec("DELETE FROM organization_members")
 	testDB.Exec("DELETE FROM organizations")
+	testDB.Exec("DELETE FROM refresh_tokens")
 	testDB.Exec("DELETE FROM users")
 
 	// Create repositories
@@ -253,16 +280,18 @@ func setupSprintTestServer(t *testing.T) *SprintTestServer {
 	cardTagRepository := cardTagRepo.NewRepository(testDB)
 	sprintRepository := sprintRepo.NewRepository(testDB)
 	metricsHistoryRepository := metricsHistoryRepo.NewRepository(testDB)
+	refreshRepository := refreshTokenRepo.NewRepository(testDB)
+	auditRepository := auditRepo.NewRepository(testDB)
 
 	// Create services
-	authSvc := auth.NewService(userRepository, "test-jwt-secret", 24)
+	authSvc := auth.NewService(userRepository, refreshRepository, "test-jwt-secret", 15, 7)
 	orgSvc := orgService.NewService(orgRepository, memberRepository, userRepository)
 	projSvc := projectService.NewService(projectRepository, orgRepository)
 	boardSvc := boardService.NewService(boardRepository, columnRepository, projectRepository)
 	cardSvc := cardService.NewService(cardRepository, columnRepository, boardRepository, tagRepository, cardTagRepository)
 	tagSvc := tagService.NewService(tagRepository, projectRepository)
-	sprintSvc := sprintService.NewService(sprintRepository, cardRepository, boardRepository)
-	metricsSvc := metricsService.NewService(sprintRepository, cardRepository, columnRepository, metricsHistoryRepository)
+	sprintSvc := sprintService.NewService(sprintRepository, cardRepository, boardRepository, columnRepository)
+	metricsSvc := metricsService.NewService(sprintRepository, cardRepository, columnRepository, metricsHistoryRepository, auditRepository)
 
 	// Create resolver
 	cfg := config.Config{

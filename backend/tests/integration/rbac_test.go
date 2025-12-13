@@ -27,6 +27,7 @@ import (
 	projectRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/project"
 	projectMemberRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/project_member"
 	roleRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/role"
+	refreshTokenRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/refreshtoken"
 	rolePermRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/role_permission"
 	tagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
@@ -254,6 +255,19 @@ func setupRBACTestServer(t *testing.T) *RBACTestServer {
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 			UNIQUE(card_id, tag_id)
 		);
+
+		-- Refresh tokens table
+		CREATE TABLE refresh_tokens (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			token_hash VARCHAR(255) NOT NULL UNIQUE,
+			expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+			revoked_at TIMESTAMP WITH TIME ZONE,
+			replaced_by UUID,
+			user_agent TEXT,
+			ip_address VARCHAR(45),
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		);
 	`).Error
 	if err != nil {
 		t.Fatalf("Failed to run migrations: %v", err)
@@ -277,9 +291,10 @@ func setupRBACTestServer(t *testing.T) *RBACTestServer {
 	cardRepository := cardRepo.NewRepository(testDB)
 	tagRepository := tagRepo.NewRepository(testDB)
 	cardTagRepository := cardTagRepo.NewRepository(testDB)
+	refreshRepository := refreshTokenRepo.NewRepository(testDB)
 
 	// Create services
-	authSvc := auth.NewService(userRepository, "test-jwt-secret", 24)
+	authSvc := auth.NewService(userRepository, refreshRepository, "test-jwt-secret", 15, 7)
 	orgSvc := orgService.NewService(orgRepository, memberRepository, userRepository)
 	projSvc := projectService.NewService(projectRepository, orgRepository)
 	boardSvc := boardService.NewService(boardRepository, columnRepository, projectRepository)

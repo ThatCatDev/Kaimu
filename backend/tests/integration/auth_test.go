@@ -17,6 +17,7 @@ import (
 	"github.com/thatcatdev/kaimu/backend/graph"
 	"github.com/thatcatdev/kaimu/backend/graph/generated"
 	"github.com/thatcatdev/kaimu/backend/http/middleware"
+	refreshTokenRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/refreshtoken"
 	userRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
 	"github.com/thatcatdev/kaimu/backend/internal/directives"
 	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
@@ -86,17 +87,30 @@ func setupTestServer(t *testing.T) *TestServer {
 			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 		);
+		CREATE TABLE IF NOT EXISTS refresh_tokens (
+			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			token_hash VARCHAR(255) NOT NULL UNIQUE,
+			expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+			revoked_at TIMESTAMP WITH TIME ZONE,
+			replaced_by UUID,
+			user_agent TEXT,
+			ip_address VARCHAR(45),
+			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+		);
 	`).Error
 	if err != nil {
 		t.Fatalf("Failed to run migrations: %v", err)
 	}
 
-	// Clean up users table before test
+	// Clean up tables before test
+	testDB.Exec("DELETE FROM refresh_tokens")
 	testDB.Exec("DELETE FROM users")
 
 	// Create services
 	userRepository := userRepo.NewRepository(testDB)
-	authService := auth.NewService(userRepository, "test-jwt-secret", 24)
+	refreshRepository := refreshTokenRepo.NewRepository(testDB)
+	authService := auth.NewService(userRepository, refreshRepository, "test-jwt-secret", 15, 7)
 
 	// Create resolver
 	cfg := config.Config{
