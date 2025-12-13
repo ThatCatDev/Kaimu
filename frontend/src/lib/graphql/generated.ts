@@ -359,6 +359,8 @@ export type Mutation = {
   moveCard: Card;
   /** Move a card to backlog (remove from all sprints) */
   moveCardToBacklog: Card;
+  /** Refresh access token using refresh token cookie */
+  refreshToken: RefreshTokenPayload;
   /** Register a new user (sends verification email) */
   register: AuthPayload;
   /** Remove a card from a sprint */
@@ -967,6 +969,12 @@ export type QueryVelocityDataArgs = {
   sprintCount?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type RefreshTokenPayload = {
+  __typename?: 'RefreshTokenPayload';
+  expiresIn: Scalars['Int']['output'];
+  success: Scalars['Boolean']['output'];
+};
+
 export type RegisterInput = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -1223,31 +1231,36 @@ export type RegisterMutationVariables = Exact<{
 }>;
 
 
-export type RegisterMutation = { __typename?: 'Mutation', register: { __typename?: 'AuthPayload', user: { __typename?: 'User', id: string, username: string, createdAt: string } } };
+export type RegisterMutation = { __typename?: 'Mutation', register: { __typename?: 'AuthPayload', user: { __typename?: 'User', id: string, username: string, email?: string | null, emailVerified: boolean, displayName?: string | null, avatarUrl?: string | null, createdAt: string } } };
 
 export type LoginMutationVariables = Exact<{
   input: LoginInput;
 }>;
 
 
-export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'AuthPayload', user: { __typename?: 'User', id: string, username: string, createdAt: string } } };
+export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'AuthPayload', user: { __typename?: 'User', id: string, username: string, email?: string | null, emailVerified: boolean, displayName?: string | null, avatarUrl?: string | null, createdAt: string } } };
 
 export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
 
 
 export type LogoutMutation = { __typename?: 'Mutation', logout: boolean };
 
+export type RefreshTokenMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RefreshTokenMutation = { __typename?: 'Mutation', refreshToken: { __typename?: 'RefreshTokenPayload', success: boolean, expiresIn: number } };
+
 export type UpdateMeMutationVariables = Exact<{
   input: UpdateMeInput;
 }>;
 
 
-export type UpdateMeMutation = { __typename?: 'Mutation', updateMe: { __typename?: 'User', id: string, username: string, email?: string | null, displayName?: string | null, avatarUrl?: string | null, createdAt: string } };
+export type UpdateMeMutation = { __typename?: 'Mutation', updateMe: { __typename?: 'User', id: string, username: string, email?: string | null, emailVerified: boolean, displayName?: string | null, avatarUrl?: string | null, createdAt: string } };
 
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me?: { __typename?: 'User', id: string, username: string, email?: string | null, displayName?: string | null, avatarUrl?: string | null, createdAt: string } | null };
+export type MeQuery = { __typename?: 'Query', me?: { __typename?: 'User', id: string, username: string, email?: string | null, emailVerified: boolean, displayName?: string | null, avatarUrl?: string | null, createdAt: string } | null };
 
 export type OidcProvidersQueryVariables = Exact<{ [key: string]: never; }>;
 

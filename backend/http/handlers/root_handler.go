@@ -25,6 +25,7 @@ import (
 	projectMemberRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/project_member"
 	roleRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/role"
 	rolePermissionRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/role_permission"
+	refreshTokenRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/refreshtoken"
 	sprintRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/sprint"
 	tagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
@@ -93,11 +94,16 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 	projectMemberRepository := projectMemberRepo.NewRepository(database.DB)
 	invitationRepository := invitationRepo.NewRepository(database.DB)
 
+	// Initialize refresh token repository
+	refreshTokenRepository := refreshTokenRepo.NewRepository(database.DB)
+
 	// Initialize services
 	authService := auth.NewService(
 		userRepository,
+		refreshTokenRepository,
 		cfg.AppConfig.JWTSecret,
-		cfg.AppConfig.JWTExpirationHours,
+		cfg.AppConfig.AccessTokenExpirationMinutes,
+		cfg.AppConfig.RefreshTokenExpirationDays,
 	)
 
 	organizationService := organization.NewService(
@@ -198,12 +204,10 @@ func InitializeDependencies(cfg config.Config) *Dependencies {
 		stateManager,
 		cfg.OIDCConfig.BaseURL,
 		cfg.OIDCConfig.FrontendURL,
-		cfg.AppConfig.JWTSecret,
-		cfg.AppConfig.JWTExpirationHours,
 	)
 
 	isSecure := cfg.AppConfig.Env != "development"
-	oidcHandler := NewOIDCHandler(oidcService, cfg.OIDCConfig.FrontendURL, isSecure)
+	oidcHandler := NewOIDCHandler(oidcService, authService, cfg.OIDCConfig.FrontendURL, isSecure)
 
 	// Initialize search service (optional - nil if Typesense is not configured)
 	var searchService search.Service

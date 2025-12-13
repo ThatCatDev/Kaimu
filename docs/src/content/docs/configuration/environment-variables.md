@@ -14,7 +14,8 @@ This page documents all environment variables used to configure Kaimu.
 | `PORT` | `3000` | Port for the GraphQL API server |
 | `ENV` | `development` | Environment (`development` or `production`) |
 | `JWT_SECRET` | `dev-secret-change-in-production` | Secret key for signing JWT tokens. **Change in production!** |
-| `JWT_EXPIRATION_HOURS` | `24` | JWT token expiration time in hours |
+| `JWT_ACCESS_EXPIRATION_MINUTES` | `5` | Access token expiration time in minutes |
+| `JWT_REFRESH_EXPIRATION_DAYS` | `7` | Refresh token expiration time in days |
 
 ### Database
 
@@ -99,7 +100,8 @@ services:
       PORT: 3000
       ENV: production
       JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION_HOURS: 24
+      JWT_ACCESS_EXPIRATION_MINUTES: 5
+      JWT_REFRESH_EXPIRATION_DAYS: 7
 
       # OIDC
       OIDC_BASE_URL: https://api.yourdomain.com

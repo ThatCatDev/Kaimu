@@ -45,7 +45,13 @@ func (r *mutationResolver) Login(ctx context.Context, input model.LoginInput) (*
 
 // Logout is the resolver for the logout field.
 func (r *mutationResolver) Logout(ctx context.Context) (bool, error) {
-	return resolvers.Logout(ctx)
+	return resolvers.Logout(ctx, r.AuthService)
+}
+
+// RefreshToken is the resolver for the refreshToken field.
+func (r *mutationResolver) RefreshToken(ctx context.Context) (*model.RefreshTokenPayload, error) {
+	isSecure := r.Config.AppConfig.Env != "development"
+	return resolvers.RefreshToken(ctx, r.AuthService, isSecure)
 }
 
 // VerifyEmail is the resolver for the verifyEmail field.

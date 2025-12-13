@@ -11,7 +11,10 @@ import (
 )
 
 func Register(ctx context.Context, authService auth.Service, input model.RegisterInput, isSecure bool) (*model.AuthPayload, error) {
-	u, token, err := authService.Register(ctx, input.Username, input.Email, input.Password)
+	userAgent := middleware.GetUserAgentFromContext(ctx)
+	ipAddress := middleware.GetIPAddressFromContext(ctx)
+
+	u, tokenPair, err := authService.Register(ctx, input.Username, input.Email, input.Password, userAgent, ipAddress)
 	if err != nil {
 		if errors.Is(err, auth.ErrUserExists) {
 			return nil, errors.New("username already taken")
@@ -19,10 +22,10 @@ func Register(ctx context.Context, authService auth.Service, input model.Registe
 		return nil, err
 	}
 
-	// Set auth cookie
+	// Set auth cookies
 	w := middleware.GetResponseWriter(ctx)
 	if w != nil {
-		middleware.SetAuthCookie(w, token, isSecure)
+		middleware.SetAuthCookies(w, tokenPair.AccessToken, tokenPair.RefreshToken, isSecure)
 	}
 
 	return &model.AuthPayload{
@@ -31,7 +34,10 @@ func Register(ctx context.Context, authService auth.Service, input model.Registe
 }
 
 func Login(ctx context.Context, authService auth.Service, input model.LoginInput, isSecure bool) (*model.AuthPayload, error) {
-	u, token, err := authService.Login(ctx, input.Username, input.Password)
+	userAgent := middleware.GetUserAgentFromContext(ctx)
+	ipAddress := middleware.GetIPAddressFromContext(ctx)
+
+	u, tokenPair, err := authService.Login(ctx, input.Username, input.Password, userAgent, ipAddress)
 	if err != nil {
 		if errors.Is(err, auth.ErrInvalidCredentials) {
 			return nil, errors.New("invalid username or password")
@@ -39,10 +45,10 @@ func Login(ctx context.Context, authService auth.Service, input model.LoginInput
 		return nil, err
 	}
 
-	// Set auth cookie
+	// Set auth cookies
 	w := middleware.GetResponseWriter(ctx)
 	if w != nil {
-		middleware.SetAuthCookie(w, token, isSecure)
+		middleware.SetAuthCookies(w, tokenPair.AccessToken, tokenPair.RefreshToken, isSecure)
 	}
 
 	return &model.AuthPayload{
@@ -50,12 +56,53 @@ func Login(ctx context.Context, authService auth.Service, input model.LoginInput
 	}, nil
 }
 
-func Logout(ctx context.Context) (bool, error) {
+func Logout(ctx context.Context, authService auth.Service) (bool, error) {
+	// Revoke the refresh token if present
+	refreshToken := middleware.GetRefreshTokenFromContext(ctx)
+	if refreshToken != "" {
+		_ = authService.RevokeRefreshToken(ctx, refreshToken)
+	}
+
+	// Clear cookies
 	w := middleware.GetResponseWriter(ctx)
 	if w != nil {
-		middleware.ClearAuthCookie(w)
+		middleware.ClearAuthCookies(w)
 	}
 	return true, nil
+}
+
+func RefreshToken(ctx context.Context, authService auth.Service, isSecure bool) (*model.RefreshTokenPayload, error) {
+	refreshToken := middleware.GetRefreshTokenFromContext(ctx)
+	if refreshToken == "" {
+		return nil, errors.New("no refresh token provided")
+	}
+
+	userAgent := middleware.GetUserAgentFromContext(ctx)
+	ipAddress := middleware.GetIPAddressFromContext(ctx)
+
+	tokenPair, err := authService.RefreshTokens(ctx, refreshToken, userAgent, ipAddress)
+	if err != nil {
+		if errors.Is(err, auth.ErrInvalidRefreshToken) || errors.Is(err, auth.ErrRefreshTokenRevoked) {
+			// Clear cookies on invalid/revoked refresh token
+			w := middleware.GetResponseWriter(ctx)
+			if w != nil {
+				middleware.ClearAuthCookies(w)
+			}
+			return nil, errors.New("session expired, please login again")
+		}
+		return nil, err
+	}
+
+	// Set new auth cookies
+	w := middleware.GetResponseWriter(ctx)
+	if w != nil {
+		middleware.SetAuthCookies(w, tokenPair.AccessToken, tokenPair.RefreshToken, isSecure)
+	}
+
+	return &model.RefreshTokenPayload{
+		Success:   true,
+		ExpiresIn: int(tokenPair.ExpiresIn),
+	}, nil
 }
 
 func Me(ctx context.Context, authService auth.Service) (*model.User, error) {

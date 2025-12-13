@@ -296,6 +296,11 @@ type ProjectMember struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
+type RefreshTokenPayload struct {
+	Success   bool `json:"success"`
+	ExpiresIn int  `json:"expiresIn"`
+}
+
 type RegisterInput struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`

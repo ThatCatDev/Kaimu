@@ -17,6 +17,11 @@ type AuthPayload {
     user: User!
 }
 
+type RefreshTokenPayload {
+    success: Boolean!
+    expiresIn: Int!
+}
+
 input RegisterInput {
     username: String!
     email: String!

@@ -7,18 +7,21 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/thatcatdev/kaimu/backend/http/middleware"
 	"github.com/thatcatdev/kaimu/backend/internal/logger"
+	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
 	"github.com/thatcatdev/kaimu/backend/internal/services/oidc"
 )
 
 type OIDCHandler struct {
 	oidcService oidc.Service
+	authService auth.Service
 	frontendURL string
 	isSecure    bool
 }
 
-func NewOIDCHandler(oidcService oidc.Service, frontendURL string, isSecure bool) *OIDCHandler {
+func NewOIDCHandler(oidcService oidc.Service, authService auth.Service, frontendURL string, isSecure bool) *OIDCHandler {
 	return &OIDCHandler{
 		oidcService: oidcService,
+		authService: authService,
 		frontendURL: frontendURL,
 		isSecure:    isSecure,
 	}
@@ -104,8 +107,8 @@ func (h *OIDCHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Handle callback
-	result, token, err := h.oidcService.HandleCallback(ctx, providerSlug, code, state)
+	// Handle callback (user creation/linking only)
+	result, err := h.oidcService.HandleCallback(ctx, providerSlug, code, state)
 	if err != nil {
 		log := logger.FromCtx(ctx)
 		log.Error().Err(err).Str("provider", providerSlug).Msg("OIDC callback failed")
@@ -122,8 +125,19 @@ func (h *OIDCHandler) Callback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Set auth cookie
-	middleware.SetAuthCookie(w, token, h.isSecure)
+	// Generate token pair using auth service
+	userAgent := r.Header.Get("User-Agent")
+	ipAddress := middleware.GetClientIP(r)
+	tokenPair, err := h.authService.GenerateTokenPair(ctx, result.User.ID, userAgent, ipAddress)
+	if err != nil {
+		log := logger.FromCtx(ctx)
+		log.Error().Err(err).Msg("Failed to generate tokens")
+		h.redirectWithError(w, r, "Authentication failed. Please try again.")
+		return
+	}
+
+	// Set auth cookies (access token and refresh token)
+	middleware.SetAuthCookies(w, tokenPair.AccessToken, tokenPair.RefreshToken, h.isSecure)
 
 	// Determine redirect URL
 	redirectURL := h.frontendURL + "/dashboard"

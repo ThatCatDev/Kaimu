@@ -3,6 +3,10 @@ mutation Register($input: RegisterInput!) {
     user {
       id
       username
+      email
+      emailVerified
+      displayName
+      avatarUrl
       createdAt
     }
   }
@@ -13,6 +17,10 @@ mutation Login($input: LoginInput!) {
     user {
       id
       username
+      email
+      emailVerified
+      displayName
+      avatarUrl
       createdAt
     }
   }
@@ -22,11 +30,19 @@ mutation Logout {
   logout
 }
 
+mutation RefreshToken {
+  refreshToken {
+    success
+    expiresIn
+  }
+}
+
 mutation UpdateMe($input: UpdateMeInput!) {
   updateMe(input: $input) {
     id
     username
     email
+    emailVerified
     displayName
     avatarUrl
     createdAt
@@ -38,6 +54,7 @@ query Me {
     id
     username
     email
+    emailVerified
     displayName
     avatarUrl
     createdAt

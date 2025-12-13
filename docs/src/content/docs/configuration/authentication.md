@@ -128,9 +128,52 @@ OIDC_PROVIDERS='[{
 }]'
 ```
 
+## JWT Token Management
+
+Kaimu uses a dual-token authentication system for security:
+
+### Token Types
+
+| Token | Lifetime | Storage | Purpose |
+|-------|----------|---------|---------|
+| Access Token | 5 minutes | HTTP-only cookie | Short-lived token for API requests |
+| Refresh Token | 7 days | HTTP-only cookie + database | Long-lived token for obtaining new access tokens |
+
+### How It Works
+
+1. **Login/OIDC Callback**: User authenticates and receives both tokens as HTTP-only cookies
+2. **API Requests**: Access token is automatically sent with each request
+3. **Token Refresh**: When the access token expires (or 30 seconds before), the frontend automatically uses the refresh token to get a new pair
+4. **Token Rotation**: Each refresh generates a new refresh token and invalidates the old one
+5. **Logout**: Both tokens are revoked and cookies are cleared
+
+### Security Features
+
+- **Short Access Token Lifetime**: Limits exposure if a token is compromised
+- **Token Rotation**: Refresh tokens are single-use; a new one is issued on each refresh
+- **Reuse Detection**: If a refresh token is used after rotation (indicating theft), all user tokens are revoked
+- **HTTP-only Cookies**: Tokens cannot be accessed by JavaScript, preventing XSS attacks
+- **Secure Cookies**: In production, cookies require HTTPS
+- **Device Tracking**: Refresh tokens store user agent and IP for auditing
+
+### Frontend Auto-Refresh
+
+The frontend automatically handles token refresh:
+- Proactively refreshes tokens 30 seconds before expiration
+- Retries failed requests after successful refresh
+- Redirects to login on authentication failure
+
+### Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `JWT_SECRET` | - | Secret key for signing tokens. **Required in production** |
+| `JWT_ACCESS_EXPIRATION_MINUTES` | `5` | Access token lifetime |
+| `JWT_REFRESH_EXPIRATION_DAYS` | `7` | Refresh token lifetime |
+
 ## Security Considerations
 
-1. **Use HTTPS in Production**: OIDC requires secure connections for token exchange.
+1. **Use HTTPS in Production**: OIDC requires secure connections for token exchange. Cookies are only secure over HTTPS.
 
 2. **Protect Client Secrets**: Never commit secrets to version control. Use environment variables or secret management.
 
@@ -139,6 +182,8 @@ OIDC_PROVIDERS='[{
 4. **Review Scopes**: Only request scopes you need. The default `openid email profile` is sufficient for most cases.
 
 5. **State Expiration**: The default 10-minute state expiration helps prevent CSRF attacks.
+
+6. **Change JWT_SECRET**: The default secret is insecure. Use a strong, random secret in production.
 
 ## Troubleshooting
 

@@ -216,8 +216,34 @@ sequenceDiagram
     B->>BE: GET /auth/oidc/{provider}/callback?code=...
     BE->>O: Exchange code for tokens
     O->>BE: ID Token + Access Token
-    BE->>B: Set cookie, redirect to dashboard
+    BE->>BE: Create/link user, generate token pair
+    BE->>B: Set access + refresh cookies, redirect
     B->>F: Load dashboard page
+```
+
+### Token Refresh Flow
+
+```mermaid
+sequenceDiagram
+    participant F as Frontend
+    participant BE as Backend
+    participant DB as Database
+
+    Note over F: Access token expires in 30s
+    F->>BE: POST /graphql (refreshToken mutation)
+    BE->>DB: Validate refresh token
+    alt Token valid and not revoked
+        BE->>DB: Revoke old refresh token
+        BE->>DB: Create new refresh token
+        BE->>F: Set new access + refresh cookies
+        F->>BE: Retry original request
+    else Token invalid or revoked
+        alt Reuse detected
+            BE->>DB: Revoke ALL user tokens
+        end
+        BE->>F: 401 Unauthorized
+        F->>F: Redirect to login
+    end
 ```
 
 ## Database Schema
@@ -251,6 +277,7 @@ erDiagram
     users ||--o{ cards : "assigned to"
     users ||--o{ oidc_identities : "has"
     users ||--o{ email_verification_tokens : "has"
+    users ||--o{ refresh_tokens : "has"
 
     roles ||--o{ role_permissions : "has"
     permissions ||--o{ role_permissions : "granted by"
@@ -448,6 +475,18 @@ erDiagram
         timestamp expires_at
         timestamp used_at
         timestamp created_at
+    }
+
+    refresh_tokens {
+        uuid id PK
+        uuid user_id FK
+        string token_hash
+        timestamp expires_at
+        timestamp created_at
+        timestamp revoked_at
+        uuid replaced_by FK
+        text user_agent
+        string ip_address
     }
 ```
 

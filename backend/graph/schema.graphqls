@@ -78,6 +78,8 @@ type Mutation {
     login(input: LoginInput!): AuthPayload!
     "Logout current user"
     logout: Boolean!
+    "Refresh access token using refresh token cookie"
+    refreshToken: RefreshTokenPayload!
     "Verify email with token"
     verifyEmail(token: String!): AuthPayload!
     "Resend verification email"

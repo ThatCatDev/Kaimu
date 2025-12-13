@@ -35,12 +35,14 @@ type OIDCProvider struct {
 }
 
 type AppConfig struct {
-	APPName            string `default:"pulse-api"`
-	Port               int    `env:"PORT" default:"3000"`
-	Version            string `default:"x.x.x" env:"VERSION"`
-	Env                string `default:"development" env:"ENV"`
-	JWTSecret          string `env:"JWT_SECRET" default:"dev-secret-change-in-production"`
-	JWTExpirationHours int    `env:"JWT_EXPIRATION_HOURS" default:"24"`
+	APPName                     string `default:"pulse-api"`
+	Port                        int    `env:"PORT" default:"3000"`
+	Version                     string `default:"x.x.x" env:"VERSION"`
+	Env                         string `default:"development" env:"ENV"`
+	JWTSecret                   string `env:"JWT_SECRET" default:"dev-secret-change-in-production"`
+	JWTExpirationHours          int    `env:"JWT_EXPIRATION_HOURS" default:"24"`                  // Deprecated: use AccessTokenExpirationMinutes
+	AccessTokenExpirationMinutes int   `env:"JWT_ACCESS_EXPIRATION_MINUTES" default:"5"`         // Access token expiry (short-lived)
+	RefreshTokenExpirationDays  int    `env:"JWT_REFRESH_EXPIRATION_DAYS" default:"7"`           // Refresh token expiry
 }
 
 type DBConfig struct {

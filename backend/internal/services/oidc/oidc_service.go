@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/thatcatdev/kaimu/backend/config"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/oidc_identity"
@@ -53,8 +52,9 @@ type Service interface {
 	// GetAuthorizationURL generates an authorization URL for a provider
 	GetAuthorizationURL(ctx context.Context, providerSlug, redirectURI string) (*AuthorizationResponse, error)
 
-	// HandleCallback processes the OIDC callback, creates/links user, returns JWT token
-	HandleCallback(ctx context.Context, providerSlug, code, state string) (*CallbackResult, string, error)
+	// HandleCallback processes the OIDC callback, creates/links user
+	// Token generation is handled separately by the auth service
+	HandleCallback(ctx context.Context, providerSlug, code, state string) (*CallbackResult, error)
 
 	// GetUserIdentities returns OIDC identities linked to a user
 	GetUserIdentities(ctx context.Context, userID uuid.UUID) ([]IdentityInfo, error)
@@ -71,8 +71,6 @@ type service struct {
 	stateManager StateManager
 	baseURL      string // Backend base URL for callbacks
 	frontendURL  string // Frontend URL for redirects after auth
-	jwtSecret    string
-	jwtExpHours  int
 
 	// Cache for OIDC providers (go-oidc Provider objects)
 	oidcProviderCache map[string]*oidc.Provider
@@ -84,8 +82,7 @@ func NewService(
 	identityRepo oidc_identity.Repository,
 	userRepo user.Repository,
 	stateManager StateManager,
-	baseURL, frontendURL, jwtSecret string,
-	jwtExpHours int,
+	baseURL, frontendURL string,
 ) Service {
 	// Build provider map for fast lookup
 	providerMap := make(map[string]config.OIDCProvider)
@@ -101,8 +98,6 @@ func NewService(
 		stateManager:      stateManager,
 		baseURL:           baseURL,
 		frontendURL:       frontendURL,
-		jwtSecret:         jwtSecret,
-		jwtExpHours:       jwtExpHours,
 		oidcProviderCache: make(map[string]*oidc.Provider),
 	}
 }
@@ -166,11 +161,11 @@ func (s *service) GetAuthorizationURL(ctx context.Context, providerSlug, redirec
 	}, nil
 }
 
-func (s *service) HandleCallback(ctx context.Context, providerSlug, code, state string) (*CallbackResult, string, error) {
+func (s *service) HandleCallback(ctx context.Context, providerSlug, code, state string) (*CallbackResult, error) {
 	// Validate state and get PKCE data
 	stateData, err := s.stateManager.GetState(state)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	// Delete state immediately (single use)
@@ -178,19 +173,19 @@ func (s *service) HandleCallback(ctx context.Context, providerSlug, code, state 
 
 	// Verify provider slug matches
 	if stateData.ProviderSlug != providerSlug {
-		return nil, "", ErrInvalidState
+		return nil, ErrInvalidState
 	}
 
 	// Get provider from config
 	provider, err := s.getProviderBySlug(providerSlug)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	// Get OIDC provider metadata
 	oidcProvider, err := s.getOIDCProvider(ctx, provider)
 	if err != nil {
-		return nil, "", fmt.Errorf("failed to get OIDC provider metadata: %w", err)
+		return nil, fmt.Errorf("failed to get OIDC provider metadata: %w", err)
 	}
 
 	// Build OAuth2 config
@@ -203,13 +198,13 @@ func (s *service) HandleCallback(ctx context.Context, providerSlug, code, state 
 		oauth2.SetAuthURLParam("code_verifier", stateData.CodeVerifier),
 	)
 	if err != nil {
-		return nil, "", fmt.Errorf("%w: %v", ErrTokenExchangeFailed, err)
+		return nil, fmt.Errorf("%w: %v", ErrTokenExchangeFailed, err)
 	}
 
 	// Extract and verify ID token
 	rawIDToken, ok := token.Extra("id_token").(string)
 	if !ok {
-		return nil, "", ErrInvalidIDToken
+		return nil, ErrInvalidIDToken
 	}
 
 	// Create verifier - use custom keyset if discovery URL differs from issuer URL
@@ -226,7 +221,7 @@ func (s *service) HandleCallback(ctx context.Context, providerSlug, code, state 
 
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		return nil, "", fmt.Errorf("%w: %v", ErrInvalidIDToken, err)
+		return nil, fmt.Errorf("%w: %v", ErrInvalidIDToken, err)
 	}
 
 	// Extract claims
@@ -239,27 +234,21 @@ func (s *service) HandleCallback(ctx context.Context, providerSlug, code, state 
 		Nonce         string `json:"nonce"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
-		return nil, "", fmt.Errorf("failed to parse claims: %w", err)
+		return nil, fmt.Errorf("failed to parse claims: %w", err)
 	}
 
 	// Verify nonce
 	if claims.Nonce != stateData.Nonce {
-		return nil, "", ErrNonceMismatch
+		return nil, ErrNonceMismatch
 	}
 
 	// Find or create user
 	result, err := s.findOrCreateUser(ctx, provider, &claims)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
-	// Generate internal JWT token
-	jwtToken, err := s.generateToken(result.User.ID)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to generate token: %w", err)
-	}
-
-	return result, jwtToken, nil
+	return result, nil
 }
 
 func (s *service) GetUserIdentities(ctx context.Context, userID uuid.UUID) ([]IdentityInfo, error) {
@@ -495,17 +484,4 @@ func nilIfEmpty(s string) *string {
 		return nil
 	}
 	return &s
-}
-
-// Token generation (duplicated from auth service to avoid circular dependency)
-func (s *service) generateToken(userID uuid.UUID) (string, error) {
-	claims := jwt.MapClaims{
-		"user_id": userID.String(),
-		"iss":     "pulse",
-		"exp":     time.Now().Add(time.Duration(s.jwtExpHours) * time.Hour).Unix(),
-		"iat":     time.Now().Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(s.jwtSecret))
 }
