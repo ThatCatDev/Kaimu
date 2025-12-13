@@ -90,27 +90,31 @@ bun run preview  # Preview build
 ## Database Schema Guidelines
 
 ### Core Entities
-- `users` - User profiles (linked to OIDC subject)
-- `organizations` - Top-level org
-- `teams` - Team within org
-- `team_members` - User-team membership with role
+- `users` - User profiles (OIDC or email/password auth)
+- `organizations` - Top-level container for projects
+- `organization_members` - User-org membership with role
 - `projects` - Project within org
-- `project_teams` - Team-project assignment
-- `task_types` - Configurable task types per org
-- `tasks` - Work items (self-referential for subtasks)
-- `task_comments` - Comments on tasks
-- `task_attachments` - File attachments
-- `sprints` - Sprint definitions
-- `sprint_tasks` - Task-sprint assignments
-- `time_entries` - Time logged against tasks
+- `project_members` - User-project membership
 - `boards` - Kanban board definitions
-- `board_columns` - Board column configuration
+- `board_columns` - Board column configuration (position, WIP limits, is_done)
+- `cards` - Work items on boards
+- `tags` - Labels scoped to projects
+- `card_tags` - Card-tag associations
+- `sprints` - Sprint definitions (board-level)
+- `card_sprints` - Card-sprint associations (many-to-many)
+- `roles` - System and custom roles
+- `permissions` - Granular permissions
+- `role_permissions` - Role-permission associations
+- `invitations` - Pending org invites
+- `metrics_history` - Daily sprint snapshots for charts
+- `audit_events` - Activity log for all entities
 
 ### Key Relationships
-- Tasks have a `parent_id` for subtask hierarchy
-- Tasks belong to a project and optionally a sprint
-- Users belong to organizations through team membership
-- Projects are accessible to assigned teams
+- Cards belong to a board and a column
+- Cards can be in multiple sprints (via card_sprints)
+- Users belong to organizations through organization_members
+- Sprints are board-level (not project-level)
+- Roles have permissions via role_permissions
 
 ## GraphQL Schema Guidelines
 
@@ -135,11 +139,19 @@ When adding new types/queries:
 - [x] Project structure setup
 - [x] Backend GraphQL skeleton with PostgreSQL
 - [x] Frontend Astro + Svelte setup
-- [ ] Database schema and migrations
-- [ ] OIDC authentication
-- [ ] User and organization management
-- [ ] Task CRUD operations
-- [ ] Kanban board UI
-- [ ] Sprint management
+- [x] Database schema and migrations (21 migrations)
+- [x] OIDC authentication
+- [x] Email/password authentication with verification
+- [x] User and organization management
+- [x] Role-based access control (RBAC)
+- [x] Project CRUD operations
+- [x] Kanban board UI with drag-and-drop
+- [x] Card CRUD with rich text editor
+- [x] Tags and assignees
+- [x] Sprint management (create, start, complete, reopen)
+- [x] Sprint planning view
+- [x] Board metrics view (burndown, cumulative flow)
+- [x] Audit event logging
 - [ ] Time tracking
-- [ ] Reporting and charts
+- [ ] Velocity charts
+- [ ] Subtasks and linked tasks

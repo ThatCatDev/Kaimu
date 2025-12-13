@@ -1,18 +1,18 @@
 ---
 title: Authentication (OIDC)
-description: Configure OpenID Connect authentication for Pulse
+description: Configure OpenID Connect authentication for Kaimu
 ---
 
-Pulse uses OpenID Connect (OIDC) for authentication. This allows you to integrate with any OIDC-compliant identity provider.
+Kaimu uses OpenID Connect (OIDC) for authentication. This allows you to integrate with any OIDC-compliant identity provider.
 
 ## How It Works
 
 1. User clicks a provider button on the login page
 2. Browser redirects to the identity provider
 3. User authenticates with the provider
-4. Provider redirects back to Pulse with an authorization code
+4. Provider redirects back to Kaimu with an authorization code
 5. Backend exchanges code for tokens and creates/links user
-6. User is logged into Pulse
+6. User is logged into Kaimu
 
 ## Configuration
 
@@ -57,7 +57,7 @@ For example:
 
 ## Supported Providers
 
-Pulse works with any OIDC-compliant provider. Here are some common ones:
+Kaimu works with any OIDC-compliant provider. Here are some common ones:
 
 ### Google
 
@@ -123,8 +123,8 @@ OIDC_PROVIDERS='[{
   "slug": "dex",
   "issuer_url": "http://localhost:5556/dex",      # Browser sees this
   "discovery_url": "http://dex:5556/dex",         # Backend uses this
-  "client_id": "pulse-app",
-  "client_secret": "pulse-secret-key"
+  "client_id": "kaimu-app",
+  "client_secret": "kaimu-secret-key"
 }]'
 ```
 

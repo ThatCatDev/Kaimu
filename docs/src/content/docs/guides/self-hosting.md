@@ -1,13 +1,13 @@
 ---
 title: Self-Hosting
-description: Deploy Pulse on your own infrastructure
+description: Deploy Kaimu on your own infrastructure
 ---
 
-This guide covers deploying Pulse on your own infrastructure for production use.
+This guide covers deploying Kaimu on your own infrastructure for production use.
 
 ## Architecture Overview
 
-Pulse consists of:
+Kaimu consists of:
 
 - **Frontend**: Astro/Svelte static site (can be served via CDN)
 - **Backend**: Go GraphQL API
@@ -50,27 +50,27 @@ services:
     image: postgres:16
     restart: always
     environment:
-      POSTGRES_USER: pulse
+      POSTGRES_USER: kaimu
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: pulse
+      POSTGRES_DB: kaimu
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pulse"]
+      test: ["CMD-SHELL", "pg_isready -U kaimu"]
       interval: 5s
       timeout: 5s
       retries: 5
 
   backend:
-    image: pulse-backend:latest
+    image: kaimu-backend:latest
     restart: always
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       DBHOST: postgres
-      DBNAME: pulse
-      DBUSERNAME: pulse
+      DBNAME: kaimu
+      DBUSERNAME: kaimu
       DBPASSWORD: ${DB_PASSWORD}
       DBSSL: disable
       ENV: production
@@ -82,7 +82,7 @@ services:
       - "127.0.0.1:3000:3000"
 
   frontend:
-    image: pulse-frontend:latest
+    image: kaimu-frontend:latest
     restart: always
     environment:
       PUBLIC_API_URL: https://api.yourdomain.com/graphql
@@ -104,27 +104,27 @@ Create Kubernetes manifests for each component:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pulse-backend
+  name: kaimu-backend
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: pulse-backend
+      app: kaimu-backend
   template:
     metadata:
       labels:
-        app: pulse-backend
+        app: kaimu-backend
     spec:
       containers:
       - name: backend
-        image: pulse-backend:latest
+        image: kaimu-backend:latest
         ports:
         - containerPort: 3000
         env:
         - name: DBPASSWORD
           valueFrom:
             secretKeyRef:
-              name: pulse-secrets
+              name: kaimu-secrets
               key: db-password
         # ... other env vars
 ```
@@ -234,10 +234,10 @@ openssl rand -base64 32
 #!/bin/bash
 BACKUP_DIR=/backups
 DATE=$(date +%Y%m%d)
-pg_dump -h localhost -U pulse -d pulse | gzip > $BACKUP_DIR/pulse_$DATE.sql.gz
+pg_dump -h localhost -U kaimu -d kaimu | gzip > $BACKUP_DIR/kaimu_$DATE.sql.gz
 
 # Keep last 30 days
-find $BACKUP_DIR -name "pulse_*.sql.gz" -mtime +30 -delete
+find $BACKUP_DIR -name "kaimu_*.sql.gz" -mtime +30 -delete
 ```
 
 ### Automated Backups
@@ -270,11 +270,11 @@ docker compose logs -f backend
 
 ### Metrics (Optional)
 
-Pulse exposes Prometheus metrics at `/metrics`. Configure Prometheus to scrape:
+Kaimu exposes Prometheus metrics at `/metrics`. Configure Prometheus to scrape:
 
 ```yaml
 scrape_configs:
-  - job_name: 'pulse'
+  - job_name: 'kaimu'
     static_configs:
       - targets: ['localhost:3000']
 ```

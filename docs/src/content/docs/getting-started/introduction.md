@@ -1,15 +1,17 @@
 ---
 title: Introduction
-description: What is Pulse and why use it
+description: What is Kaimu and why use it
 ---
 
-Pulse is a modern, self-hosted project management tool designed for software teams. It provides a clean, fast interface for managing projects with Kanban boards, similar to tools like Jira or Linear.
+Kaimu is a modern, self-hosted project management tool designed for software teams. It provides a clean, fast interface for managing projects with Kanban boards, sprints, and agile workflows - similar to tools like Jira or Linear.
 
-## Why Pulse?
+**kai** (change) + **mu** (nothing wasted)
+
+## Why Kaimu?
 
 - **Self-Hosted**: Keep your data on your own infrastructure
 - **Modern Stack**: Built with Go, GraphQL, Astro, and Svelte 5
-- **Fast**: Optimized for speed and responsiveness
+- **Agile Ready**: Kanban boards, sprints, planning views, and burndown charts
 - **Flexible Authentication**: Works with any OIDC provider (Google, Okta, Azure AD, etc.)
 - **Open Source**: Full access to the source code
 
@@ -29,13 +31,19 @@ Pulse is a modern, self-hosted project management tool designed for software tea
 ## Core Features
 
 ### Organizations & Projects
-Organize your work into organizations and projects. Each organization can have multiple projects, and users can be members of multiple organizations.
+Organize your work into organizations and projects. Each organization can have multiple projects, and users can be members of multiple organizations with role-based access control.
 
 ### Kanban Boards
-Each project can have multiple Kanban boards with customizable columns. Drag and drop cards between columns to track progress.
+Each project can have multiple Kanban boards with customizable columns, WIP limits, and drag-and-drop cards.
+
+### Sprints & Planning
+Use sprints for time-boxed iterations. The Planning view helps you manage your backlog, assign cards to sprints, and track progress.
 
 ### Cards & Tags
-Create cards with descriptions, tags, and custom fields. Use tags to categorize and filter cards.
+Create cards with rich text descriptions, priorities, assignees, story points, due dates, and tags. Track everything your team needs.
+
+### Metrics & Charts
+Visualize progress with burndown charts, cumulative flow diagrams, and velocity tracking.
 
 ### Authentication
 Secure authentication via OpenID Connect (OIDC). Works with:
@@ -48,6 +56,7 @@ Secure authentication via OpenID Connect (OIDC). Works with:
 
 ## Next Steps
 
-- [Quick Start](/getting-started/quick-start/) - Get Pulse running in 5 minutes
+- [Quick Start](/getting-started/quick-start/) - Get Kaimu running in 5 minutes
+- [Core Concepts](/usage/concepts/) - Learn about organizations, projects, boards, and sprints
 - [Installation](/getting-started/installation/) - Detailed installation guide
-- [Configuration](/configuration/environment-variables/) - Configure Pulse for your environment
+- [Configuration](/configuration/environment-variables/) - Configure Kaimu for your environment

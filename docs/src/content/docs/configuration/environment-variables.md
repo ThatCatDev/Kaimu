@@ -1,9 +1,9 @@
 ---
 title: Environment Variables
-description: Complete reference for Pulse environment variables
+description: Complete reference for Kaimu environment variables
 ---
 
-This page documents all environment variables used to configure Pulse.
+This page documents all environment variables used to configure Kaimu.
 
 ## Backend Configuration
 
@@ -21,8 +21,8 @@ This page documents all environment variables used to configure Pulse.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DBHOST` | `localhost` | PostgreSQL host |
-| `DBNAME` | `pulse` | Database name |
-| `DBUSERNAME` | `pulse` | Database user |
+| `DBNAME` | `kaimu` | Database name |
+| `DBUSERNAME` | `kaimu` | Database user |
 | `DBPASSWORD` | *required* | Database password |
 | `DBPORT` | `5432` | Database port |
 | `DBSSL` | `disable` | SSL mode (`disable`, `require`, `verify-full`) |
@@ -89,8 +89,8 @@ services:
     environment:
       # Database
       DBHOST: postgres
-      DBNAME: pulse
-      DBUSERNAME: pulse
+      DBNAME: kaimu
+      DBUSERNAME: kaimu
       DBPASSWORD: ${DB_PASSWORD}
       DBPORT: 5432
       DBSSL: disable

@@ -1,9 +1,9 @@
 ---
 title: Contributing
-description: How to contribute to Pulse
+description: How to contribute to Kaimu
 ---
 
-We welcome contributions to Pulse! This guide will help you get started.
+We welcome contributions to Kaimu! This guide will help you get started.
 
 ## Getting Started
 
@@ -19,8 +19,8 @@ We welcome contributions to Pulse! This guide will help you get started.
 1. Fork and clone the repository:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/pulse.git
-cd pulse
+git clone https://github.com/YOUR_USERNAME/kaimu.git
+cd kaimu
 ```
 
 2. Start the development environment:
@@ -59,7 +59,7 @@ bun run dev
 ## Project Structure
 
 ```
-pulse/
+kaimu/
 ├── backend/          # Go GraphQL API
 ├── frontend/         # Astro + Svelte frontend
 ├── docs/             # Documentation (Starlight)
@@ -301,4 +301,4 @@ Be respectful and inclusive. We're all here to build something great together.
 
 ## License
 
-Pulse is open source software. By contributing, you agree that your contributions will be licensed under the same license.
+Kaimu is open source software. By contributing, you agree that your contributions will be licensed under the same license.

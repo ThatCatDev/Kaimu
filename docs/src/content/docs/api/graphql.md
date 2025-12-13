@@ -1,9 +1,9 @@
 ---
 title: GraphQL API
-description: Pulse GraphQL API reference
+description: Kaimu GraphQL API reference
 ---
 
-Pulse exposes a GraphQL API for all operations. The API is available at `/graphql`.
+Kaimu exposes a GraphQL API for all operations. The API is available at `/graphql`.
 
 ## Endpoint
 
@@ -21,7 +21,7 @@ http://localhost:3000/ui/playground
 
 Most queries and mutations require authentication. Include the session cookie in your requests (handled automatically by the frontend).
 
-For API access, use the `pulse_token` cookie or pass a JWT in the Authorization header:
+For API access, use the `kaimu_token` cookie or pass a JWT in the Authorization header:
 
 ```
 Authorization: Bearer <jwt-token>

@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import mermaid from 'astro-mermaid';
 
 // https://astro.build/config
 export default defineConfig({
@@ -8,11 +9,12 @@ export default defineConfig({
 		port: 4322,
 	},
 	integrations: [
+		mermaid(),
 		starlight({
-			title: 'Pulse',
+			title: 'Kaimu',
 			description: 'A modern project management tool for software teams',
 			social: [
-				{ icon: 'github', label: 'GitHub', href: 'https://github.com/thatcatdev/pulse' },
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/ThatCatDev/Kaimu' },
 			],
 			sidebar: [
 				{
@@ -21,6 +23,15 @@ export default defineConfig({
 						{ label: 'Introduction', slug: 'getting-started/introduction' },
 						{ label: 'Quick Start', slug: 'getting-started/quick-start' },
 						{ label: 'Installation', slug: 'getting-started/installation' },
+					],
+				},
+				{
+					label: 'Usage',
+					items: [
+						{ label: 'Core Concepts', slug: 'usage/concepts' },
+						{ label: 'Organizations', slug: 'usage/organizations' },
+						{ label: 'Projects & Boards', slug: 'usage/projects-boards' },
+						{ label: 'Cards & Sprints', slug: 'usage/cards-sprints' },
 					],
 				},
 				{

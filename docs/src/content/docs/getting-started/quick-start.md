@@ -1,9 +1,9 @@
 ---
 title: Quick Start
-description: Get Pulse running in 5 minutes with Docker Compose
+description: Get Kaimu running in 5 minutes with Docker Compose
 ---
 
-Get Pulse running locally in just a few minutes using Docker Compose.
+Get Kaimu running locally in just a few minutes using Docker Compose.
 
 ## Prerequisites
 
@@ -15,8 +15,8 @@ Get Pulse running locally in just a few minutes using Docker Compose.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/thatcatdev/pulse.git
-cd pulse
+git clone https://github.com/ThatCatDev/Kaimu.git
+cd Kaimu
 ```
 
 ### 2. Start the Services
@@ -37,7 +37,7 @@ This starts:
 docker compose exec backend go run cmd/main.go migrate up
 ```
 
-### 4. Access Pulse
+### 4. Access Kaimu
 
 Open [http://localhost:4321](http://localhost:4321) in your browser.
 
@@ -47,8 +47,8 @@ Click "Continue with Dex" and use these test credentials:
 
 | Email | Password |
 |-------|----------|
-| `admin@pulse.local` | `password` |
-| `user@pulse.local` | `password` |
+| `admin@kaimu.local` | `password` |
+| `user@kaimu.local` | `password` |
 
 ## What's Next?
 
@@ -57,7 +57,7 @@ Click "Continue with Dex" and use these test credentials:
 - Set up a Kanban board
 - Add cards and start tracking work
 
-## Stopping Pulse
+## Stopping Kaimu
 
 ```bash
 docker compose down

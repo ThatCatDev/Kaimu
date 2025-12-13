@@ -1,38 +1,46 @@
 ---
 title: Architecture
-description: Technical architecture of Pulse
+description: Technical architecture of Kaimu
 ---
 
-This document describes the technical architecture of Pulse.
+This document describes the technical architecture of Kaimu.
 
 ## Overview
 
-Pulse is built as a modern web application with a clear separation between frontend and backend:
+Kaimu is built as a modern web application with a clear separation between frontend and backend:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                         Frontend                             │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │    Astro    │  │   Svelte 5  │  │  GraphQL Client     │ │
-│  │   (SSG)     │  │ (Components)│  │  (graphql-request)  │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              │ GraphQL
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                         Backend                              │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │   gqlgen    │  │  Services   │  │    Repositories     │ │
-│  │ (GraphQL)   │──▶│  (Logic)    │──▶│     (Data)         │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              │ SQL
-                              ▼
-                    ┌─────────────────┐
-                    │   PostgreSQL    │
-                    └─────────────────┘
+```mermaid
+graph TB
+    subgraph Frontend
+        A1[Astro SSG]
+        A2[Svelte 5 Components]
+        A3[GraphQL Client]
+    end
+
+    subgraph Backend
+        B1[gqlgen GraphQL]
+        B2[Services]
+        B3[Repositories]
+    end
+
+    subgraph Database
+        C1[(PostgreSQL)]
+    end
+
+    A1 --> A2
+    A2 --> A3
+    A3 -->|GraphQL| B1
+    B1 --> B2
+    B2 --> B3
+    B3 -->|SQL| C1
+
+    style A1 fill:#7C3AED,color:#fff
+    style A2 fill:#F97316,color:#fff
+    style A3 fill:#0EA5E9,color:#fff
+    style B1 fill:#10B981,color:#fff
+    style B2 fill:#10B981,color:#fff
+    style B3 fill:#10B981,color:#fff
+    style C1 fill:#3B82F6,color:#fff
 ```
 
 ## Frontend Architecture
@@ -129,31 +137,19 @@ backend/
 
 ### Layer Architecture
 
-```
-┌─────────────────────────────────────┐
-│           HTTP Layer                │
-│  (handlers, middleware, routing)    │
-└─────────────────┬───────────────────┘
-                  │
-┌─────────────────▼───────────────────┐
-│          GraphQL Layer              │
-│    (resolvers, schema, types)       │
-└─────────────────┬───────────────────┘
-                  │
-┌─────────────────▼───────────────────┐
-│          Service Layer              │
-│       (business logic)              │
-└─────────────────┬───────────────────┘
-                  │
-┌─────────────────▼───────────────────┐
-│        Repository Layer             │
-│         (data access)               │
-└─────────────────┬───────────────────┘
-                  │
-┌─────────────────▼───────────────────┐
-│           Database                  │
-│         (PostgreSQL)                │
-└─────────────────────────────────────┘
+```mermaid
+graph TB
+    A[HTTP Layer<br/>handlers, middleware, routing] --> B
+    B[GraphQL Layer<br/>resolvers, schema, types] --> C
+    C[Service Layer<br/>business logic] --> D
+    D[Repository Layer<br/>data access] --> E
+    E[(Database<br/>PostgreSQL)]
+
+    style A fill:#EC4899,color:#fff
+    style B fill:#8B5CF6,color:#fff
+    style C fill:#3B82F6,color:#fff
+    style D fill:#10B981,color:#fff
+    style E fill:#F59E0B,color:#fff
 ```
 
 ### Key Patterns
@@ -204,72 +200,255 @@ type Service interface {
 
 ### OIDC Authentication
 
-```
-┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
-│  Browser │     │ Frontend │     │ Backend  │     │   OIDC   │
-│          │     │          │     │          │     │ Provider │
-└────┬─────┘     └────┬─────┘     └────┬─────┘     └────┬─────┘
-     │                │                │                │
-     │ Click Login    │                │                │
-     ├───────────────▶│                │                │
-     │                │                │                │
-     │ Redirect to    │                │                │
-     │ /auth/oidc/... │                │                │
-     │◀───────────────┤                │                │
-     │                                 │                │
-     │ GET /auth/oidc/{provider}/authorize             │
-     ├────────────────────────────────▶│                │
-     │                                 │                │
-     │ Redirect to OIDC Provider       │                │
-     │◀────────────────────────────────┤                │
-     │                                                  │
-     │ Authenticate with Provider                       │
-     ├─────────────────────────────────────────────────▶│
-     │                                                  │
-     │ Redirect with code                               │
-     │◀─────────────────────────────────────────────────┤
-     │                                 │                │
-     │ GET /auth/oidc/{provider}/callback?code=...     │
-     ├────────────────────────────────▶│                │
-     │                                 │                │
-     │                                 │ Exchange code  │
-     │                                 ├───────────────▶│
-     │                                 │                │
-     │                                 │ ID Token       │
-     │                                 │◀───────────────┤
-     │                                 │                │
-     │ Set cookie, redirect to dashboard               │
-     │◀────────────────────────────────┤                │
-     │                │                │                │
-     │ Dashboard page │                │                │
-     │◀───────────────┤                │                │
+```mermaid
+sequenceDiagram
+    participant B as Browser
+    participant F as Frontend
+    participant BE as Backend
+    participant O as OIDC Provider
+
+    B->>F: Click Login
+    F->>B: Redirect to /auth/oidc/...
+    B->>BE: GET /auth/oidc/{provider}/authorize
+    BE->>B: Redirect to OIDC Provider
+    B->>O: Authenticate with Provider
+    O->>B: Redirect with auth code
+    B->>BE: GET /auth/oidc/{provider}/callback?code=...
+    BE->>O: Exchange code for tokens
+    O->>BE: ID Token + Access Token
+    BE->>B: Set cookie, redirect to dashboard
+    B->>F: Load dashboard page
 ```
 
 ## Database Schema
 
 ### Entity Relationships
 
-```
-┌──────────┐      ┌────────────────────┐      ┌─────────┐
-│   User   │──────│OrganizationMember  │──────│  Org    │
-└──────────┘      └────────────────────┘      └────┬────┘
-     │                                              │
-     │                                              │
-     │            ┌──────────┐                      │
-     │            │ Project  │◀─────────────────────┘
-     │            └────┬─────┘
-     │                 │
-     │            ┌────▼─────┐
-     │            │  Board   │
-     │            └────┬─────┘
-     │                 │
-     │            ┌────▼──────┐     ┌─────────┐
-     │            │  Column   │     │   Tag   │
-     │            └────┬──────┘     └────┬────┘
-     │                 │                 │
-     │            ┌────▼─────┐      ┌────▼────┐
-     └───────────▶│   Card   │◀─────│CardTag  │
-                  └──────────┘      └─────────┘
+```mermaid
+erDiagram
+    users ||--o{ organization_members : "belongs to"
+    organizations ||--o{ organization_members : "has"
+    organizations ||--o{ projects : "contains"
+    organizations ||--o{ invitations : "has"
+
+    projects ||--o{ boards : "has"
+    projects ||--o{ tags : "has"
+    projects ||--o{ project_members : "has"
+    users ||--o{ project_members : "belongs to"
+
+    boards ||--o{ board_columns : "has"
+    boards ||--o{ cards : "contains"
+    boards ||--o{ sprints : "has"
+
+    board_columns ||--o{ cards : "contains"
+
+    cards ||--o{ card_tags : "has"
+    tags ||--o{ card_tags : "tagged with"
+    cards ||--o{ card_sprints : "assigned to"
+    sprints ||--o{ card_sprints : "contains"
+    sprints ||--o{ metrics_history : "tracked by"
+
+    users ||--o{ cards : "assigned to"
+    users ||--o{ oidc_identities : "has"
+    users ||--o{ email_verification_tokens : "has"
+
+    roles ||--o{ role_permissions : "has"
+    permissions ||--o{ role_permissions : "granted by"
+    roles ||--o{ organization_members : "assigned to"
+    roles ||--o{ project_members : "assigned to"
+
+    users {
+        uuid id PK
+        string username
+        string email
+        string display_name
+        string avatar_url
+        string password_hash
+        string oidc_provider
+        string oidc_subject
+        boolean email_verified
+        timestamp created_at
+    }
+
+    organizations {
+        uuid id PK
+        string name
+        string slug UK
+        string description
+        uuid owner_id FK
+        timestamp created_at
+    }
+
+    organization_members {
+        uuid id PK
+        uuid organization_id FK
+        uuid user_id FK
+        uuid role_id FK
+        timestamp created_at
+    }
+
+    projects {
+        uuid id PK
+        uuid organization_id FK
+        string name
+        string key
+        string description
+        timestamp created_at
+    }
+
+    boards {
+        uuid id PK
+        uuid project_id FK
+        string name
+        string description
+        boolean is_default
+        timestamp created_at
+    }
+
+    board_columns {
+        uuid id PK
+        uuid board_id FK
+        string name
+        int position
+        string color
+        int wip_limit
+        boolean is_done
+        boolean is_backlog
+    }
+
+    cards {
+        uuid id PK
+        uuid board_id FK
+        uuid column_id FK
+        string title
+        text description
+        float position
+        enum priority
+        uuid assignee_id FK
+        timestamp due_date
+        int story_points
+        timestamp created_at
+    }
+
+    tags {
+        uuid id PK
+        uuid project_id FK
+        string name
+        string color
+    }
+
+    card_tags {
+        uuid id PK
+        uuid card_id FK
+        uuid tag_id FK
+    }
+
+    sprints {
+        uuid id PK
+        uuid board_id FK
+        string name
+        text goal
+        timestamp start_date
+        timestamp end_date
+        enum status
+        int position
+    }
+
+    card_sprints {
+        uuid id PK
+        uuid card_id FK
+        uuid sprint_id FK
+        timestamp added_at
+    }
+
+    metrics_history {
+        uuid id PK
+        uuid sprint_id FK
+        date recorded_date
+        int total_cards
+        int completed_cards
+        int total_story_points
+        int completed_story_points
+        jsonb column_snapshot
+    }
+
+    roles {
+        uuid id PK
+        uuid organization_id FK
+        string name
+        string description
+        boolean is_system
+        string scope
+    }
+
+    permissions {
+        uuid id PK
+        string code UK
+        string name
+        string description
+        string resource_type
+    }
+
+    role_permissions {
+        uuid id PK
+        uuid role_id FK
+        uuid permission_id FK
+    }
+
+    invitations {
+        uuid id PK
+        uuid organization_id FK
+        string email
+        uuid role_id FK
+        uuid invited_by FK
+        string token UK
+        timestamp expires_at
+        timestamp accepted_at
+    }
+
+    audit_events {
+        uuid id PK
+        timestamp occurred_at
+        uuid actor_id FK
+        enum action
+        enum entity_type
+        uuid entity_id
+        uuid organization_id FK
+        uuid project_id FK
+        uuid board_id FK
+        jsonb state_before
+        jsonb state_after
+        jsonb metadata
+    }
+
+    project_members {
+        uuid id PK
+        uuid project_id FK
+        uuid user_id FK
+        uuid role_id FK
+        timestamp created_at
+    }
+
+    oidc_identities {
+        uuid id PK
+        uuid user_id FK
+        string issuer
+        string subject
+        string email
+        boolean email_verified
+        timestamp created_at
+        timestamp updated_at
+    }
+
+    email_verification_tokens {
+        uuid id PK
+        uuid user_id FK
+        string token UK
+        string email
+        timestamp expires_at
+        timestamp used_at
+        timestamp created_at
+    }
 ```
 
 ## Code Generation

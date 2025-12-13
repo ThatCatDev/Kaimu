@@ -1,9 +1,9 @@
 ---
 title: Setting up Google Auth
-description: Configure Google as an OIDC provider for Pulse
+description: Configure Google as an OIDC provider for Kaimu
 ---
 
-This guide walks through setting up Google as an authentication provider for Pulse.
+This guide walks through setting up Google as an authentication provider for Kaimu.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ This guide walks through setting up Google as an authentication provider for Pul
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
 2. Click the project dropdown at the top
 3. Click "New Project"
-4. Enter a project name (e.g., "Pulse")
+4. Enter a project name (e.g., "Kaimu")
 5. Click "Create"
 
 ### 2. Configure OAuth Consent Screen
@@ -26,7 +26,7 @@ This guide walks through setting up Google as an authentication provider for Pul
 2. Select **External** (or Internal if using Google Workspace)
 3. Click "Create"
 4. Fill in the required fields:
-   - **App name**: Pulse
+   - **App name**: Kaimu
    - **User support email**: Your email
    - **Developer contact email**: Your email
 5. Click "Save and Continue"
@@ -40,7 +40,7 @@ This guide walks through setting up Google as an authentication provider for Pul
 2. Click "Create Credentials" > "OAuth client ID"
 3. Select "Web application"
 4. Configure:
-   - **Name**: Pulse Web Client
+   - **Name**: Kaimu Web Client
    - **Authorized redirect URIs**: Add your callback URL(s)
 
 #### Callback URLs
@@ -58,7 +58,7 @@ https://api.yourdomain.com/auth/oidc/google/callback
 5. Click "Create"
 6. Copy the **Client ID** and **Client Secret**
 
-### 4. Configure Pulse
+### 4. Configure Kaimu
 
 Add Google to your `OIDC_PROVIDERS` environment variable:
 
@@ -73,7 +73,7 @@ OIDC_PROVIDERS='[{
 }]'
 ```
 
-### 5. Restart Pulse
+### 5. Restart Kaimu
 
 ```bash
 docker compose restart backend
@@ -84,7 +84,7 @@ docker compose restart backend
 1. Go to `http://localhost:4321/login`
 2. Click "Continue with Google"
 3. Sign in with your Google account
-4. You should be redirected to the Pulse dashboard
+4. You should be redirected to the Kaimu dashboard
 
 ## Multiple Environments
 
@@ -119,7 +119,7 @@ For internal apps (Google Workspace only), this isn't necessary.
 
 ### "This app isn't verified"
 
-- For testing, click "Advanced" > "Go to Pulse (unsafe)"
+- For testing, click "Advanced" > "Go to Kaimu (unsafe)"
 - For production, complete the app verification process
 
 ### User Gets Logged Out Quickly

@@ -1,9 +1,9 @@
 ---
 title: Installation
-description: Detailed installation guide for Pulse
+description: Detailed installation guide for Kaimu
 ---
 
-This guide covers installing Pulse for development and production environments.
+This guide covers installing Kaimu for development and production environments.
 
 ## Development Setup
 
@@ -112,7 +112,7 @@ OIDC_FRONTEND_URL=https://yourdomain.com
 
 ### Database
 
-Pulse uses PostgreSQL. For production:
+Kaimu uses PostgreSQL. For production:
 
 1. Use a managed PostgreSQL service (AWS RDS, Google Cloud SQL, etc.)
 2. Or run PostgreSQL with proper backups and replication

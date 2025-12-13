@@ -1,9 +1,9 @@
 ---
 title: Database
-description: Configure PostgreSQL for Pulse
+description: Configure PostgreSQL for Kaimu
 ---
 
-Pulse uses PostgreSQL as its database. This guide covers database setup and configuration.
+Kaimu uses PostgreSQL as its database. This guide covers database setup and configuration.
 
 ## Requirements
 
@@ -17,8 +17,8 @@ Configure the database connection via environment variables:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DBHOST` | `localhost` | PostgreSQL host |
-| `DBNAME` | `pulse` | Database name |
-| `DBUSERNAME` | `pulse` | Database user |
+| `DBNAME` | `kaimu` | Database name |
+| `DBUSERNAME` | `kaimu` | Database user |
 | `DBPASSWORD` | *required* | Database password |
 | `DBPORT` | `5432` | Database port |
 | `DBSSL` | `disable` | SSL mode |
@@ -41,14 +41,14 @@ docker compose up -d postgres
 ```
 
 This creates a PostgreSQL instance with:
-- User: `pulse`
+- User: `kaimu`
 - Password: `mysecretpassword`
-- Database: `pulse`
+- Database: `kaimu`
 - Port: `5432`
 
 ## Migrations
 
-Pulse uses [golang-migrate](https://github.com/golang-migrate/migrate) for database migrations.
+Kaimu uses [golang-migrate](https://github.com/golang-migrate/migrate) for database migrations.
 
 ### Run Migrations
 
@@ -144,7 +144,7 @@ services:
   pgbouncer:
     image: edoburu/pgbouncer
     environment:
-      DATABASE_URL: postgresql://user:pass@postgres:5432/pulse
+      DATABASE_URL: postgresql://user:pass@postgres:5432/kaimu
       POOL_MODE: transaction
       MAX_CLIENT_CONN: 100
 ```
@@ -154,13 +154,13 @@ services:
 ### Manual Backup
 
 ```bash
-pg_dump -h localhost -U pulse -d pulse > backup.sql
+pg_dump -h localhost -U kaimu -d kaimu > backup.sql
 ```
 
 ### Restore
 
 ```bash
-psql -h localhost -U pulse -d pulse < backup.sql
+psql -h localhost -U kaimu -d kaimu < backup.sql
 ```
 
 ### Automated Backups
@@ -172,7 +172,7 @@ For production, set up automated backups:
 
 Example cron job (daily backup):
 ```bash
-0 2 * * * pg_dump -h localhost -U pulse -d pulse | gzip > /backups/pulse_$(date +\%Y\%m\%d).sql.gz
+0 2 * * * pg_dump -h localhost -U kaimu -d kaimu | gzip > /backups/kaimu_$(date +\%Y\%m\%d).sql.gz
 ```
 
 ## Troubleshooting

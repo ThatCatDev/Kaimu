@@ -1,9 +1,9 @@
 ---
 title: Setting up Okta
-description: Configure Okta as an OIDC provider for Pulse
+description: Configure Okta as an OIDC provider for Kaimu
 ---
 
-This guide walks through setting up Okta as an authentication provider for Pulse.
+This guide walks through setting up Okta as an authentication provider for Kaimu.
 
 ## Prerequisites
 
@@ -26,7 +26,7 @@ This guide walks through setting up Okta as an authentication provider for Pulse
 
 Fill in the application settings:
 
-- **App integration name**: Pulse
+- **App integration name**: Kaimu
 - **Grant type**: Authorization Code (default)
 - **Sign-in redirect URIs**:
   - Development: `http://localhost:3000/auth/oidc/okta/callback`
@@ -61,7 +61,7 @@ https://{your-okta-domain}/oauth2/{authorization-server-id}
 
 You can find this at **Security** > **API** > **Authorization Servers**
 
-### 5. Configure Pulse
+### 5. Configure Kaimu
 
 Add Okta to your `OIDC_PROVIDERS` environment variable:
 
@@ -76,7 +76,7 @@ OIDC_PROVIDERS='[{
 }]'
 ```
 
-### 6. Restart Pulse
+### 6. Restart Kaimu
 
 ```bash
 docker compose restart backend
@@ -87,20 +87,20 @@ docker compose restart backend
 1. Go to `http://localhost:4321/login`
 2. Click "Continue with Okta"
 3. Sign in with your Okta account
-4. You should be redirected to the Pulse dashboard
+4. You should be redirected to the Kaimu dashboard
 
 ## Assigning Users
 
 ### Individual Assignment
 
-1. Go to **Applications** > **Pulse**
+1. Go to **Applications** > **Kaimu**
 2. Click the "Assignments" tab
 3. Click "Assign" > "Assign to People"
 4. Select users and click "Assign"
 
 ### Group Assignment
 
-1. Go to **Applications** > **Pulse**
+1. Go to **Applications** > **Kaimu**
 2. Click the "Assignments" tab
 3. Click "Assign" > "Assign to Groups"
 4. Select groups and click "Assign"
@@ -112,10 +112,10 @@ For production, consider creating a custom authorization server:
 1. Go to **Security** > **API**
 2. Click "Add Authorization Server"
 3. Configure:
-   - **Name**: Pulse API
-   - **Audience**: `pulse`
-   - **Description**: Authorization server for Pulse
-4. Use the custom issuer URL in your Pulse configuration
+   - **Name**: Kaimu API
+   - **Audience**: `kaimu`
+   - **Description**: Authorization server for Kaimu
+4. Use the custom issuer URL in your Kaimu configuration
 
 ## Troubleshooting
 
@@ -126,7 +126,7 @@ For production, consider creating a custom authorization server:
 
 ### "User is not assigned to the client application"
 
-- Assign the user to the Pulse application in Okta
+- Assign the user to the Kaimu application in Okta
 - Or enable "Allow everyone to self-service" in the application settings
 
 ### "Invalid scope"
