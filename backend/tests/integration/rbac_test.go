@@ -481,10 +481,10 @@ func (ts *RBACTestServer) executeGraphQL(t *testing.T, query string, cookies []*
 
 func (ts *RBACTestServer) registerUser(t *testing.T, username, password string) []*http.Cookie {
 	query := fmt.Sprintf(`mutation {
-		register(input: {username: "%s", password: "%s"}) {
+		register(input: {username: "%s", password: "%s", email: "%s@test.com"}) {
 			user { id }
 		}
-	}`, username, password)
+	}`, username, password, username)
 
 	resp, cookies := ts.executeGraphQL(t, query, nil)
 	require.Empty(t, resp.Errors, "Registration failed: %v", resp.Errors)

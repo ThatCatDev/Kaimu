@@ -347,7 +347,7 @@ func (s *SprintTestServer) executeQuery(query string, cookie string) *graphQLRes
 	req := httptest.NewRequest("POST", "/graphql", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	if cookie != "" {
-		req.AddCookie(&http.Cookie{Name: "pulse_token", Value: cookie})
+		req.AddCookie(&http.Cookie{Name: middleware.AccessTokenCookie, Value: cookie})
 	}
 
 	w := httptest.NewRecorder()
@@ -375,7 +375,7 @@ func (s *SprintTestServer) registerUser(username, password string) (string, erro
 	// Extract cookie from response
 	cookies := w.Result().Cookies()
 	for _, c := range cookies {
-		if c.Name == "pulse_token" {
+		if c.Name == middleware.AccessTokenCookie {
 			return c.Value, nil
 		}
 	}

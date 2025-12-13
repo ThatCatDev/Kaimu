@@ -170,7 +170,7 @@ func TestIntegration_Register(t *testing.T) {
 	defer ts.cleanup(t)
 
 	query := `mutation {
-		register(input: {username: "testuser", password: "password123"}) {
+		register(input: {username: "testuser", password: "password123", email: "testuser@example.com"}) {
 			user {
 				id
 				username
@@ -199,12 +199,12 @@ func TestIntegration_Register(t *testing.T) {
 	// Check that cookie was set
 	var tokenCookie *http.Cookie
 	for _, c := range cookies {
-		if c.Name == "pulse_token" {
+		if c.Name == middleware.AccessTokenCookie {
 			tokenCookie = c
 			break
 		}
 	}
-	assert.NotNil(t, tokenCookie, "Expected pulse_token cookie to be set")
+	assert.NotNil(t, tokenCookie, "Expected access token cookie to be set")
 	assert.NotEmpty(t, tokenCookie.Value)
 }
 
@@ -214,7 +214,7 @@ func TestIntegration_Register_DuplicateUsername(t *testing.T) {
 
 	// Register first user
 	query := `mutation {
-		register(input: {username: "duplicate", password: "password123"}) {
+		register(input: {username: "duplicate", password: "password123", email: "duplicate@example.com"}) {
 			user { id }
 		}
 	}`
@@ -233,7 +233,7 @@ func TestIntegration_Login_Success(t *testing.T) {
 
 	// First register a user
 	registerQuery := `mutation {
-		register(input: {username: "loginuser", password: "mypassword"}) {
+		register(input: {username: "loginuser", password: "mypassword", email: "loginuser@example.com"}) {
 			user { id }
 		}
 	}`
@@ -269,7 +269,7 @@ func TestIntegration_Login_Success(t *testing.T) {
 	// Check cookie
 	var tokenCookie *http.Cookie
 	for _, c := range cookies {
-		if c.Name == "pulse_token" {
+		if c.Name == middleware.AccessTokenCookie {
 			tokenCookie = c
 			break
 		}
@@ -283,7 +283,7 @@ func TestIntegration_Login_InvalidPassword(t *testing.T) {
 
 	// Register a user
 	registerQuery := `mutation {
-		register(input: {username: "wrongpass", password: "correctpassword"}) {
+		register(input: {username: "wrongpass", password: "correctpassword", email: "wrongpass@example.com"}) {
 			user { id }
 		}
 	}`
@@ -324,7 +324,7 @@ func TestIntegration_Me_Authenticated(t *testing.T) {
 
 	// Register and get cookie
 	registerQuery := `mutation {
-		register(input: {username: "meuser", password: "password123"}) {
+		register(input: {username: "meuser", password: "password123", email: "meuser@example.com"}) {
 			user { id username }
 		}
 	}`
@@ -378,7 +378,7 @@ func TestIntegration_Logout(t *testing.T) {
 
 	// Register and get cookie
 	registerQuery := `mutation {
-		register(input: {username: "logoutuser", password: "password123"}) {
+		register(input: {username: "logoutuser", password: "password123", email: "logoutuser@example.com"}) {
 			user { id }
 		}
 	}`
@@ -408,7 +408,7 @@ func TestIntegration_Logout(t *testing.T) {
 	// Check that cookie was cleared
 	var clearedCookie *http.Cookie
 	for _, c := range logoutCookies {
-		if c.Name == "pulse_token" {
+		if c.Name == middleware.AccessTokenCookie {
 			clearedCookie = c
 			break
 		}
@@ -424,7 +424,7 @@ func TestIntegration_FullAuthFlow(t *testing.T) {
 
 	// 1. Register
 	registerQuery := `mutation {
-		register(input: {username: "flowuser", password: "flowpass"}) {
+		register(input: {username: "flowuser", password: "flowpass", email: "flowuser@example.com"}) {
 			user { id username }
 		}
 	}`

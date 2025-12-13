@@ -278,7 +278,7 @@ func (s *BoardTestServer) executeQuery(query string, cookie string) *graphQLResp
 	req := httptest.NewRequest("POST", "/graphql", bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	if cookie != "" {
-		req.AddCookie(&http.Cookie{Name: "pulse_token", Value: cookie})
+		req.AddCookie(&http.Cookie{Name: middleware.AccessTokenCookie, Value: cookie})
 	}
 
 	w := httptest.NewRecorder()
@@ -291,10 +291,10 @@ func (s *BoardTestServer) executeQuery(query string, cookie string) *graphQLResp
 
 func (s *BoardTestServer) registerUser(username, password string) (string, error) {
 	query := fmt.Sprintf(`mutation {
-		register(input: { username: "%s", password: "%s" }) {
+		register(input: { username: "%s", password: "%s", email: "%s@test.com" }) {
 			user { id username }
 		}
-	}`, username, password)
+	}`, username, password, username)
 
 	body, _ := json.Marshal(map[string]string{"query": query})
 	req := httptest.NewRequest("POST", "/graphql", bytes.NewReader(body))
@@ -306,7 +306,7 @@ func (s *BoardTestServer) registerUser(username, password string) (string, error
 	// Extract cookie from response
 	cookies := w.Result().Cookies()
 	for _, c := range cookies {
-		if c.Name == "pulse_token" {
+		if c.Name == middleware.AccessTokenCookie {
 			return c.Value, nil
 		}
 	}
