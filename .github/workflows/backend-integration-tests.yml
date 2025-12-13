@@ -1,0 +1,98 @@
+name: Backend Integration Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-integration-tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-integration-tests.yml'
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: kaimu_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      typesense:
+        image: typesense/typesense:27.0
+        ports:
+          - 8108:8108
+        env:
+          TYPESENSE_API_KEY: test_api_key
+          TYPESENSE_DATA_DIR: /data
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: backend/go.sum
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Wait for Typesense
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8108/health | grep -q ok; then
+              echo "Typesense is ready"
+              break
+            fi
+            echo "Waiting for Typesense..."
+            sleep 2
+          done
+
+      - name: Run database migrations
+        env:
+          DBHOST: localhost
+          DBPORT: 5432
+          DBNAME: kaimu_test
+          DBUSERNAME: test
+          DBPASSWORD: testpassword
+          DBSSL: disable
+        run: go run cmd/main.go migrate up
+
+      - name: Run integration tests
+        env:
+          TEST_DB_HOST: localhost
+          TEST_DB_PORT: 5432
+          TEST_DB_NAME: kaimu_test
+          TEST_DB_USER: test
+          TEST_DB_PASSWORD: testpassword
+          TEST_TYPESENSE_HOST: localhost
+          TEST_TYPESENSE_PORT: 8108
+          TEST_TYPESENSE_API_KEY: test_api_key
+        run: go test -v -race -coverprofile=coverage.out -covermode=atomic ./tests/integration/...
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: backend/coverage.out
+          flags: backend-integration
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
