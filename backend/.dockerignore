@@ -1,0 +1,12 @@
+tmp
+*.log
+*.test
+coverage.out
+.git
+.gitignore
+.env
+.env.*
+README.md
+Dockerfile*
+docker-compose*
+Makefile

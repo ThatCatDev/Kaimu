@@ -19,3 +19,13 @@
 
 # Go workspace file
 go.work
+
+# Node (shouldn't be here but just in case)
+node_modules/
+
+# Temp files
+tmp/
+
+# Environment
+.env
+.env.*
