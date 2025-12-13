@@ -11,8 +11,8 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   // Add retries to handle transient failures
   retries: process.env.CI ? 6 : 6,
-  // Use more workers for faster test execution
-  workers: process.env.CI ? 4 : 8,
+  // Use 4 workers for stability
+  workers: 4,
   reporter: [['html', { outputFolder: path.join(outputDir, 'report') }]],
   outputDir: path.join(outputDir, 'results'),
   // Increase timeout for slower operations
