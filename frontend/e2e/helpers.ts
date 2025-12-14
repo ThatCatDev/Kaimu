@@ -358,3 +358,26 @@ export async function createCard(page: Page, columnName: string, title: string, 
   await expect(page.getByLabel('Create Card')).toBeHidden({ timeout: 5000 });
   await expect(page.getByText(title)).toBeVisible({ timeout: 5000 });
 }
+
+/**
+ * Closes the card detail panel/dialog by pressing Escape first to dismiss any open dropdowns
+ * then clicking the Close button. This prevents issues where dropdowns cover the Close button.
+ */
+export async function closeCardDetail(page: Page) {
+  // Press Escape to close any open dropdowns (assignee search, etc.)
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  // Click the Close button
+  await page.getByRole('button', { name: 'Close' }).click();
+  // Wait for dialog to close
+  await expect(page.getByRole('heading', { name: 'Card Details' })).not.toBeVisible({ timeout: 5000 });
+}
+
+/**
+ * Waits for network activity to settle and the page to be stable.
+ * Useful in CI where things are slower.
+ */
+export async function waitForStableState(page: Page, timeout: number = 1000) {
+  await page.waitForLoadState('networkidle');
+  await page.waitForTimeout(timeout);
+}

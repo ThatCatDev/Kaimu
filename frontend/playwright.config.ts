@@ -13,25 +13,24 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
   forbidOnly: isCI,
-  // More retries in CI due to slower environment
-  retries: isCI ? 3 : 2,
-  // Fewer workers in CI to reduce contention
-  workers: isCI ? 2 : 4,
+  // Reduce retries in CI to avoid long runs - fix tests instead
+  retries: isCI ? 2 : 1,
+  // Use more workers in CI since tests are isolated
+  workers: isCI ? 4 : 4,
   reporter: isCI
-    ? [['html', { outputFolder: path.join(outputDir, 'report') }], ['github']]
+    ? [['html', { outputFolder: path.join(outputDir, 'report') }], ['github'], ['list']]
     : [['html', { outputFolder: path.join(outputDir, 'report') }]],
   outputDir: path.join(outputDir, 'results'),
   // Longer timeouts for CI
-  timeout: isCI ? 60000 : 45000,
+  timeout: isCI ? 90000 : 45000,
   expect: {
-    timeout: isCI ? 10000 : 5000,
+    timeout: isCI ? 15000 : 5000,
   },
   use: {
     baseURL,
     trace: 'on-first-retry',
-    actionTimeout: isCI ? 20000 : 15000,
-    // Slow down actions slightly in CI
-    ...(isCI && { launchOptions: { slowMo: 50 } }),
+    actionTimeout: isCI ? 30000 : 15000,
+    navigationTimeout: isCI ? 45000 : 30000,
   },
   projects: [
     {
