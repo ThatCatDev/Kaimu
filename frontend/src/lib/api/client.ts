@@ -1,5 +1,10 @@
 function getApiUrl(): string {
-  // In browser, always use localhost (browser can't reach docker internal network)
+  // If proxy mode is enabled, use the local /api/ path (same-origin)
+  if (import.meta.env.PUBLIC_USE_PROXY === 'true') {
+    return '/api/graphql';
+  }
+
+  // In browser, use PUBLIC_API_URL or default to localhost
   if (typeof window !== 'undefined') {
     return import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/graphql';
   }

@@ -35,14 +35,17 @@ type OIDCProvider struct {
 }
 
 type AppConfig struct {
-	APPName                     string `default:"pulse-api"`
-	Port                        int    `env:"PORT" default:"3000"`
-	Version                     string `default:"x.x.x" env:"VERSION"`
-	Env                         string `default:"development" env:"ENV"`
-	JWTSecret                   string `env:"JWT_SECRET" default:"dev-secret-change-in-production"`
-	JWTExpirationHours          int    `env:"JWT_EXPIRATION_HOURS" default:"24"`                  // Deprecated: use AccessTokenExpirationMinutes
-	AccessTokenExpirationMinutes int   `env:"JWT_ACCESS_EXPIRATION_MINUTES" default:"5"`         // Access token expiry (short-lived)
-	RefreshTokenExpirationDays  int    `env:"JWT_REFRESH_EXPIRATION_DAYS" default:"7"`           // Refresh token expiry
+	APPName                      string `default:"pulse-api"`
+	Port                         int    `env:"PORT" default:"3000"`
+	Version                      string `default:"x.x.x" env:"VERSION"`
+	Env                          string `default:"development" env:"ENV"`
+	JWTSecret                    string `env:"JWT_SECRET" default:"dev-secret-change-in-production"`
+	JWTExpirationHours           int    `env:"JWT_EXPIRATION_HOURS" default:"24"`          // Deprecated: use AccessTokenExpirationMinutes
+	AccessTokenExpirationMinutes int    `env:"JWT_ACCESS_EXPIRATION_MINUTES" default:"5"`  // Access token expiry (short-lived)
+	RefreshTokenExpirationDays   int    `env:"JWT_REFRESH_EXPIRATION_DAYS" default:"7"`    // Refresh token expiry
+	CORSOrigins                  string `env:"CORS_ORIGINS" default:"http://localhost:4321,http://localhost:3000"` // Comma-separated allowed origins
+	CookieDomain                 string `env:"COOKIE_DOMAIN" default:""`                   // Cookie domain (empty = current domain only)
+	CookieSecure                 bool   `env:"COOKIE_SECURE" default:"false"`              // Use Secure flag on cookies (requires HTTPS)
 }
 
 type DBConfig struct {
@@ -80,6 +83,19 @@ func LoadConfigOrPanic() Config {
 	config.OIDCConfig.Providers = loadOIDCProviders()
 
 	return config
+}
+
+// GetCORSOrigins returns the allowed CORS origins as a slice
+func (c *AppConfig) GetCORSOrigins() []string {
+	if c.CORSOrigins == "" {
+		return []string{"http://localhost:4321", "http://localhost:3000"}
+	}
+	origins := strings.Split(c.CORSOrigins, ",")
+	// Trim whitespace from each origin
+	for i := range origins {
+		origins[i] = strings.TrimSpace(origins[i])
+	}
+	return origins
 }
 
 // loadOIDCProviders loads OIDC provider configurations from the OIDC_PROVIDERS environment variable.

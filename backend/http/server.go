@@ -33,8 +33,11 @@ func SetupServerWithContext(ctx context.Context, cfg config.Config, deps *handle
 
 	router := muxtrace.NewRouter(muxtrace.WithServiceName(cfg.AppConfig.APPName))
 
+	// Configure cookie settings
+	middleware.SetCookieConfig(cfg.AppConfig.CookieDomain, cfg.AppConfig.CookieSecure)
+
 	// Add middleware to all routes - CORS must be first to handle preflight requests
-	router.Use(middleware.CORSMiddleware([]string{"http://localhost:4321", "http://localhost:3000"}))
+	router.Use(middleware.CORSMiddleware(cfg.AppConfig.GetCORSOrigins()))
 	router.Use(middleware.GzipMiddleware())
 	router.Use(middleware.TracingMiddleware())
 	router.Use(middleware.AuditContextMiddleware())

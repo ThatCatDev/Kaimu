@@ -84,6 +84,10 @@ services:
       TYPESENSE_HOST: typesense
       TYPESENSE_PORT: 8108
       TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:-dev_api_key}
+      CORS_ORIGINS: http://localhost:4321,http://localhost:3000,https://kaimu.vercel.app
+      # For production on Vercel, set these:
+      # COOKIE_DOMAIN: .yourdomain.com
+      # COOKIE_SECURE: true
     volumes:
       - ./backend:/app
       - go_modules:/go/pkg/mod

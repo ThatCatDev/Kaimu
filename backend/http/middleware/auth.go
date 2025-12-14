@@ -17,15 +17,33 @@ const (
 	RefreshTokenKey contextKey = "refreshToken"
 	UserAgentKey    contextKey = "userAgent"
 	IPAddressKey    contextKey = "ipAddress"
+	CookieConfigKey contextKey = "cookieConfig"
 
 	// Cookie names
 	AccessTokenCookie  = "kaimu_access_token"
 	RefreshTokenCookie = "kaimu_refresh_token"
 
 	// Cookie durations
-	AccessTokenMaxAge  = 300       // 5 minutes (matches JWT expiry)
-	RefreshTokenMaxAge = 604800    // 7 days
+	AccessTokenMaxAge  = 300    // 5 minutes (matches JWT expiry)
+	RefreshTokenMaxAge = 604800 // 7 days
 )
+
+// CookieConfig holds cookie configuration
+type CookieConfig struct {
+	Domain string
+	Secure bool
+}
+
+// Global cookie config (set at startup)
+var globalCookieConfig CookieConfig
+
+// SetCookieConfig sets the global cookie configuration
+func SetCookieConfig(domain string, secure bool) {
+	globalCookieConfig = CookieConfig{
+		Domain: domain,
+		Secure: secure,
+	}
+}
 
 func AuthMiddleware(authService auth.Service) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -87,14 +105,24 @@ func GetResponseWriter(ctx context.Context) http.ResponseWriter {
 
 // SetAuthCookies sets both access and refresh token cookies
 func SetAuthCookies(w http.ResponseWriter, accessToken, refreshToken string, secure bool) {
+	// Use global config, but allow secure override
+	cookieSecure := secure || globalCookieConfig.Secure
+	sameSite := http.SameSiteLaxMode
+	if globalCookieConfig.Domain != "" {
+		// Cross-site cookies need SameSite=None and Secure=true
+		sameSite = http.SameSiteNoneMode
+		cookieSecure = true
+	}
+
 	// Access token cookie (short-lived, matches JWT expiry)
 	http.SetCookie(w, &http.Cookie{
 		Name:     AccessTokenCookie,
 		Value:    accessToken,
 		Path:     "/",
+		Domain:   globalCookieConfig.Domain,
 		HttpOnly: true,
-		Secure:   secure,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   cookieSecure,
+		SameSite: sameSite,
 		MaxAge:   AccessTokenMaxAge,
 	})
 
@@ -103,22 +131,31 @@ func SetAuthCookies(w http.ResponseWriter, accessToken, refreshToken string, sec
 		Name:     RefreshTokenCookie,
 		Value:    refreshToken,
 		Path:     "/",
+		Domain:   globalCookieConfig.Domain,
 		HttpOnly: true,
-		Secure:   secure,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   cookieSecure,
+		SameSite: sameSite,
 		MaxAge:   RefreshTokenMaxAge,
 	})
 }
 
 // SetAuthCookie sets the access token cookie (legacy support, use SetAuthCookies instead)
 func SetAuthCookie(w http.ResponseWriter, token string, secure bool) {
+	cookieSecure := secure || globalCookieConfig.Secure
+	sameSite := http.SameSiteLaxMode
+	if globalCookieConfig.Domain != "" {
+		sameSite = http.SameSiteNoneMode
+		cookieSecure = true
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     AccessTokenCookie,
 		Value:    token,
 		Path:     "/",
+		Domain:   globalCookieConfig.Domain,
 		HttpOnly: true,
-		Secure:   secure,
-		SameSite: http.SameSiteLaxMode,
+		Secure:   cookieSecure,
+		SameSite: sameSite,
 		MaxAge:   AccessTokenMaxAge,
 	})
 }
@@ -129,6 +166,7 @@ func ClearAuthCookies(w http.ResponseWriter) {
 		Name:     AccessTokenCookie,
 		Value:    "",
 		Path:     "/",
+		Domain:   globalCookieConfig.Domain,
 		HttpOnly: true,
 		MaxAge:   -1,
 	})
@@ -136,6 +174,7 @@ func ClearAuthCookies(w http.ResponseWriter) {
 		Name:     RefreshTokenCookie,
 		Value:    "",
 		Path:     "/",
+		Domain:   globalCookieConfig.Domain,
 		HttpOnly: true,
 		MaxAge:   -1,
 	})

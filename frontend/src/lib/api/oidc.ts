@@ -16,6 +16,11 @@ export async function getOIDCProviders(): Promise<OidcProvider[]> {
 }
 
 export function getOIDCLoginURL(providerSlug: string): string {
+  // If proxy mode is enabled, use the local /api/ path
+  if (import.meta.env.PUBLIC_USE_PROXY === 'true') {
+    return `/api/auth/oidc/${providerSlug}/authorize`;
+  }
+
   // In browser, always use localhost (browser can't reach docker internal network)
   const baseUrl =
     typeof window !== 'undefined'
