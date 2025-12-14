@@ -1,4 +1,10 @@
 {
   "buildCommand": "astro build --config astro.config.vercel.mjs",
-  "framework": "astro"
+  "framework": "astro",
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://386acd3496ce.ngrok-free.app/:path*"
+    }
+  ]
 }
