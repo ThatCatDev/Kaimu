@@ -31,11 +31,12 @@ const handler: APIRoute = async ({ params, request }) => {
         : undefined,
     });
 
-    const responseHeaders = new Headers(response.headers);
+    // Read response body fully
+    const body = await response.arrayBuffer();
 
-    // Remove compression headers - fetch already decompresses
-    responseHeaders.delete('content-encoding');
-    responseHeaders.delete('content-length');
+    // Build clean headers - only forward safe ones
+    const responseHeaders = new Headers();
+    responseHeaders.set('content-type', response.headers.get('content-type') || 'application/json');
 
     // Forward cookies from backend
     const setCookie = response.headers.get('set-cookie');
@@ -43,7 +44,7 @@ const handler: APIRoute = async ({ params, request }) => {
       responseHeaders.set('set-cookie', setCookie);
     }
 
-    return new Response(response.body, {
+    return new Response(body, {
       status: response.status,
       statusText: response.statusText,
       headers: responseHeaders,
