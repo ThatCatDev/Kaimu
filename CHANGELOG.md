@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.0.4](https://github.com/ThatCatDev/Kaimu/compare/v0.0.3...v0.0.4) (2025-12-14)
+
+
+### Bug Fixes
+
+* frontend docker image ([b44e9fe](https://github.com/ThatCatDev/Kaimu/commit/b44e9fe1d9ec347be8fe3b3f6fd533dac130467d))
+* frontend runtime envs ([e3498d6](https://github.com/ThatCatDev/Kaimu/commit/e3498d6b2e94e65002a3e812938b1943b470f3e6))
+
 ## [0.0.3](https://github.com/ThatCatDev/Kaimu/compare/v0.0.2...v0.0.3) (2025-12-14)
 
 
