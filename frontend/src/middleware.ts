@@ -4,8 +4,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Read at runtime for Vercel serverless compatibility
   const PROXY_BACKEND_URL = process.env.PROXY_BACKEND_URL || import.meta.env.PROXY_BACKEND_URL || '';
 
+  // Debug logging
+  console.log('[Middleware] Path:', context.url.pathname);
+  console.log('[Middleware] PROXY_BACKEND_URL:', PROXY_BACKEND_URL ? 'SET' : 'NOT SET');
+
   // Only proxy if PROXY_BACKEND_URL is set and path starts with /api/
   if (PROXY_BACKEND_URL && context.url.pathname.startsWith('/api/')) {
+    console.log('[Middleware] Proxying to:', PROXY_BACKEND_URL);
     const backendPath = context.url.pathname.replace(/^\/api/, '');
     const backendUrl = `${PROXY_BACKEND_URL}${backendPath}${context.url.search}`;
 
