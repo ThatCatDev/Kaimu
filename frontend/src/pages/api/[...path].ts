@@ -33,6 +33,10 @@ const handler: APIRoute = async ({ params, request }) => {
 
     const responseHeaders = new Headers(response.headers);
 
+    // Remove compression headers - fetch already decompresses
+    responseHeaders.delete('content-encoding');
+    responseHeaders.delete('content-length');
+
     // Forward cookies from backend
     const setCookie = response.headers.get('set-cookie');
     if (setCookie) {
