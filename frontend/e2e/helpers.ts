@@ -163,6 +163,73 @@ export interface TestContext {
 }
 
 /**
+ * Registers a new user and waits for successful redirect to home.
+ * Throws an error with details if registration fails.
+ */
+export async function registerUser(
+  page: Page,
+  username: string,
+  email: string,
+  password: string
+): Promise<void> {
+  await page.goto('/register');
+  await page.waitForLoadState('networkidle');
+
+  await page.fill('#username', username);
+  await page.fill('#email', email);
+  await page.fill('#password', password);
+  await page.fill('#confirmPassword', password);
+
+  const registerButton = page.getByRole('button', { name: 'Register' });
+  await registerButton.click();
+
+  // Wait for either success (URL change) or error (error message appears)
+  const result = await Promise.race([
+    page.waitForURL('/', { timeout: 30000 }).then(() => ({ success: true as const })),
+    page.locator('.bg-red-50 .text-red-700').waitFor({ state: 'visible', timeout: 30000 }).then(async () => {
+      const errorText = await page.locator('.bg-red-50 .text-red-700').textContent();
+      return { success: false as const, error: errorText };
+    }),
+  ]);
+
+  if (!result.success) {
+    throw new Error(`Registration failed: ${result.error}`);
+  }
+}
+
+/**
+ * Logs in a user and waits for successful redirect to home.
+ * Throws an error with details if login fails.
+ */
+export async function loginUser(
+  page: Page,
+  username: string,
+  password: string
+): Promise<void> {
+  await page.goto('/login');
+  await page.waitForLoadState('networkidle');
+
+  await page.fill('#username', username);
+  await page.fill('#password', password);
+
+  const loginButton = page.getByRole('button', { name: 'Sign in' });
+  await loginButton.click();
+
+  // Wait for either success (URL change) or error (error message appears)
+  const result = await Promise.race([
+    page.waitForURL('/', { timeout: 30000 }).then(() => ({ success: true as const })),
+    page.locator('.bg-red-50 .text-red-700').waitFor({ state: 'visible', timeout: 30000 }).then(async () => {
+      const errorText = await page.locator('.bg-red-50 .text-red-700').textContent();
+      return { success: false as const, error: errorText };
+    }),
+  ]);
+
+  if (!result.success) {
+    throw new Error(`Login failed: ${result.error}`);
+  }
+}
+
+/**
  * Creates a fresh isolated test environment with a new user, organization, and project.
  * Each test gets its own unique data to ensure complete isolation.
  * By default, email verification is skipped to keep tests fast. Set verifyEmail: true to enable.

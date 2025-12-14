@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { randomId, waitForEmail, extractVerificationToken, clearMailHog, isMailHogAvailable } from './helpers';
+import { randomId, waitForEmail, extractVerificationToken, clearMailHog, isMailHogAvailable, registerUser, loginUser } from './helpers';
 
 test.describe('Authentication', () => {
   test('homepage shows login and register links when not authenticated', async ({ page }) => {
@@ -71,18 +71,10 @@ test.describe('Authentication', () => {
     const email = `${uniqueUser}@test.local`;
     const password = 'testpassword123';
 
-    await page.goto('/register');
-    // Wait for hydration
-    await page.waitForTimeout(500);
+    await registerUser(page, uniqueUser, email, password);
 
-    await page.fill('#username', uniqueUser);
-    await page.fill('#email', email);
-    await page.fill('#password', password);
-    await page.fill('#confirmPassword', password);
-    await page.getByRole('button', { name: 'Register' }).click();
-
-    // Should redirect to home and show username in nav
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    // Should be on home and show username in nav
+    await expect(page).toHaveURL('/');
     await expect(page.getByText(`Hello, ${uniqueUser}`)).toBeVisible({ timeout: 10000 });
   });
 
@@ -92,18 +84,11 @@ test.describe('Authentication', () => {
     const password = 'testpassword123';
 
     // First, register the user
-    await page.goto('/register');
-    await page.waitForTimeout(500);
-    await page.fill('#username', uniqueUser);
-    await page.fill('#email', email);
-    await page.fill('#password', password);
-    await page.fill('#confirmPassword', password);
-    await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    await registerUser(page, uniqueUser, email, password);
 
     // Now try to register again with the same username
     await page.goto('/register');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
     await page.fill('#username', uniqueUser);
     await page.fill('#email', `${uniqueUser}2@test.local`);
     await page.fill('#password', password);
@@ -119,28 +104,17 @@ test.describe('Authentication', () => {
     const password = 'testpassword123';
 
     // First, register the user
-    await page.goto('/register');
-    await page.waitForTimeout(500);
-    await page.fill('#username', uniqueUser);
-    await page.fill('#email', email);
-    await page.fill('#password', password);
-    await page.fill('#confirmPassword', password);
-    await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    await registerUser(page, uniqueUser, email, password);
 
     // Logout
     await page.getByRole('button', { name: 'Logout' }).click();
     await expect(page.getByRole('link', { name: 'Login' })).toBeVisible({ timeout: 10000 });
 
     // Now login with the registered user
-    await page.goto('/login');
-    await page.waitForTimeout(500);
-    await page.fill('#username', uniqueUser);
-    await page.fill('#password', password);
-    await page.getByRole('button', { name: 'Sign in' }).click();
+    await loginUser(page, uniqueUser, password);
 
-    // Should redirect to home and show username in nav
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    // Should be on home and show username in nav
+    await expect(page).toHaveURL('/');
     await expect(page.getByText(`Hello, ${uniqueUser}`)).toBeVisible({ timeout: 10000 });
   });
 
@@ -150,14 +124,7 @@ test.describe('Authentication', () => {
     const password = 'testpassword123';
 
     // First, register the user
-    await page.goto('/register');
-    await page.waitForTimeout(500);
-    await page.fill('#username', uniqueUser);
-    await page.fill('#email', email);
-    await page.fill('#password', password);
-    await page.fill('#confirmPassword', password);
-    await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    await registerUser(page, uniqueUser, email, password);
 
     // Logout
     await page.getByRole('button', { name: 'Logout' }).click();
@@ -165,7 +132,7 @@ test.describe('Authentication', () => {
 
     // Now try to login with wrong password
     await page.goto('/login');
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
     await page.fill('#username', uniqueUser);
     await page.fill('#password', 'wrongpassword');
     await page.getByRole('button', { name: 'Sign in' }).click();
@@ -178,15 +145,8 @@ test.describe('Authentication', () => {
     const email = `${uniqueUser}@test.local`;
     const password = 'testpassword123';
 
-    // Register and login
-    await page.goto('/register');
-    await page.waitForTimeout(500);
-    await page.fill('#username', uniqueUser);
-    await page.fill('#email', email);
-    await page.fill('#password', password);
-    await page.fill('#confirmPassword', password);
-    await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    // Register
+    await registerUser(page, uniqueUser, email, password);
     await expect(page.getByText(`Hello, ${uniqueUser}`)).toBeVisible({ timeout: 10000 });
 
     // Then logout
@@ -227,14 +187,7 @@ test.describe('Authentication', () => {
     await clearMailHog();
 
     // Register user
-    await page.goto('/register');
-    await page.waitForTimeout(500);
-    await page.fill('#username', uniqueUser);
-    await page.fill('#email', email);
-    await page.fill('#password', password);
-    await page.fill('#confirmPassword', password);
-    await page.getByRole('button', { name: 'Register' }).click();
-    await expect(page).toHaveURL('/', { timeout: 10000 });
+    await registerUser(page, uniqueUser, email, password);
 
     // Wait for verification email to arrive
     const emailMessage = await waitForEmail(email, 15000);
