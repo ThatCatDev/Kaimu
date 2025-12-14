@@ -10,12 +10,14 @@
     "codegen": "graphql-codegen --config codegen.ts",
     "codegen:watch": "graphql-codegen --config codegen.ts --watch",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:ci": "CI=true playwright test"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
     "@astrojs/node": "^9.5.1",
     "@astrojs/svelte": "^7.2.2",
+    "@astrojs/vercel": "^9.0.2",
     "@internationalized/date": "^3.10.0",
     "@tailwindcss/vite": "^4.1.17",
     "@tiptap/core": "^3.13.0",
@@ -44,5 +46,6 @@
     "@playwright/test": "^1.57.0",
     "@types/dompurify": "^3.2.0",
     "graphql": "^16.12.0"
-  }
+  },
+  "packageManager": "pnpm@10.22.0+sha512.bf049efe995b28f527fd2b41ae0474ce29186f7edcb3bf545087bd61fbbebb2bf75362d1307fda09c2d288e1e499787ac12d4fcb617a974718a6051f2eee741c"
 }

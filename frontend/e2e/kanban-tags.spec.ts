@@ -738,8 +738,9 @@ test.describe('Kanban Cards with Tags', () => {
     await page.getByText(`Edit Mode Tag ${ctx.testId}`).click();
     await expect(page.getByRole('heading', { name: 'Card Details' })).toBeVisible({ timeout: 5000 });
 
-    // Create a new tag from edit mode
-    const tagInput = page.locator('input[placeholder*="search or create tags"]');
+    // Create a new tag from edit mode - scope to Card Details dialog to avoid Create Card dialog
+    const cardDetailsDialog = page.getByRole('dialog', { name: 'Card Details' });
+    const tagInput = cardDetailsDialog.getByPlaceholder('Type to search or create tags');
     await tagInput.focus();
 
     const newTagName = `EditModeTag${ctx.testId}`;

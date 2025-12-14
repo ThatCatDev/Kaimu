@@ -103,9 +103,28 @@ export function extractVerificationToken(message: MailHogMessage): string {
 }
 
 /**
+ * Checks if MailHog is available
+ */
+export async function isMailHogAvailable(): Promise<boolean> {
+  try {
+    const response = await fetch(`${MAILHOG_API_URL.replace('/api/v2', '/api/v1')}/messages`, {
+      method: 'GET',
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Deletes all messages from MailHog (useful for test cleanup)
+ * Throws if MailHog is not available
  */
 export async function clearMailHog(): Promise<void> {
+  const available = await isMailHogAvailable();
+  if (!available) {
+    throw new Error('MailHog is not available - skipping email test');
+  }
   await fetch(`${MAILHOG_API_URL.replace('/api/v2', '/api/v1')}/messages`, {
     method: 'DELETE',
   });

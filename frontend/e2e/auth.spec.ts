@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { randomId, waitForEmail, extractVerificationToken, clearMailHog } from './helpers';
+import { randomId, waitForEmail, extractVerificationToken, clearMailHog, isMailHogAvailable } from './helpers';
 
 test.describe('Authentication', () => {
   test('homepage shows login and register links when not authenticated', async ({ page }) => {
@@ -216,6 +216,9 @@ test.describe('Authentication', () => {
   });
 
   test('can verify email after registration', async ({ page }) => {
+    // Skip if MailHog is not available
+    test.skip(!(await isMailHogAvailable()), 'MailHog not available');
+
     const uniqueUser = `e2e_${randomId()}`;
     const email = `${uniqueUser}@test.local`;
     const password = 'testpassword123';

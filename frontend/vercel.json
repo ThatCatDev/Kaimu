@@ -1,0 +1,4 @@
+{
+  "buildCommand": "astro build --config astro.config.vercel.mjs",
+  "framework": "astro"
+}

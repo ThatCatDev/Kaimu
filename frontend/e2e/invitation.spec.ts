@@ -5,6 +5,7 @@ import {
   login,
   waitForEmail,
   clearMailHog,
+  isMailHogAvailable,
   type TestContext
 } from './helpers';
 
@@ -216,7 +217,7 @@ test.describe('Invitation System', () => {
       await page.getByRole('button', { name: 'Create Invitation' }).click();
 
       // Should show error about pending invitation
-      await expect(page.getByText(/pending invitation/i)).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText(/already a pending invitation/i)).toBeVisible({ timeout: 10000 });
     });
 
     test('cancel button closes the modal without creating invitation', async ({ page }) => {
@@ -508,6 +509,9 @@ test.describe('Invitation System', () => {
 
   test.describe('Invitation Email', () => {
     test('sends invitation email to invitee', async ({ page }) => {
+      // Skip if MailHog is not available
+      test.skip(!(await isMailHogAvailable()), 'MailHog not available');
+
       // Clear mailhog first
       await clearMailHog();
 
@@ -531,6 +535,9 @@ test.describe('Invitation System', () => {
     });
 
     test('resending invitation sends new email', async ({ page }) => {
+      // Skip if MailHog is not available
+      test.skip(!(await isMailHogAvailable()), 'MailHog not available');
+
       // Clear mailhog first
       await clearMailHog();
 

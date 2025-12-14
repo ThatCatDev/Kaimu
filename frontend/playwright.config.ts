@@ -1,27 +1,37 @@
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 
+const isCI = !!process.env.CI;
+
+// Allow overriding the base URL via environment variable
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:4321';
+
 // Output reports to a temp directory to avoid Docker volume issues
-const outputDir = process.env.CI ? './test-results' : path.join(process.env.TMPDIR || '/tmp', 'playwright-pulse');
+const outputDir = isCI ? './test-results' : path.join(process.env.TMPDIR || '/tmp', 'playwright-pulse');
 
 export default defineConfig({
   testDir: './e2e',
-  // Run test files in parallel, but tests within a file run serially (via describe.configure)
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  // Add retries to handle transient failures
-  retries: process.env.CI ? 6 : 6,
-  // Use 4 workers for stability
-  workers: 4,
-  reporter: [['html', { outputFolder: path.join(outputDir, 'report') }]],
+  forbidOnly: isCI,
+  // More retries in CI due to slower environment
+  retries: isCI ? 3 : 2,
+  // Fewer workers in CI to reduce contention
+  workers: isCI ? 2 : 4,
+  reporter: isCI
+    ? [['html', { outputFolder: path.join(outputDir, 'report') }], ['github']]
+    : [['html', { outputFolder: path.join(outputDir, 'report') }]],
   outputDir: path.join(outputDir, 'results'),
-  // Increase timeout for slower operations
-  timeout: 45000,
+  // Longer timeouts for CI
+  timeout: isCI ? 60000 : 45000,
+  expect: {
+    timeout: isCI ? 10000 : 5000,
+  },
   use: {
-    baseURL: 'http://localhost:4321',
+    baseURL,
     trace: 'on-first-retry',
-    // Add action timeout
-    actionTimeout: 15000,
+    actionTimeout: isCI ? 20000 : 15000,
+    // Slow down actions slightly in CI
+    ...(isCI && { launchOptions: { slowMo: 50 } }),
   },
   projects: [
     {
@@ -29,6 +39,4 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  // Note: Start docker compose before running tests
-  // webServer is disabled since we expect Docker to be running
 });
