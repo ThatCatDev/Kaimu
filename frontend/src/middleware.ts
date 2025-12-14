@@ -1,8 +1,9 @@
 import { defineMiddleware } from 'astro:middleware';
 
-const PROXY_BACKEND_URL = import.meta.env.PROXY_BACKEND_URL || '';
-
 export const onRequest = defineMiddleware(async (context, next) => {
+  // Read at runtime for Vercel serverless compatibility
+  const PROXY_BACKEND_URL = process.env.PROXY_BACKEND_URL || import.meta.env.PROXY_BACKEND_URL || '';
+
   // Only proxy if PROXY_BACKEND_URL is set and path starts with /api/
   if (PROXY_BACKEND_URL && context.url.pathname.startsWith('/api/')) {
     const backendPath = context.url.pathname.replace(/^\/api/, '');
