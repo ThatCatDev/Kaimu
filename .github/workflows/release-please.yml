@@ -1,0 +1,355 @@
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # Run backend unit tests
+  backend-unit-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: backend/go.sum
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Run unit tests
+        run: go test -v -race ./internal/logger/... ./internal/services/auth/... ./http/middleware/... ./http/handlers/...
+
+  # Run backend integration tests
+  backend-integration-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: testpassword
+          POSTGRES_DB: kaimu_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      typesense:
+        image: typesense/typesense:27.0
+        ports:
+          - 8108:8108
+        env:
+          TYPESENSE_API_KEY: test_api_key
+          TYPESENSE_DATA_DIR: /data
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: backend/go.sum
+
+      - name: Download dependencies
+        run: go mod download
+
+      - name: Wait for Typesense
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8108/health | grep -q ok; then
+              echo "Typesense is ready"
+              break
+            fi
+            echo "Waiting for Typesense..."
+            sleep 2
+          done
+
+      - name: Run database migrations
+        env:
+          DBHOST: localhost
+          DBPORT: 5432
+          DBNAME: kaimu_test
+          DBUSERNAME: test
+          DBPASSWORD: testpassword
+          DBSSL: disable
+        run: go run cmd/main.go migrate up
+
+      - name: Run integration tests
+        env:
+          TEST_DB_HOST: localhost
+          TEST_DB_PORT: 5432
+          TEST_DB_NAME: kaimu_test
+          TEST_DB_USER: test
+          TEST_DB_PASSWORD: testpassword
+          TEST_TYPESENSE_HOST: localhost
+          TEST_TYPESENSE_PORT: 8108
+          TEST_TYPESENSE_API_KEY: test_api_key
+        run: go test -v -race ./tests/integration/...
+
+  # Run E2E tests
+  e2e-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard:
+          - name: auth
+            files: "auth.spec.ts oidc.spec.ts"
+          - name: access
+            files: "invitation.spec.ts rbac-roles.spec.ts"
+          - name: kanban-cards
+            files: "kanban-cards.spec.ts kanban-drag-drop.spec.ts"
+          - name: kanban-features
+            files: "kanban-tags.spec.ts kanban-ui-improvements.spec.ts"
+          - name: board
+            files: "board.spec.ts planning.spec.ts"
+          - name: sprints
+            files: "sprints.spec.ts assignee.spec.ts"
+          - name: org
+            files: "organization.spec.ts project.spec.ts"
+          - name: navigation
+            files: "search.spec.ts sidebar.spec.ts user-journey.spec.ts"
+
+    name: E2E (${{ matrix.shard.name }})
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Start services with Docker Compose
+        run: |
+          docker compose up -d --build
+          echo "Waiting for services to be ready..."
+
+      - name: Wait for PostgreSQL
+        run: |
+          for i in {1..30}; do
+            if docker compose exec -T postgres pg_isready -U app; then
+              echo "PostgreSQL is ready"
+              break
+            fi
+            echo "Waiting for PostgreSQL... ($i/30)"
+            sleep 2
+          done
+
+      - name: Run database migrations
+        run: |
+          docker compose exec -T backend go run cmd/main.go migrate up
+          echo "Migrations completed"
+
+      - name: Wait for Backend
+        run: |
+          for i in {1..60}; do
+            if curl -s http://localhost:3000/healthcheck > /dev/null 2>&1; then
+              echo "Backend is ready"
+              break
+            fi
+            echo "Waiting for Backend... ($i/60)"
+            sleep 2
+          done
+
+      - name: Wait for Dex (OIDC)
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:5556/dex/.well-known/openid-configuration > /dev/null 2>&1; then
+              echo "Dex is ready"
+              break
+            fi
+            echo "Waiting for Dex... ($i/30)"
+            sleep 2
+          done
+
+      - name: Wait for Typesense
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8108/health | grep -q ok; then
+              echo "Typesense is ready"
+              break
+            fi
+            echo "Waiting for Typesense... ($i/30)"
+            sleep 2
+          done
+
+      - name: Wait for Mailhog
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8025/api/v2/messages > /dev/null 2>&1; then
+              echo "Mailhog is ready"
+              break
+            fi
+            echo "Waiting for Mailhog... ($i/30)"
+            sleep 2
+          done
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: bun install
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: bunx playwright install --with-deps chromium
+
+      - name: Build frontend
+        working-directory: frontend
+        env:
+          PUBLIC_API_URL: http://localhost:3000/graphql
+        run: bun run build
+
+      - name: Start frontend preview server
+        working-directory: frontend
+        env:
+          PUBLIC_API_URL: http://localhost:3000/graphql
+        run: |
+          bun run preview --host 0.0.0.0 &
+          echo "Waiting for frontend to be ready..."
+          for i in {1..60}; do
+            if curl -s http://localhost:4321 > /dev/null 2>&1; then
+              echo "Frontend is ready"
+              break
+            fi
+            echo "Waiting for frontend... ($i/60)"
+            sleep 2
+          done
+
+      - name: Run E2E tests
+        working-directory: frontend
+        run: bunx playwright test ${{ matrix.shard.files }}
+
+      - name: Stop services
+        if: always()
+        run: docker compose down -v
+
+  # Run release-please after all tests pass
+  release-please:
+    needs: [backend-unit-tests, backend-integration-tests, e2e-tests]
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+      version: ${{ steps.release.outputs.version }}
+
+    steps:
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Output release info
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          echo "Release created: ${{ steps.release.outputs.tag_name }}"
+          echo "Version: ${{ steps.release.outputs.version }}"
+
+  build-backend:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: thatcatdev/kaimu-backend
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.release-please.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-please.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+  build-frontend:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: thatcatdev/kaimu-frontend
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.release-please.outputs.version }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release-please.outputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile.prod
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
