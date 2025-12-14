@@ -1,15 +1,28 @@
+// Get runtime config from window (injected by Layout.astro) or fall back to build-time env
+function getRuntimeConfig() {
+  if (typeof window !== 'undefined' && (window as any).__RUNTIME_CONFIG__) {
+    return (window as any).__RUNTIME_CONFIG__;
+  }
+  return {
+    apiUrl: import.meta.env.PUBLIC_API_URL || '',
+    useProxy: import.meta.env.PUBLIC_USE_PROXY || '',
+  };
+}
+
 function getApiUrl(): string {
+  const config = getRuntimeConfig();
+
   // If proxy mode is enabled, use the local /api/ path (same-origin)
-  if (import.meta.env.PUBLIC_USE_PROXY === 'true') {
+  if (config.useProxy === 'true') {
     return '/api/graphql';
   }
 
-  // In browser, use PUBLIC_API_URL or default to localhost
+  // In browser, use runtime config or default to localhost
   if (typeof window !== 'undefined') {
-    return import.meta.env.PUBLIC_API_URL || 'http://localhost:3000/graphql';
+    return config.apiUrl || 'http://localhost:3000/graphql';
   }
-  // During SSR in Docker, use the service name
-  return import.meta.env.PUBLIC_API_URL || 'http://backend:3000/graphql';
+  // During SSR, use process.env or fall back to service name
+  return process.env.PUBLIC_API_URL || config.apiUrl || 'http://backend:3000/graphql';
 }
 
 interface GraphQLResponse<T> {
