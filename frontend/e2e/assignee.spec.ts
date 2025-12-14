@@ -42,6 +42,10 @@ test.describe('Card Assignee', () => {
       console.log('User not found in search - Typesense may not have indexed yet');
     }
 
+    // Close any open dropdowns before clicking Close
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
     // Close modal
     await page.getByRole('button', { name: 'Close' }).click();
   });
@@ -74,10 +78,15 @@ test.describe('Card Assignee', () => {
       await page.getByRole('button', { name: 'Close' }).click();
       await expect(page.getByRole('heading', { name: 'Card Details' })).not.toBeVisible({ timeout: 5000 });
 
-      // Verify the card shows an assignee avatar (a circle with initial)
-      const cardElement = page.locator('text=Show Assignee ' + ctx.testId).locator('..');
-      // The avatar is a span with rounded-full class containing the initial
-      await expect(cardElement.locator('.rounded-full')).toBeVisible({ timeout: 5000 });
+      // Wait for the board to refresh with the new assignee data
+      await page.waitForTimeout(1000);
+
+      // Verify the card shows an assignee avatar
+      // The kanban card is a button element containing the card title
+      const cardButton = page.locator('button').filter({ hasText: `Show Assignee ${ctx.testId}` }).first();
+      await expect(cardButton).toBeVisible({ timeout: 5000 });
+      // The avatar is inside the card - a rounded element with the user's initial
+      await expect(cardButton.locator('.rounded-full').first()).toBeVisible({ timeout: 5000 });
     } else {
       console.log('User not found in search - skipping avatar check');
       await page.getByRole('button', { name: 'Close' }).click();
@@ -129,6 +138,9 @@ test.describe('Card Assignee', () => {
       expect(avatarCount).toBe(0);
     } else {
       console.log('User not found in search - skipping remove test');
+      // Close any open dropdowns before clicking Close
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(200);
       await page.getByRole('button', { name: 'Close' }).click();
     }
   });

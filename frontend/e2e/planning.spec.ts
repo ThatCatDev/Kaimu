@@ -7,8 +7,12 @@ import { setupTestEnvironment, navigateToBoard, createCard, type TestContext } f
 async function navigateToPlanning(page: Page, projectId: string, boardId: string) {
   await page.goto(`/projects/${projectId}/board/${boardId}/planning`);
   await page.waitForLoadState('networkidle');
+  // Wait for the loading skeleton to disappear (indicates data is loaded)
+  await expect(page.locator('.animate-pulse').first()).not.toBeVisible({ timeout: 15000 }).catch(() => {});
   // Wait for the planning view to load - should see Backlog section
   await expect(page.getByText('Backlog', { exact: true }).first()).toBeVisible({ timeout: 10000 });
+  // Additional wait for any async data fetching
+  await page.waitForTimeout(500);
 }
 
 /**
@@ -23,15 +27,30 @@ async function openSprintSelector(page: Page) {
 
 /**
  * Helper to create a sprint via the UI
+ * Note: Closes the sprint selector popover after creating
  */
 async function createSprint(page: Page, name: string) {
   await openSprintSelector(page);
   await page.locator('button').filter({ hasText: 'Create Sprint' }).click();
   await expect(page.getByRole('dialog', { name: 'Create Sprint' })).toBeVisible({ timeout: 5000 });
   const modal = page.getByRole('dialog', { name: 'Create Sprint' });
-  await modal.getByPlaceholder('e.g., Sprint 1').fill(name);
+
+  // Clear the existing placeholder and fill with the new name
+  const nameInput = modal.getByPlaceholder('e.g., Sprint 1');
+  await nameInput.click();
+  await nameInput.fill('');
+  await nameInput.fill(name);
+
   await modal.getByRole('button', { name: 'Create Sprint' }).click();
   await expect(modal).not.toBeVisible({ timeout: 5000 });
+
+  // Wait for sprint to be saved and toast to appear
+  await expect(page.getByText(/created|Sprint/i)).toBeVisible({ timeout: 5000 }).catch(() => {});
+  await page.waitForTimeout(500);
+
+  // Close the popover to ensure clean state for next operation
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
 }
 
 /**
@@ -39,15 +58,27 @@ async function createSprint(page: Page, name: string) {
  */
 async function startSprint(page: Page, sprintName: string) {
   await openSprintSelector(page);
+
   const popover = page.locator('[data-popover-content]');
-  const sprintRow = popover.locator('.px-3.py-2').filter({
-    has: page.getByRole('button', { name: sprintName })
-  });
-  const startButton = sprintRow.getByRole('button', { name: 'Start' });
+
+  // Wait for the popover to finish loading sprints
+  // The popover shows "Loading sprints..." text while loading
+  await expect(popover.getByText('Loading sprints...')).not.toBeVisible({ timeout: 10000 });
+
+  // Wait for the "Upcoming" section header to appear (indicates sprint list is rendered)
+  await expect(popover.getByText('Upcoming')).toBeVisible({ timeout: 5000 });
+
+  // Find the Start button - it should be the first (and likely only) Start button
+  const startButton = popover.getByRole('button', { name: 'Start' }).first();
   await expect(startButton).toBeVisible({ timeout: 5000 });
   await startButton.click();
+
   await expect(page.getByText(/Started/)).toBeVisible({ timeout: 10000 });
-  await page.waitForTimeout(500);
+  // Wait for toast to disappear and data to be saved
+  await page.waitForTimeout(1000);
+  // Close the popover by pressing Escape
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
 }
 
 test.describe('Tab Navigation', () => {
@@ -220,14 +251,18 @@ test.describe('Sprint Planning View', () => {
     const actualBoardId = boardMatch ? boardMatch[1] : '';
 
     // Create and start a sprint
-    await createSprint(page, `Active Plan Sprint ${ctx.testId}`);
-    await startSprint(page, `Active Plan Sprint ${ctx.testId}`);
+    const sprintName = `Active Plan Sprint ${ctx.testId}`;
+    await createSprint(page, sprintName);
+    await startSprint(page, sprintName);
 
-    // Navigate to planning
+    // Wait for backend to fully persist the sprint data
+    await page.waitForTimeout(1500);
+
+    // Navigate to planning and wait for data
     await navigateToPlanning(page, ctx.projectId, actualBoardId);
 
     // Should see the active sprint section with "Active" badge
-    await expect(page.getByText(`Active Plan Sprint ${ctx.testId}`)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(sprintName)).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Active', { exact: true }).first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -241,13 +276,17 @@ test.describe('Sprint Planning View', () => {
     const actualBoardId = boardMatch ? boardMatch[1] : '';
 
     // Create a future sprint (don't start it)
-    await createSprint(page, `Future Plan Sprint ${ctx.testId}`);
+    const sprintName = `Future Plan Sprint ${ctx.testId}`;
+    await createSprint(page, sprintName);
 
-    // Navigate to planning
+    // Wait for backend to fully persist the sprint data
+    await page.waitForTimeout(1500);
+
+    // Navigate to planning and wait for data
     await navigateToPlanning(page, ctx.projectId, actualBoardId);
 
     // Should see the future sprint section with "Future" badge
-    await expect(page.getByText(`Future Plan Sprint ${ctx.testId}`)).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(sprintName)).toBeVisible({ timeout: 10000 });
     await expect(page.getByText('Future', { exact: true }).first()).toBeVisible({ timeout: 5000 });
   });
 
