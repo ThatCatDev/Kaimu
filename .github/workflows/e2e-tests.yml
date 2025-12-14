@@ -75,6 +75,11 @@ jobs:
             sleep 2
           done
 
+      - name: Run database migrations
+        run: |
+          docker compose exec -T backend go run cmd/main.go migrate up
+          echo "Migrations completed"
+
       - name: Wait for Backend
         run: |
           for i in {1..60}; do
