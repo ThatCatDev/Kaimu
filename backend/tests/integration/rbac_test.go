@@ -82,197 +82,6 @@ func setupRBACTestServer(t *testing.T) *RBACTestServer {
 	// Clean up any existing tables first to ensure clean schema
 	cleanupRBACTables(testDB)
 
-	// Run migrations for RBAC tables
-	err = testDB.Exec(`
-		CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
-		-- Users table
-		CREATE TABLE users (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			username VARCHAR(255) NOT NULL UNIQUE,
-			email VARCHAR(255),
-			display_name VARCHAR(255),
-			avatar_url TEXT,
-			password_hash VARCHAR(255),
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-
-		-- Organizations table
-		CREATE TABLE organizations (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			name VARCHAR(255) NOT NULL,
-			slug VARCHAR(255) NOT NULL UNIQUE,
-			description TEXT,
-			owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-
-		-- Permissions table
-		CREATE TABLE permissions (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			code VARCHAR(100) NOT NULL UNIQUE,
-			name VARCHAR(255) NOT NULL,
-			description TEXT,
-			resource_type VARCHAR(50) NOT NULL,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-
-		-- Roles table
-		CREATE TABLE roles (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
-			name VARCHAR(100) NOT NULL,
-			description TEXT,
-			is_system BOOLEAN NOT NULL DEFAULT FALSE,
-			scope VARCHAR(50) NOT NULL DEFAULT 'organization',
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			CONSTRAINT unique_role_name_per_org UNIQUE (organization_id, name)
-		);
-
-		-- Role permissions junction table
-		CREATE TABLE role_permissions (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-			permission_id UUID NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			CONSTRAINT unique_role_permission UNIQUE (role_id, permission_id)
-		);
-
-		-- Organization members table (must be created after roles)
-		CREATE TABLE organization_members (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			role VARCHAR(50) NOT NULL DEFAULT 'member',
-			role_id UUID REFERENCES roles(id) ON DELETE SET NULL,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			UNIQUE(organization_id, user_id)
-		);
-
-		-- Projects table
-		CREATE TABLE projects (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-			name VARCHAR(255) NOT NULL,
-			key VARCHAR(10) NOT NULL,
-			description TEXT,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			UNIQUE(organization_id, key)
-		);
-
-		-- Project members table
-		CREATE TABLE project_members (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			role_id UUID REFERENCES roles(id) ON DELETE SET NULL,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			CONSTRAINT unique_project_member UNIQUE (project_id, user_id)
-		);
-
-		-- Invitations table
-		CREATE TABLE invitations (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-			email VARCHAR(255) NOT NULL,
-			role_id UUID REFERENCES roles(id) ON DELETE SET NULL,
-			invited_by UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			token VARCHAR(255) NOT NULL UNIQUE,
-			expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-			accepted_at TIMESTAMP WITH TIME ZONE,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-
-		-- Boards table (needed for project creation)
-		CREATE TABLE boards (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-			name VARCHAR(255) NOT NULL,
-			description TEXT,
-			is_default BOOLEAN NOT NULL DEFAULT FALSE,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			created_by UUID REFERENCES users(id) ON DELETE SET NULL
-		);
-
-		-- Board columns table (needed for board creation)
-		CREATE TABLE board_columns (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			board_id UUID NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
-			name VARCHAR(255) NOT NULL,
-			position INTEGER NOT NULL DEFAULT 0,
-			color VARCHAR(7),
-			wip_limit INTEGER,
-			is_backlog BOOLEAN NOT NULL DEFAULT FALSE,
-			is_hidden BOOLEAN NOT NULL DEFAULT FALSE,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-
-		-- Tags table (for card tagging)
-		CREATE TABLE tags (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-			name VARCHAR(100) NOT NULL,
-			color VARCHAR(7),
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			UNIQUE(project_id, name)
-		);
-
-		-- Card priority enum
-		DO $$ BEGIN
-			CREATE TYPE card_priority AS ENUM ('none', 'low', 'medium', 'high', 'urgent');
-		EXCEPTION
-			WHEN duplicate_object THEN null;
-		END $$;
-
-		-- Cards table
-		CREATE TABLE cards (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			column_id UUID NOT NULL REFERENCES board_columns(id) ON DELETE CASCADE,
-			board_id UUID NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
-			title VARCHAR(500) NOT NULL,
-			description TEXT,
-			position FLOAT NOT NULL DEFAULT 0,
-			priority card_priority NOT NULL DEFAULT 'none',
-			assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
-			due_date TIMESTAMP WITH TIME ZONE,
-			created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
-			created_by UUID REFERENCES users(id) ON DELETE SET NULL
-		);
-
-		-- Card tags junction table
-		CREATE TABLE card_tags (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			card_id UUID NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
-			tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			UNIQUE(card_id, tag_id)
-		);
-
-		-- Refresh tokens table
-		CREATE TABLE refresh_tokens (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			token_hash VARCHAR(255) NOT NULL UNIQUE,
-			expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-			revoked_at TIMESTAMP WITH TIME ZONE,
-			replaced_by UUID,
-			user_agent TEXT,
-			ip_address VARCHAR(45),
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-	`).Error
-	if err != nil {
-		t.Fatalf("Failed to run migrations: %v", err)
-	}
-
 	// Seed permissions and system roles
 	seedRBACData(t, testDB)
 
@@ -355,22 +164,23 @@ func setupRBACTestServer(t *testing.T) *RBACTestServer {
 }
 
 func cleanupRBACTables(db *gorm.DB) {
-	// Drop and recreate tables to ensure schema is up to date
-	db.Exec("DROP TABLE IF EXISTS card_tags CASCADE")
-	db.Exec("DROP TABLE IF EXISTS cards CASCADE")
-	db.Exec("DROP TABLE IF EXISTS tags CASCADE")
-	db.Exec("DROP TABLE IF EXISTS board_columns CASCADE")
-	db.Exec("DROP TABLE IF EXISTS boards CASCADE")
-	db.Exec("DROP TABLE IF EXISTS invitations CASCADE")
-	db.Exec("DROP TABLE IF EXISTS project_members CASCADE")
-	db.Exec("DROP TABLE IF EXISTS role_permissions CASCADE")
-	db.Exec("DROP TABLE IF EXISTS organization_members CASCADE")
-	db.Exec("DROP TABLE IF EXISTS projects CASCADE")
-	db.Exec("DROP TABLE IF EXISTS roles CASCADE")
-	db.Exec("DROP TABLE IF EXISTS permissions CASCADE")
-	db.Exec("DROP TABLE IF EXISTS organizations CASCADE")
-	db.Exec("DROP TABLE IF EXISTS users CASCADE")
-	db.Exec("DROP TYPE IF EXISTS card_priority")
+	// Clean up data from tables (in correct order for foreign key constraints)
+	db.Exec("DELETE FROM card_tags")
+	db.Exec("DELETE FROM cards")
+	db.Exec("DELETE FROM tags")
+	db.Exec("DELETE FROM board_columns")
+	db.Exec("DELETE FROM boards")
+	db.Exec("DELETE FROM invitations")
+	db.Exec("DELETE FROM project_members")
+	// Only delete role_permissions for non-system roles (keep seed data for system roles)
+	db.Exec("DELETE FROM role_permissions WHERE role_id NOT IN ('00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000004')")
+	db.Exec("DELETE FROM organization_members")
+	db.Exec("DELETE FROM projects")
+	db.Exec("DELETE FROM roles WHERE is_system = false")
+	// Don't delete permissions - this is seed data needed by all tests
+	db.Exec("DELETE FROM organizations")
+	db.Exec("DELETE FROM refresh_tokens")
+	db.Exec("DELETE FROM users")
 }
 
 func seedRBACData(t *testing.T, db *gorm.DB) {
@@ -1552,11 +1362,11 @@ func TestRBAC_AcceptInvitation_Success(t *testing.T) {
 	ownerCookies := ts.registerUser(t, "acceptowner", "password123")
 	orgID := ts.createOrganization(t, ownerCookies, "Accept Org")
 
-	// Create invitation
+	// Create invitation (email must match what registerUser creates: acceptuser@test.com)
 	inviteQuery := fmt.Sprintf(`mutation {
 		inviteMember(input: {
 			organizationId: "%s"
-			email: "acceptme@example.com"
+			email: "acceptuser@test.com"
 			roleId: "00000000-0000-0000-0000-000000000003"
 		}) {
 			token

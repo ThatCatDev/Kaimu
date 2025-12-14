@@ -60,49 +60,6 @@ func setupOIDCTestServer(t *testing.T) *OIDCTestServer {
 		t.Skipf("Skipping integration test: could not connect to test database: %v", err)
 	}
 
-	// Run migrations for users and oidc_identities
-	err = testDB.Exec(`
-		CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-		CREATE TABLE IF NOT EXISTS users (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			username VARCHAR(255) NOT NULL UNIQUE,
-			password_hash VARCHAR(255),
-			email VARCHAR(255) UNIQUE,
-			display_name VARCHAR(255),
-			avatar_url TEXT,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-		CREATE TABLE IF NOT EXISTS oidc_identities (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			issuer VARCHAR(512) NOT NULL,
-			subject VARCHAR(512) NOT NULL,
-			email VARCHAR(255),
-			email_verified BOOLEAN DEFAULT false,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			UNIQUE(issuer, subject)
-		);
-		CREATE INDEX IF NOT EXISTS idx_oidc_identities_user_id ON oidc_identities(user_id);
-		CREATE INDEX IF NOT EXISTS idx_oidc_identities_issuer_subject ON oidc_identities(issuer, subject);
-
-		CREATE TABLE IF NOT EXISTS refresh_tokens (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			token_hash VARCHAR(255) NOT NULL UNIQUE,
-			expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-			revoked_at TIMESTAMP WITH TIME ZONE,
-			replaced_by UUID,
-			user_agent TEXT,
-			ip_address VARCHAR(45),
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-	`).Error
-	if err != nil {
-		t.Fatalf("Failed to run migrations: %v", err)
-	}
-
 	// Clean up tables before test
 	testDB.Exec("DELETE FROM oidc_identities")
 	testDB.Exec("DELETE FROM refresh_tokens")

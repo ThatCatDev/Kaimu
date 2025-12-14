@@ -413,7 +413,10 @@ func (s *service) sendInvitationEmail(ctx context.Context, inv *invitation.Invit
 	// Build invitation URL
 	inviteURL := fmt.Sprintf("%s/%s", s.emailConfig.InvitationURL, inv.Token)
 
-	// Send the email
+	// Send the email if mail service is configured
+	if s.mailService == nil {
+		return
+	}
 	err = s.mailService.SendMail(ctx, []string{inv.Email}, fmt.Sprintf("You've been invited to join %s", org.Name), "invitation.mjml", map[string]string{
 		"organization_name": org.Name,
 		"inviter_name":      inviterName,

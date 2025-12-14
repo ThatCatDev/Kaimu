@@ -117,9 +117,9 @@ func (s *service) CreateDefaultBoard(ctx context.Context, projectID uuid.UUID, c
 
 	b := &board.Board{
 		ProjectID:   projectID,
-		Name:        "Main Board",
+		Name:        "Default Board",
 		Description: "Kanban board for tracking tasks",
-		IsDefault:   false,
+		IsDefault:   true,
 		CreatedBy:   createdBy,
 	}
 

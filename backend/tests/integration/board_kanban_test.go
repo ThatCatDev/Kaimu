@@ -22,8 +22,12 @@ import (
 	cardTagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/card_tag"
 	orgRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization"
 	memberRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/organization_member"
+	permissionRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/permission"
 	projectRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/project"
+	projectMemberRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/project_member"
 	refreshTokenRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/refreshtoken"
+	roleRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/role"
+	rolePermissionRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/role_permission"
 	tagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
 	"github.com/thatcatdev/kaimu/backend/internal/directives"
@@ -32,6 +36,7 @@ import (
 	cardService "github.com/thatcatdev/kaimu/backend/internal/services/card"
 	orgService "github.com/thatcatdev/kaimu/backend/internal/services/organization"
 	projectService "github.com/thatcatdev/kaimu/backend/internal/services/project"
+	rbacService "github.com/thatcatdev/kaimu/backend/internal/services/rbac"
 	tagService "github.com/thatcatdev/kaimu/backend/internal/services/tag"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -72,126 +77,6 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 		t.Skipf("Skipping integration test: could not connect to test database: %v", err)
 	}
 
-	// Run migrations for all tables
-	err = testDB.Exec(`
-		CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
-		CREATE TABLE IF NOT EXISTS users (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			username VARCHAR(255) NOT NULL UNIQUE,
-			password_hash VARCHAR(255) NOT NULL,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-
-		CREATE TABLE IF NOT EXISTS organizations (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			name VARCHAR(255) NOT NULL,
-			slug VARCHAR(255) NOT NULL UNIQUE,
-			description TEXT,
-			owner_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-
-		CREATE TABLE IF NOT EXISTS organization_members (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			role VARCHAR(50) NOT NULL DEFAULT 'member',
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			UNIQUE(organization_id, user_id)
-		);
-
-		CREATE TABLE IF NOT EXISTS projects (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-			name VARCHAR(255) NOT NULL,
-			key VARCHAR(10) NOT NULL,
-			description TEXT,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			UNIQUE(organization_id, key)
-		);
-
-		CREATE TABLE IF NOT EXISTS boards (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-			name VARCHAR(255) NOT NULL,
-			description TEXT,
-			is_default BOOLEAN NOT NULL DEFAULT FALSE,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			created_by UUID REFERENCES users(id) ON DELETE SET NULL
-		);
-
-		CREATE TABLE IF NOT EXISTS board_columns (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			board_id UUID NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
-			name VARCHAR(255) NOT NULL,
-			position INTEGER NOT NULL DEFAULT 0,
-			is_backlog BOOLEAN NOT NULL DEFAULT FALSE,
-			is_hidden BOOLEAN NOT NULL DEFAULT FALSE,
-			color VARCHAR(7) DEFAULT '#6B7280',
-			wip_limit INTEGER,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-
-		CREATE TABLE IF NOT EXISTS tags (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-			name VARCHAR(100) NOT NULL,
-			color VARCHAR(7) NOT NULL DEFAULT '#6B7280',
-			description TEXT,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			UNIQUE (project_id, name)
-		);
-
-		DO $$ BEGIN
-			CREATE TYPE card_priority AS ENUM ('none', 'low', 'medium', 'high', 'urgent');
-		EXCEPTION
-			WHEN duplicate_object THEN null;
-		END $$;
-
-		CREATE TABLE IF NOT EXISTS cards (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			column_id UUID NOT NULL REFERENCES board_columns(id) ON DELETE CASCADE,
-			board_id UUID NOT NULL REFERENCES boards(id) ON DELETE CASCADE,
-			title VARCHAR(500) NOT NULL,
-			description TEXT,
-			position FLOAT NOT NULL DEFAULT 0,
-			priority card_priority NOT NULL DEFAULT 'none',
-			assignee_id UUID REFERENCES users(id) ON DELETE SET NULL,
-			due_date TIMESTAMP WITH TIME ZONE,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			created_by UUID REFERENCES users(id) ON DELETE SET NULL
-		);
-
-		CREATE TABLE IF NOT EXISTS card_tags (
-			card_id UUID NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
-			tag_id UUID NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-			PRIMARY KEY (card_id, tag_id)
-		);
-
-		CREATE TABLE IF NOT EXISTS refresh_tokens (
-			id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-			user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-			token_hash VARCHAR(255) NOT NULL UNIQUE,
-			expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
-			revoked_at TIMESTAMP WITH TIME ZONE,
-			replaced_by UUID,
-			user_agent TEXT,
-			ip_address VARCHAR(45),
-			created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-		);
-	`).Error
-	if err != nil {
-		t.Fatalf("Failed to run migrations: %v", err)
-	}
-
 	// Clean up tables before test (order matters due to foreign keys)
 	testDB.Exec("DELETE FROM card_tags")
 	testDB.Exec("DELETE FROM cards")
@@ -209,11 +94,15 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 	orgRepository := orgRepo.NewRepository(testDB)
 	memberRepository := memberRepo.NewRepository(testDB)
 	projectRepository := projectRepo.NewRepository(testDB)
+	projectMemberRepository := projectMemberRepo.NewRepository(testDB)
 	boardRepository := boardRepo.NewRepository(testDB)
 	columnRepository := columnRepo.NewRepository(testDB)
 	cardRepository := cardRepo.NewRepository(testDB)
 	tagRepository := tagRepo.NewRepository(testDB)
 	cardTagRepository := cardTagRepo.NewRepository(testDB)
+	permissionRepository := permissionRepo.NewRepository(testDB)
+	roleRepository := roleRepo.NewRepository(testDB)
+	rolePermissionRepository := rolePermissionRepo.NewRepository(testDB)
 
 	// Create services
 	refreshRepository := refreshTokenRepo.NewRepository(testDB)
@@ -223,6 +112,16 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 	boardSvc := boardService.NewService(boardRepository, columnRepository, projectRepository)
 	cardSvc := cardService.NewService(cardRepository, columnRepository, boardRepository, tagRepository, cardTagRepository)
 	tagSvc := tagService.NewService(tagRepository, projectRepository)
+	rbacSvc := rbacService.NewService(
+		permissionRepository,
+		roleRepository,
+		rolePermissionRepository,
+		memberRepository,
+		projectMemberRepository,
+		projectRepository,
+		boardRepository,
+		userRepository,
+	)
 
 	// Create resolver
 	cfg := config.Config{
@@ -238,6 +137,7 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 		BoardService:        boardSvc,
 		CardService:         cardSvc,
 		TagService:          tagSvc,
+		RBACService:         rbacSvc,
 	}
 
 	// Create GraphQL handler
