@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "$BACKEND_URL/:path*"
+      "destination": "https://f8a39f9b003e.ngrok-free.app/:path*"
     }
   ]
 }
