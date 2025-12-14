@@ -435,8 +435,11 @@ test.describe('Sidebar Navigation', () => {
 
     const sidebar = page.locator('aside');
 
-    // Expand org
-    await sidebar.locator('button[title="Expand"]').first().click();
+    // Expand org if not already expanded (may be auto-expanded from previous navigation)
+    const expandButton = sidebar.locator('button[title="Expand"]').first();
+    if (await expandButton.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await expandButton.click();
+    }
     await expect(sidebar.getByText(ctx.projectName)).toBeVisible({ timeout: 5000 });
 
     // Track if full page reload happens
