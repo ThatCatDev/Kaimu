@@ -26,18 +26,30 @@ jobs:
       fail-fast: false
       matrix:
         shard:
-          # Group 1: Authentication, authorization, and access control
+          # Group 1: Core authentication
           - name: auth
-            files: "auth.spec.ts oidc.spec.ts invitation.spec.ts rbac-roles.spec.ts"
-          # Group 2: Kanban board interactions (cards, drag-drop, tags, UI)
-          - name: kanban
-            files: "kanban-cards.spec.ts kanban-drag-drop.spec.ts kanban-tags.spec.ts kanban-ui-improvements.spec.ts"
-          # Group 3: Sprint planning and board management
+            files: "auth.spec.ts oidc.spec.ts"
+          # Group 2: Access control
+          - name: access
+            files: "invitation.spec.ts rbac-roles.spec.ts"
+          # Group 3: Kanban card operations
+          - name: kanban-cards
+            files: "kanban-cards.spec.ts kanban-drag-drop.spec.ts"
+          # Group 4: Kanban features
+          - name: kanban-features
+            files: "kanban-tags.spec.ts kanban-ui-improvements.spec.ts"
+          # Group 5: Board management
+          - name: board
+            files: "board.spec.ts planning.spec.ts"
+          # Group 6: Sprint management
           - name: sprints
-            files: "board.spec.ts planning.spec.ts sprints.spec.ts assignee.spec.ts"
-          # Group 4: Organization, projects, and navigation
+            files: "sprints.spec.ts assignee.spec.ts"
+          # Group 7: Organization & projects
+          - name: org
+            files: "organization.spec.ts project.spec.ts"
+          # Group 8: Navigation & user flows
           - name: navigation
-            files: "organization.spec.ts project.spec.ts search.spec.ts sidebar.spec.ts user-journey.spec.ts"
+            files: "search.spec.ts sidebar.spec.ts user-journey.spec.ts"
 
     name: E2E (${{ matrix.shard.name }})
     steps:
@@ -96,6 +108,17 @@ jobs:
             sleep 2
           done
 
+      - name: Wait for Mailhog
+        run: |
+          for i in {1..30}; do
+            if curl -s http://localhost:8025/api/v2/messages > /dev/null 2>&1; then
+              echo "Mailhog is ready"
+              break
+            fi
+            echo "Waiting for Mailhog... ($i/30)"
+            sleep 2
+          done
+
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
         with:
@@ -142,6 +165,8 @@ jobs:
           curl -s -o /dev/null -w "  Status: %{http_code}\n" http://localhost:5556/dex/.well-known/openid-configuration || echo "  FAILED"
           echo "Typesense:"
           curl -s http://localhost:8108/health || echo "  FAILED"
+          echo "Mailhog:"
+          curl -s -o /dev/null -w "  Status: %{http_code}\n" http://localhost:8025/api/v2/messages || echo "  FAILED"
           echo "=== All services verified ==="
 
       - name: Run E2E tests
@@ -174,6 +199,8 @@ jobs:
           docker compose logs typesense --tail=50
           echo "=== Dex logs ==="
           docker compose logs dex --tail=50
+          echo "=== Mailhog logs ==="
+          docker compose logs mailhog --tail=50
           echo "=== PostgreSQL logs ==="
           docker compose logs postgres --tail=50
 

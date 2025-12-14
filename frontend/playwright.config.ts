@@ -15,8 +15,8 @@ export default defineConfig({
   forbidOnly: isCI,
   // Reduce retries in CI to avoid long runs - fix tests instead
   retries: isCI ? 2 : 1,
-  // Use more workers in CI since tests are isolated
-  workers: isCI ? 4 : 4,
+  // Use fewer workers per shard since we have more parallel shards
+  workers: isCI ? 2 : 4,
   reporter: isCI
     ? [['html', { outputFolder: path.join(outputDir, 'report') }], ['github'], ['list']]
     : [['html', { outputFolder: path.join(outputDir, 'report') }]],
