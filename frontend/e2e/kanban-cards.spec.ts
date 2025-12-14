@@ -86,7 +86,7 @@ test.describe('Kanban Cards - Advanced Features', () => {
     // Wait for auto-save
     await expect(page.getByText('Saved')).toBeVisible({ timeout: 5000 });
 
-    // Close modal
+    // Close modal - dropdown auto-closes after selection, so just click Close
     await page.getByRole('button', { name: 'Close' }).click();
 
     // Verify modal closes

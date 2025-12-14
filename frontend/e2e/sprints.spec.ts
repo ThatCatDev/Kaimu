@@ -42,20 +42,13 @@ async function createSprint(page: Page, name: string, goal?: string, startDate?:
   // Find the modal dialog
   const modal = page.getByRole('dialog', { name: 'Create Sprint' });
 
-  // Wait for the input to have a value (loadSuggestedName async fills it)
+  // Wait for the input to be visible
   const nameInput = modal.getByPlaceholder('e.g., Sprint 1');
   await expect(nameInput).toBeVisible({ timeout: 5000 });
-  // Wait for the suggested name to load (input will have non-empty value)
-  await page.waitForFunction(
-    (input) => (input as HTMLInputElement)?.value?.length > 0,
-    await nameInput.elementHandle(),
-    { timeout: 5000 }
-  ).catch(() => {
-    // If suggestion doesn't load, that's okay - we'll fill it anyway
-  });
 
-  // Clear and fill with our name
-  await nameInput.clear();
+  // Click, clear, and fill with our name (ensures proper input handling)
+  await nameInput.click();
+  await nameInput.fill('');
   await nameInput.fill(name);
 
   if (goal) {
