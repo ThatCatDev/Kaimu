@@ -94,10 +94,14 @@ jobs:
 
       - name: Build frontend
         working-directory: frontend
+        env:
+          PUBLIC_API_URL: http://localhost:3000/graphql
         run: bun run build
 
       - name: Start frontend preview server
         working-directory: frontend
+        env:
+          PUBLIC_API_URL: http://localhost:3000/graphql
         run: |
           bun run preview --host 0.0.0.0 &
           echo "Waiting for frontend to be ready..."
@@ -148,6 +152,8 @@ jobs:
         run: |
           echo "=== Backend logs ==="
           docker compose logs backend --tail=100
+          echo "=== Typesense logs ==="
+          docker compose logs typesense --tail=50
           echo "=== Dex logs ==="
           docker compose logs dex --tail=50
           echo "=== PostgreSQL logs ==="
