@@ -21,8 +21,25 @@ on:
 jobs:
   e2e-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        shard:
+          # Group 1: Authentication, authorization, and access control
+          - name: auth
+            files: "auth.spec.ts oidc.spec.ts invitation.spec.ts rbac-roles.spec.ts"
+          # Group 2: Kanban board interactions (cards, drag-drop, tags, UI)
+          - name: kanban
+            files: "kanban-cards.spec.ts kanban-drag-drop.spec.ts kanban-tags.spec.ts kanban-ui-improvements.spec.ts"
+          # Group 3: Sprint planning and board management
+          - name: sprints
+            files: "board.spec.ts planning.spec.ts sprints.spec.ts assignee.spec.ts"
+          # Group 4: Organization, projects, and navigation
+          - name: navigation
+            files: "organization.spec.ts project.spec.ts search.spec.ts sidebar.spec.ts user-journey.spec.ts"
 
+    name: E2E (${{ matrix.shard.name }})
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -129,13 +146,13 @@ jobs:
 
       - name: Run E2E tests
         working-directory: frontend
-        run: bun run test:e2e:ci
+        run: bunx playwright test ${{ matrix.shard.files }}
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard.name }}
           path: frontend/test-results/
           retention-days: 7
 
@@ -143,13 +160,14 @@ jobs:
         uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: test-screenshots
+          name: test-screenshots-${{ matrix.shard.name }}
           path: frontend/e2e/**/*.png
           retention-days: 7
 
       - name: Show Docker logs on failure
         if: failure()
         run: |
+          echo "=== Failure in shard: ${{ matrix.shard.name }} ==="
           echo "=== Backend logs ==="
           docker compose logs backend --tail=100
           echo "=== Typesense logs ==="
