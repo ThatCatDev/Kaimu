@@ -19,13 +19,14 @@ FROM node:20-slim
 
 WORKDIR /app
 
-# Copy built assets
+# Copy built assets and node_modules for runtime dependencies
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
 
-# Install only production deps needed for preview
-RUN npm install astro
+# Set environment variables for the standalone server
+ENV HOST=0.0.0.0
+ENV PORT=4321
 
 EXPOSE 4321
 
-CMD ["npx", "astro", "preview", "--host", "0.0.0.0"]
+CMD ["node", "./dist/server/entry.mjs"]
