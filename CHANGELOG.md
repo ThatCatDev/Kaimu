@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.5](https://github.com/ThatCatDev/Kaimu/compare/v0.0.4...v0.0.5) (2025-12-15)
+
+
+### Bug Fixes
+
+* oidc toggle through env ([2abe8b0](https://github.com/ThatCatDev/Kaimu/commit/2abe8b00406ddb0f4f5ae91ff47b95f23f32238a))
+
 ## [0.0.4](https://github.com/ThatCatDev/Kaimu/compare/v0.0.3...v0.0.4) (2025-12-14)
 
 
