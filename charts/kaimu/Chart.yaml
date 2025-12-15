@@ -1,0 +1,17 @@
+apiVersion: v2
+name: kaimu
+description: A Helm chart for Kaimu - Modern project management tool
+type: application
+version: 0.1.0
+appVersion: "0.0.4"
+keywords:
+  - project-management
+  - kanban
+  - agile
+  - scrum
+home: https://github.com/your-org/kaimu
+sources:
+  - https://github.com/your-org/kaimu
+maintainers:
+  - name: Kaimu Team
+

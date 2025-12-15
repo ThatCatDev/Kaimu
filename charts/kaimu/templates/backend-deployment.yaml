@@ -1,0 +1,185 @@
+{{- if .Values.backend.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kaimu.backend.name" . }}
+  labels:
+    {{- include "kaimu.backend.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.backend.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "kaimu.backend.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.backend.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "kaimu.backend.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- include "kaimu.imagePullSecrets" . | nindent 6 }}
+      serviceAccountName: {{ include "kaimu.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: backend
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.backend.service.port }}
+              protocol: TCP
+          env:
+            # Server configuration
+            - name: PORT
+              value: {{ .Values.backend.service.port | quote }}
+            - name: ENV
+              value: {{ .Values.backend.env | quote }}
+
+            # Database configuration
+            - name: DBHOST
+              {{- if and .Values.postgresql.enabled (not .Values.backend.database.host) }}
+              value: "{{ include "kaimu.fullname" . }}-postgresql"
+              {{- else }}
+              value: {{ .Values.backend.database.host | quote }}
+              {{- end }}
+            - name: DBPORT
+              value: {{ .Values.backend.database.port | quote }}
+            - name: DBNAME
+              {{- if .Values.postgresql.enabled }}
+              value: {{ .Values.postgresql.auth.database | quote }}
+              {{- else }}
+              value: {{ .Values.backend.database.name | quote }}
+              {{- end }}
+            - name: DBUSERNAME
+              {{- if .Values.postgresql.enabled }}
+              value: {{ .Values.postgresql.auth.username | quote }}
+              {{- else }}
+              value: {{ .Values.backend.database.username | quote }}
+              {{- end }}
+            - name: DBSSL
+              value: {{ .Values.backend.database.ssl | quote }}
+            - name: DBPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.backend.database.existingSecret }}
+                  name: {{ .Values.backend.database.existingSecret }}
+                  key: {{ .Values.backend.database.existingSecretPasswordKey }}
+                  {{- else if .Values.postgresql.enabled }}
+                  name: "{{ include "kaimu.fullname" . }}-postgresql"
+                  key: password
+                  {{- else }}
+                  name: {{ include "kaimu.fullname" . }}-backend-secrets
+                  key: db-password
+                  {{- end }}
+
+            # OIDC configuration
+            {{- if .Values.backend.oidc.baseUrl }}
+            - name: OIDC_BASE_URL
+              value: {{ .Values.backend.oidc.baseUrl | quote }}
+            {{- end }}
+            {{- if .Values.backend.oidc.frontendUrl }}
+            - name: OIDC_FRONTEND_URL
+              value: {{ .Values.backend.oidc.frontendUrl | quote }}
+            {{- end }}
+            - name: OIDC_STATE_EXPIRATION_MINUTES
+              value: {{ .Values.backend.oidc.stateExpirationMinutes | quote }}
+            - name: OIDC_PROVIDERS
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.backend.oidc.existingSecret }}
+                  name: {{ .Values.backend.oidc.existingSecret }}
+                  key: {{ .Values.backend.oidc.existingSecretProvidersKey }}
+                  {{- else }}
+                  name: {{ include "kaimu.fullname" . }}-backend-secrets
+                  key: oidc-providers
+                  {{- end }}
+
+            # Email configuration
+            {{- if .Values.backend.email.host }}
+            - name: EMAIL_HOST
+              value: {{ .Values.backend.email.host | quote }}
+            - name: EMAIL_PORT
+              value: {{ .Values.backend.email.port | quote }}
+            - name: EMAIL_FROM
+              value: {{ .Values.backend.email.from | quote }}
+            - name: EMAIL_FROM_NAME
+              value: {{ .Values.backend.email.fromName | quote }}
+            - name: EMAIL_SSL_TYPE
+              value: {{ .Values.backend.email.sslType | quote }}
+            {{- if .Values.backend.email.username }}
+            - name: EMAIL_USERNAME
+              value: {{ .Values.backend.email.username | quote }}
+            {{- end }}
+            {{- if or .Values.backend.email.password .Values.backend.email.existingSecret }}
+            - name: EMAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.backend.email.existingSecret }}
+                  name: {{ .Values.backend.email.existingSecret }}
+                  key: {{ .Values.backend.email.existingSecretPasswordKey }}
+                  {{- else }}
+                  name: {{ include "kaimu.fullname" . }}-backend-secrets
+                  key: email-password
+                  {{- end }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.backend.email.verificationUrl }}
+            - name: EMAIL_VERIFICATION_URL
+              value: {{ .Values.backend.email.verificationUrl | quote }}
+            {{- end }}
+            {{- if .Values.backend.email.invitationUrl }}
+            - name: EMAIL_INVITATION_URL
+              value: {{ .Values.backend.email.invitationUrl | quote }}
+            {{- end }}
+
+            # Typesense configuration
+            {{- if .Values.typesense.enabled }}
+            - name: TYPESENSE_HOST
+              value: "{{ include "kaimu.fullname" . }}-typesense"
+            - name: TYPESENSE_PORT
+              value: "8108"
+            - name: TYPESENSE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kaimu.fullname" . }}-typesense-secret
+                  key: api-key
+            {{- end }}
+
+            # CORS configuration
+            {{- if .Values.backend.cors.origins }}
+            - name: CORS_ORIGINS
+              value: {{ .Values.backend.cors.origins | quote }}
+            {{- end }}
+
+            # Cookie configuration
+            {{- if .Values.backend.cookie.domain }}
+            - name: COOKIE_DOMAIN
+              value: {{ .Values.backend.cookie.domain | quote }}
+            {{- end }}
+            - name: COOKIE_SECURE
+              value: {{ .Values.backend.cookie.secure | quote }}
+
+          livenessProbe:
+            {{- toYaml .Values.backend.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.backend.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+      {{- with .Values.backend.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

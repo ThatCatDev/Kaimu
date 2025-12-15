@@ -1,0 +1,121 @@
+# Example production values for Kaimu
+# Copy this file and customize for your deployment
+
+# Backend configuration
+backend:
+  enabled: true
+
+  replicaCount: 2
+
+  # Database configuration
+  database:
+    host: your-postgres-host.example.com
+    port: 5432
+    name: kaimu
+    username: kaimu
+    password: "your-secure-database-password"  # Or use existingSecret
+    ssl: require
+
+  # OIDC configuration
+  oidc:
+    baseUrl: https://api.yourdomain.com
+    frontendUrl: https://yourdomain.com
+    # Configure your OIDC providers
+    providers: |
+      [
+        {
+          "name": "Google",
+          "slug": "google",
+          "issuer_url": "https://accounts.google.com",
+          "client_id": "your-google-client-id",
+          "client_secret": "your-google-client-secret",
+          "scopes": "openid email profile"
+        }
+      ]
+
+  # Email configuration
+  email:
+    host: smtp.sendgrid.net
+    port: 587
+    username: apikey
+    password: "your-sendgrid-api-key"
+    from: noreply@yourdomain.com
+    fromName: Kaimu
+    sslType: tls
+    verificationUrl: https://yourdomain.com/verify
+    invitationUrl: https://yourdomain.com/invite
+
+  # Typesense configuration
+  typesense:
+    enabled: true
+    host: your-typesense-host.example.com
+    port: 8108
+    apiKey: "your-typesense-api-key"
+
+  # CORS - allow your frontend domain
+  cors:
+    origins: https://yourdomain.com
+
+  # Cookie configuration for production
+  cookie:
+    domain: .yourdomain.com
+    secure: true
+
+  # Production resources
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+# Frontend configuration
+frontend:
+  enabled: true
+
+  replicaCount: 2
+
+  # API URL - external URL for browser requests
+  apiUrl: https://api.yourdomain.com/graphql
+
+  # Production resources
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+  frontend:
+    enabled: true
+    hosts:
+      - host: yourdomain.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: kaimu-frontend-tls
+        hosts:
+          - yourdomain.com
+
+  backend:
+    enabled: true
+    hosts:
+      - host: api.yourdomain.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: kaimu-backend-tls
+        hosts:
+          - api.yourdomain.com

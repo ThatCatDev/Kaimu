@@ -1,0 +1,111 @@
+{{- if .Values.typesense.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kaimu.fullname" . }}-typesense
+  labels:
+    {{- include "kaimu.labels" . | nindent 4 }}
+    app.kubernetes.io/component: typesense
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "kaimu.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: typesense
+  template:
+    metadata:
+      labels:
+        {{- include "kaimu.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: typesense
+    spec:
+      {{- include "kaimu.imagePullSecrets" . | nindent 6 }}
+      containers:
+        - name: typesense
+          image: "{{ .Values.typesense.image.repository }}:{{ .Values.typesense.image.tag }}"
+          imagePullPolicy: {{ .Values.typesense.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8108
+              protocol: TCP
+          env:
+            - name: TYPESENSE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "kaimu.fullname" . }}-typesense-secret
+                  key: api-key
+            - name: TYPESENSE_DATA_DIR
+              value: /data
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          resources:
+            {{- toYaml .Values.typesense.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: data
+          {{- if .Values.typesense.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ include "kaimu.fullname" . }}-typesense
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "kaimu.fullname" . }}-typesense
+  labels:
+    {{- include "kaimu.labels" . | nindent 4 }}
+    app.kubernetes.io/component: typesense
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8108
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "kaimu.selectorLabels" . | nindent 4 }}
+    app.kubernetes.io/component: typesense
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ include "kaimu.fullname" . }}-typesense-secret
+  labels:
+    {{- include "kaimu.labels" . | nindent 4 }}
+    app.kubernetes.io/component: typesense
+type: Opaque
+stringData:
+  api-key: {{ .Values.typesense.apiKey | quote }}
+{{- if .Values.typesense.persistence.enabled }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "kaimu.fullname" . }}-typesense
+  labels:
+    {{- include "kaimu.labels" . | nindent 4 }}
+    app.kubernetes.io/component: typesense
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.typesense.persistence.size }}
+  {{- if .Values.typesense.persistence.storageClass }}
+  storageClassName: {{ .Values.typesense.persistence.storageClass }}
+  {{- end }}
+{{- end }}
+{{- end }}

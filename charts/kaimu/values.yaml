@@ -1,0 +1,244 @@
+# Kaimu Helm Chart Values
+
+# Global settings
+global:
+  # Image pull secrets for private registries
+  imagePullSecrets: []
+
+# Backend configuration
+backend:
+  enabled: true
+
+  image:
+    repository: thatcatdev/kaimu-backend
+    tag: "0.0.4"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 1
+
+  service:
+    type: ClusterIP
+    port: 3000
+
+  # Resource limits and requests
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  # Pod annotations
+  podAnnotations: {}
+
+  # Node selector
+  nodeSelector: {}
+
+  # Tolerations
+  tolerations: []
+
+  # Affinity rules
+  affinity: {}
+
+  # Environment (development, production)
+  env: production
+
+  # Database configuration
+  # When postgresql.enabled=true, host is auto-configured
+  # Set host manually only when using external database
+  database:
+    host: ""  # Leave empty to use built-in postgresql
+    port: 5432
+    name: kaimu
+    username: kaimu
+    password: ""  # Only used for external DB
+    ssl: disable
+    existingSecret: ""
+    existingSecretPasswordKey: "password"
+
+  # OIDC configuration
+  oidc:
+    baseUrl: ""  # e.g., https://api.yourdomain.com
+    frontendUrl: ""  # e.g., https://yourdomain.com
+    stateExpirationMinutes: 10
+    # OIDC providers as JSON array
+    providers: "[]"
+    existingSecret: ""
+    existingSecretProvidersKey: "providers"
+
+  # Email configuration
+  email:
+    host: ""
+    port: 587
+    username: ""
+    password: ""
+    from: "noreply@yourdomain.com"
+    fromName: "Kaimu"
+    sslType: tls  # none, tls, starttls
+    verificationUrl: ""
+    invitationUrl: ""
+    existingSecret: ""
+    existingSecretPasswordKey: "password"
+
+  # CORS configuration
+  cors:
+    origins: ""  # Comma-separated list of allowed origins
+
+  # Cookie configuration
+  cookie:
+    domain: ""  # e.g., .yourdomain.com
+    secure: true
+
+  # Health check configuration
+  livenessProbe:
+    httpGet:
+      path: /healthcheck
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /healthcheck
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Frontend configuration
+frontend:
+  enabled: true
+
+  image:
+    repository: thatcatdev/kaimu-frontend
+    tag: "0.0.4"
+    pullPolicy: IfNotPresent
+
+  replicaCount: 1
+
+  service:
+    type: ClusterIP
+    port: 4321
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  # API URL for the frontend to connect to backend
+  # Leave empty to auto-configure to internal backend service
+  apiUrl: ""
+
+  # Use proxy mode (frontend proxies to backend)
+  useProxy: "false"
+
+  livenessProbe:
+    httpGet:
+      path: /
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /
+      port: http
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# PostgreSQL configuration (built-in deployment)
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: "16"
+    pullPolicy: IfNotPresent
+  auth:
+    username: kaimu
+    password: ""  # Set this!
+    database: kaimu
+  persistence:
+    size: 2Gi
+    storageClass: ""
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Typesense configuration (built-in deployment)
+typesense:
+  enabled: true
+  image:
+    repository: typesense/typesense
+    tag: "27.0"
+    pullPolicy: IfNotPresent
+  apiKey: ""  # Required: set a secure API key
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: ""
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Ingress configuration (for non-Istio setups)
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  frontend:
+    enabled: true
+    hosts:
+      - host: kaimu.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+  backend:
+    enabled: true
+    hosts:
+      - host: api.kaimu.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+# Service account configuration
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 1000
+
+# Container security context
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
