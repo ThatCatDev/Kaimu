@@ -144,6 +144,9 @@ frontend:
   # Use proxy mode (frontend proxies to backend)
   useProxy: "false"
 
+  # Enable OIDC login buttons (set to "false" to hide them)
+  oidcEnabled: "true"
+
   livenessProbe:
     httpGet:
       path: /

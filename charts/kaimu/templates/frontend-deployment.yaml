@@ -49,6 +49,8 @@ spec:
               {{- end }}
             - name: PUBLIC_USE_PROXY
               value: {{ .Values.frontend.useProxy | quote }}
+            - name: PUBLIC_OIDC_ENABLED
+              value: {{ .Values.frontend.oidcEnabled | quote }}
           livenessProbe:
             {{- toYaml .Values.frontend.livenessProbe | nindent 12 }}
           readinessProbe:

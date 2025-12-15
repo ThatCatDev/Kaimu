@@ -18,7 +18,13 @@ function getRuntimeConfig() {
   return {
     apiUrl: import.meta.env.PUBLIC_API_URL || '',
     useProxy: import.meta.env.PUBLIC_USE_PROXY || '',
+    oidcEnabled: import.meta.env.PUBLIC_OIDC_ENABLED || 'true',
   };
+}
+
+export function isOIDCEnabled(): boolean {
+  const config = getRuntimeConfig();
+  return config.oidcEnabled === 'true';
 }
 
 export async function getOIDCProviders(): Promise<OidcProvider[]> {

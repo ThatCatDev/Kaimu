@@ -12,6 +12,7 @@ const { title } = Astro.props;
 const runtimeConfig = {
   apiUrl: process.env.PUBLIC_API_URL || import.meta.env.PUBLIC_API_URL || '',
   useProxy: process.env.PUBLIC_USE_PROXY || import.meta.env.PUBLIC_USE_PROXY || '',
+  oidcEnabled: process.env.PUBLIC_OIDC_ENABLED || import.meta.env.PUBLIC_OIDC_ENABLED || 'true',
 };
 ---
 

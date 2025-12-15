@@ -1,6 +1,6 @@
 <script lang="ts">
   import { login, register } from '../lib/stores/auth.svelte';
-  import { getOIDCProviders, getOIDCLoginURL } from '../lib/api/oidc';
+  import { getOIDCProviders, getOIDCLoginURL, isOIDCEnabled } from '../lib/api/oidc';
   import type { OidcProvider } from '../lib/graphql/generated';
   import { Input, Button } from './ui';
 
@@ -18,8 +18,11 @@
   let loading = $state(false);
   let oidcProviders = $state<OidcProvider[]>([]);
 
-  // Load OIDC providers on mount
+  // Load OIDC providers on mount (only if OIDC is enabled)
   $effect(() => {
+    if (!isOIDCEnabled()) {
+      return;
+    }
     getOIDCProviders()
       .then((providers) => {
         oidcProviders = providers;
