@@ -7,6 +7,7 @@ import (
 	"github.com/thatcatdev/kaimu/backend/config"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 type DB struct {
@@ -24,9 +25,11 @@ func NewDatabase(cfg config.DBConfig) *DB {
 		panic("failed to connect database")
 	}
 
-	// Add tracing plugin
-	if err := db.Use(&TracingPlugin{}); err != nil {
-		panic(fmt.Sprintf("failed to add tracing plugin: %v", err))
+	// Add OpenTelemetry tracing and metrics plugin
+	if err := db.Use(tracing.NewPlugin(
+		tracing.WithDBName(cfg.DataBase),
+	)); err != nil {
+		panic(fmt.Sprintf("failed to add opentelemetry plugin: %v", err))
 	}
 
 	sqlDB, err := db.DB()

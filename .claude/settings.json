@@ -1,0 +1,5 @@
+{
+  "enabledPlugins": {
+    "go-microservices@bludot-team-marketplace": true
+  }
+}
