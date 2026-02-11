@@ -26,9 +26,7 @@ func NewDatabase(cfg config.DBConfig) *DB {
 	}
 
 	// Add OpenTelemetry tracing and metrics plugin
-	if err := db.Use(tracing.NewPlugin(
-		tracing.WithDBName(cfg.DataBase),
-	)); err != nil {
+	if err := db.Use(tracing.NewPlugin()); err != nil {
 		panic(fmt.Sprintf("failed to add opentelemetry plugin: %v", err))
 	}
 
