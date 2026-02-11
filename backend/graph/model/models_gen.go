@@ -84,6 +84,24 @@ type BoardColumn struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+type BulkSprintInput struct {
+	CardIds  []string `json:"cardIds"`
+	SprintID string   `json:"sprintId"`
+}
+
+type BulkUpdateCardsInput struct {
+	CardIds          []string      `json:"cardIds"`
+	ColumnID         *string       `json:"columnId,omitempty"`
+	AssigneeID       *string       `json:"assigneeId,omitempty"`
+	ClearAssignee    *bool         `json:"clearAssignee,omitempty"`
+	TagIds           []string      `json:"tagIds,omitempty"`
+	Priority         *CardPriority `json:"priority,omitempty"`
+	DueDate          *time.Time    `json:"dueDate,omitempty"`
+	ClearDueDate     *bool         `json:"clearDueDate,omitempty"`
+	StoryPoints      *int          `json:"storyPoints,omitempty"`
+	ClearStoryPoints *bool         `json:"clearStoryPoints,omitempty"`
+}
+
 type BurnDownData struct {
 	SprintID   string       `json:"sprintId"`
 	SprintName string       `json:"sprintName"`

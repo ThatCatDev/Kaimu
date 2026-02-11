@@ -891,6 +891,173 @@ func (r *mutationResolver) MoveCardToBacklog(ctx context.Context, cardID string)
 	return card, nil
 }
 
+// BulkUpdateCards is the resolver for the bulkUpdateCards field.
+func (r *mutationResolver) BulkUpdateCards(ctx context.Context, input model.BulkUpdateCardsInput) ([]*model.Card, error) {
+	cards, err := resolvers.BulkUpdateCards(ctx, r.RBACService, r.CardService, r.BoardService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil && len(cards) > 0 {
+		cardID, _ := uuid.Parse(cards[0].ID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		board, _ := r.CardService.GetBoardByCardID(ctx, cardID)
+		var boardID, projectID, orgID *uuid.UUID
+		if board != nil {
+			boardID = &board.ID
+			if proj, err := r.BoardService.GetProject(ctx, board.ID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+		}
+
+		r.AuditService.LogEventAsync(ctx, audit.EventInput{
+			ActorID:        userID,
+			Action:         auditrepo.ActionBulkUpdate,
+			EntityType:     auditrepo.EntityCard,
+			EntityID:       cardID,
+			OrganizationID: orgID,
+			ProjectID:      projectID,
+			BoardID:        boardID,
+			StateAfter:     cards,
+			Metadata: map[string]interface{}{
+				"card_count": len(cards),
+			},
+		})
+	}
+
+	return cards, nil
+}
+
+// BulkDeleteCards is the resolver for the bulkDeleteCards field.
+func (r *mutationResolver) BulkDeleteCards(ctx context.Context, cardIds []string) (int, error) {
+	// Get board info before deletion for audit
+	var boardID, projectID, orgID *uuid.UUID
+	var firstCardID uuid.UUID
+	if r.AuditService != nil && len(cardIds) > 0 {
+		firstCardID, _ = uuid.Parse(cardIds[0])
+		if board, err := r.CardService.GetBoardByCardID(ctx, firstCardID); err == nil {
+			boardID = &board.ID
+			if proj, err := r.BoardService.GetProject(ctx, board.ID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+		}
+	}
+
+	count, err := resolvers.BulkDeleteCards(ctx, r.RBACService, r.CardService, r.BoardService, cardIds)
+	if err != nil {
+		return 0, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil && len(cardIds) > 0 {
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		r.AuditService.LogEventAsync(ctx, audit.EventInput{
+			ActorID:        userID,
+			Action:         auditrepo.ActionBulkDelete,
+			EntityType:     auditrepo.EntityCard,
+			EntityID:       firstCardID,
+			OrganizationID: orgID,
+			ProjectID:      projectID,
+			BoardID:        boardID,
+			Metadata: map[string]interface{}{
+				"card_ids":     cardIds,
+				"delete_count": count,
+			},
+		})
+	}
+
+	return count, nil
+}
+
+// BulkAddCardsToSprint is the resolver for the bulkAddCardsToSprint field.
+func (r *mutationResolver) BulkAddCardsToSprint(ctx context.Context, input model.BulkSprintInput) ([]*model.Card, error) {
+	cards, err := resolvers.BulkAddCardsToSprint(ctx, r.RBACService, r.CardService, r.BoardService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil && len(cards) > 0 {
+		cardID, _ := uuid.Parse(cards[0].ID)
+		sprintID, _ := uuid.Parse(input.SprintID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		board, _ := r.CardService.GetBoardByCardID(ctx, cardID)
+		var boardID, projectID, orgID *uuid.UUID
+		if board != nil {
+			boardID = &board.ID
+			if proj, err := r.BoardService.GetProject(ctx, board.ID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+		}
+
+		r.AuditService.LogEventAsync(ctx, audit.EventInput{
+			ActorID:        userID,
+			Action:         auditrepo.ActionBulkCardAddedToSprint,
+			EntityType:     auditrepo.EntitySprint,
+			EntityID:       sprintID,
+			OrganizationID: orgID,
+			ProjectID:      projectID,
+			BoardID:        boardID,
+			StateAfter:     cards,
+			Metadata: map[string]interface{}{
+				"card_count": len(cards),
+				"card_ids":   input.CardIds,
+			},
+		})
+	}
+
+	return cards, nil
+}
+
+// BulkRemoveCardsFromSprint is the resolver for the bulkRemoveCardsFromSprint field.
+func (r *mutationResolver) BulkRemoveCardsFromSprint(ctx context.Context, input model.BulkSprintInput) ([]*model.Card, error) {
+	cards, err := resolvers.BulkRemoveCardsFromSprint(ctx, r.RBACService, r.CardService, r.BoardService, input)
+	if err != nil {
+		return nil, err
+	}
+
+	// Audit logging
+	if r.AuditService != nil && len(cards) > 0 {
+		cardID, _ := uuid.Parse(cards[0].ID)
+		sprintID, _ := uuid.Parse(input.SprintID)
+		userID := middleware.GetUserIDFromContext(ctx)
+
+		board, _ := r.CardService.GetBoardByCardID(ctx, cardID)
+		var boardID, projectID, orgID *uuid.UUID
+		if board != nil {
+			boardID = &board.ID
+			if proj, err := r.BoardService.GetProject(ctx, board.ID); err == nil {
+				projectID = &proj.ID
+				orgID = &proj.OrganizationID
+			}
+		}
+
+		r.AuditService.LogEventAsync(ctx, audit.EventInput{
+			ActorID:        userID,
+			Action:         auditrepo.ActionBulkCardRemovedFromSprint,
+			EntityType:     auditrepo.EntitySprint,
+			EntityID:       sprintID,
+			OrganizationID: orgID,
+			ProjectID:      projectID,
+			BoardID:        boardID,
+			StateAfter:     cards,
+			Metadata: map[string]interface{}{
+				"card_count": len(cards),
+				"card_ids":   input.CardIds,
+			},
+		})
+	}
+
+	return cards, nil
+}
+
 // HelloWorld is the resolver for the helloWorld field.
 func (r *queryResolver) HelloWorld(ctx context.Context) (string, error) {
 	return resolvers.Hello(), nil

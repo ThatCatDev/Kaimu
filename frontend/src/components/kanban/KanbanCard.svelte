@@ -2,6 +2,7 @@
   import type { BoardCard } from '../../lib/api/boards';
   import { CardPriority } from '../../lib/graphql/generated';
   import { ConfirmModal } from '../ui';
+  import { bulkSelection } from '../../lib/stores/bulkSelection.svelte';
 
   interface Props {
     card: BoardCard;
@@ -22,6 +23,10 @@
     canDeleteCard = true
   }: Props = $props();
   let showDeleteConfirm = $state(false);
+
+  // Selection state
+  let isSelected = $derived(bulkSelection.isSelected(card.id));
+  let selectionMode = $derived(bulkSelection.selectionMode);
 
 
   const priorityColors: Record<CardPriority, string> = {
@@ -72,16 +77,32 @@
     return date < today;
   }
 
-  function handleClick() {
+  function handleClick(e: MouseEvent) {
+    // If in selection mode or Ctrl/Cmd+click, toggle selection instead of opening card
+    if (selectionMode || e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      bulkSelection.toggleCard(card.id, e);
+      return;
+    }
     if (onCardClick) {
       onCardClick(card);
     }
   }
 
+  function handleCheckboxClick(e: MouseEvent) {
+    e.stopPropagation();
+    bulkSelection.toggleCard(card.id);
+  }
+
   function handleKeydown(e: KeyboardEvent) {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      handleClick();
+      if (selectionMode) {
+        bulkSelection.toggleCard(card.id);
+      } else if (onCardClick) {
+        onCardClick(card);
+      }
     }
   }
 
@@ -106,12 +127,21 @@
 </script>
 
 <div
-  class="group relative w-full text-left rounded-lg shadow-sm border p-4 transition-shadow bg-white border-gray-200 hover:shadow-md cursor-pointer {priorityStyle === 'border' && card.priority !== CardPriority.None ? `border-l-4 ${priorityColors[card.priority]}` : ''}"
+  class="group relative w-full text-left rounded-lg shadow-sm border p-4 transition-shadow cursor-pointer {isSelected ? 'bg-indigo-50 border-indigo-400 ring-2 ring-indigo-300' : 'bg-white border-gray-200 hover:shadow-md'} {priorityStyle === 'border' && card.priority !== CardPriority.None ? `border-l-4 ${priorityColors[card.priority]}` : ''}"
   onclick={handleClick}
   onkeydown={handleKeydown}
   role="button"
   tabindex="0"
 >
+  <!-- Selection checkbox - visible in selection mode or on hover -->
+  <div class="absolute top-3 left-3 {selectionMode ? 'block' : 'hidden group-hover:block'} z-10">
+    <input
+      type="checkbox"
+      checked={isSelected}
+      onclick={handleCheckboxClick}
+      class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+    />
+  </div>
 
   <!-- Quick actions - simple icons that appear on hover, permission-gated -->
   {#if canEditCard || canDeleteCard}
@@ -143,7 +173,7 @@
     </div>
   {/if}
 
-  <h4 class="text-sm font-medium text-gray-900 mb-1 pr-16">{card.title}</h4>
+  <h4 class="text-sm font-medium text-gray-900 mb-1 pr-16 {selectionMode ? 'pl-6' : ''}">{card.title}</h4>
 
   {#if card.tags && card.tags.length > 0}
     <div class="flex flex-wrap gap-1 mb-2">

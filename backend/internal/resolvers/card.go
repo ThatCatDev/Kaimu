@@ -497,3 +497,268 @@ func ProjectTags(ctx context.Context, tagSvc tagService.Service, proj *model.Pro
 	}
 	return result, nil
 }
+
+// BulkUpdateCards updates multiple cards at once
+func BulkUpdateCards(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.BulkUpdateCardsInput) ([]*model.Card, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return nil, ErrUnauthorized
+	}
+
+	if len(input.CardIds) == 0 {
+		return []*model.Card{}, nil
+	}
+
+	// Parse card IDs
+	cardIDs := make([]uuid.UUID, len(input.CardIds))
+	for i, id := range input.CardIds {
+		cardID, err := uuid.Parse(id)
+		if err != nil {
+			return nil, err
+		}
+		cardIDs[i] = cardID
+	}
+
+	// Check permission for the first card (assuming all cards are in the same project)
+	b, err := cardSvc.GetBoardByCardID(ctx, cardIDs[0])
+	if err != nil {
+		return nil, err
+	}
+
+	proj, err := boardSvc.GetProject(ctx, b.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "card:edit")
+	if err != nil {
+		return nil, err
+	}
+	if !hasPermission {
+		return nil, ErrUnauthorized
+	}
+
+	bulkInput := cardService.BulkUpdateInput{
+		CardIDs: cardIDs,
+	}
+
+	if input.ColumnID != nil {
+		colID, err := uuid.Parse(*input.ColumnID)
+		if err != nil {
+			return nil, err
+		}
+		bulkInput.ColumnID = &colID
+	}
+
+	if input.ClearAssignee != nil && *input.ClearAssignee {
+		bulkInput.ClearAssignee = true
+	} else if input.AssigneeID != nil {
+		assigneeID, err := uuid.Parse(*input.AssigneeID)
+		if err != nil {
+			return nil, err
+		}
+		bulkInput.AssigneeID = &assigneeID
+	}
+
+	if input.TagIds != nil {
+		tagIDs := make([]uuid.UUID, len(input.TagIds))
+		for i, id := range input.TagIds {
+			tagID, err := uuid.Parse(id)
+			if err != nil {
+				return nil, err
+			}
+			tagIDs[i] = tagID
+		}
+		bulkInput.TagIDs = tagIDs
+	}
+
+	if input.Priority != nil {
+		p := modelPriorityToCard(*input.Priority)
+		bulkInput.Priority = &p
+	}
+
+	if input.ClearDueDate != nil && *input.ClearDueDate {
+		bulkInput.ClearDueDate = true
+	} else if input.DueDate != nil {
+		bulkInput.DueDate = input.DueDate
+	}
+
+	if input.ClearStoryPoints != nil && *input.ClearStoryPoints {
+		bulkInput.ClearStoryPoints = true
+	} else if input.StoryPoints != nil {
+		bulkInput.StoryPoints = input.StoryPoints
+	}
+
+	cards, err := cardSvc.BulkUpdateCards(ctx, bulkInput)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.Card, len(cards))
+	for i, c := range cards {
+		result[i] = cardToModel(c)
+	}
+	return result, nil
+}
+
+// BulkDeleteCards deletes multiple cards at once
+func BulkDeleteCards(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardService.Service, boardSvc boardService.Service, cardIds []string) (int, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return 0, ErrUnauthorized
+	}
+
+	if len(cardIds) == 0 {
+		return 0, nil
+	}
+
+	// Parse card IDs
+	cardIDs := make([]uuid.UUID, len(cardIds))
+	for i, id := range cardIds {
+		cardID, err := uuid.Parse(id)
+		if err != nil {
+			return 0, err
+		}
+		cardIDs[i] = cardID
+	}
+
+	// Check permission for the first card (assuming all cards are in the same project)
+	b, err := cardSvc.GetBoardByCardID(ctx, cardIDs[0])
+	if err != nil {
+		return 0, err
+	}
+
+	proj, err := boardSvc.GetProject(ctx, b.ID)
+	if err != nil {
+		return 0, err
+	}
+
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "card:delete")
+	if err != nil {
+		return 0, err
+	}
+	if !hasPermission {
+		return 0, ErrUnauthorized
+	}
+
+	count, err := cardSvc.BulkDeleteCards(ctx, cardIDs)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count), nil
+}
+
+// BulkAddCardsToSprint adds multiple cards to a sprint
+func BulkAddCardsToSprint(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.BulkSprintInput) ([]*model.Card, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return nil, ErrUnauthorized
+	}
+
+	if len(input.CardIds) == 0 {
+		return []*model.Card{}, nil
+	}
+
+	// Parse card IDs
+	cardIDs := make([]uuid.UUID, len(input.CardIds))
+	for i, id := range input.CardIds {
+		cardID, err := uuid.Parse(id)
+		if err != nil {
+			return nil, err
+		}
+		cardIDs[i] = cardID
+	}
+
+	sprintID, err := uuid.Parse(input.SprintID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check permission for the first card
+	b, err := cardSvc.GetBoardByCardID(ctx, cardIDs[0])
+	if err != nil {
+		return nil, err
+	}
+
+	proj, err := boardSvc.GetProject(ctx, b.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "sprint:manage")
+	if err != nil {
+		return nil, err
+	}
+	if !hasPermission {
+		return nil, ErrUnauthorized
+	}
+
+	cards, err := cardSvc.BulkAddCardsToSprint(ctx, cardIDs, sprintID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.Card, len(cards))
+	for i, c := range cards {
+		result[i] = cardToModel(c)
+	}
+	return result, nil
+}
+
+// BulkRemoveCardsFromSprint removes multiple cards from a sprint
+func BulkRemoveCardsFromSprint(ctx context.Context, rbacSvc rbacService.Service, cardSvc cardService.Service, boardSvc boardService.Service, input model.BulkSprintInput) ([]*model.Card, error) {
+	userID := middleware.GetUserIDFromContext(ctx)
+	if userID == nil {
+		return nil, ErrUnauthorized
+	}
+
+	if len(input.CardIds) == 0 {
+		return []*model.Card{}, nil
+	}
+
+	// Parse card IDs
+	cardIDs := make([]uuid.UUID, len(input.CardIds))
+	for i, id := range input.CardIds {
+		cardID, err := uuid.Parse(id)
+		if err != nil {
+			return nil, err
+		}
+		cardIDs[i] = cardID
+	}
+
+	sprintID, err := uuid.Parse(input.SprintID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check permission for the first card
+	b, err := cardSvc.GetBoardByCardID(ctx, cardIDs[0])
+	if err != nil {
+		return nil, err
+	}
+
+	proj, err := boardSvc.GetProject(ctx, b.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	hasPermission, err := rbacSvc.HasProjectPermission(ctx, *userID, proj.ID, "sprint:manage")
+	if err != nil {
+		return nil, err
+	}
+	if !hasPermission {
+		return nil, ErrUnauthorized
+	}
+
+	cards, err := cardSvc.BulkRemoveCardsFromSprint(ctx, cardIDs, sprintID)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]*model.Card, len(cards))
+	for i, c := range cards {
+		result[i] = cardToModel(c)
+	}
+	return result, nil
+}

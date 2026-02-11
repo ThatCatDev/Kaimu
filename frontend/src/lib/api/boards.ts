@@ -304,6 +304,67 @@ const DELETE_TAG_MUTATION = `
   }
 `;
 
+// Bulk card mutations
+const BULK_UPDATE_CARDS_MUTATION = `
+  mutation BulkUpdateCards($input: BulkUpdateCardsInput!) {
+    bulkUpdateCards(input: $input) {
+      id
+      title
+      description
+      position
+      priority
+      dueDate
+      storyPoints
+      updatedAt
+      tags {
+        id
+        name
+        color
+      }
+      assignee {
+        id
+        username
+        displayName
+      }
+      column {
+        id
+      }
+    }
+  }
+`;
+
+const BULK_DELETE_CARDS_MUTATION = `
+  mutation BulkDeleteCards($cardIds: [ID!]!) {
+    bulkDeleteCards(cardIds: $cardIds)
+  }
+`;
+
+const BULK_ADD_CARDS_TO_SPRINT_MUTATION = `
+  mutation BulkAddCardsToSprint($input: BulkSprintInput!) {
+    bulkAddCardsToSprint(input: $input) {
+      id
+      sprints {
+        id
+        name
+        status
+      }
+    }
+  }
+`;
+
+const BULK_REMOVE_CARDS_FROM_SPRINT_MUTATION = `
+  mutation BulkRemoveCardsFromSprint($input: BulkSprintInput!) {
+    bulkRemoveCardsFromSprint(input: $input) {
+      id
+      sprints {
+        id
+        name
+        status
+      }
+    }
+  }
+`;
+
 // Board operations
 export async function getBoard(id: string): Promise<BoardWithColumns | null> {
   const data = await graphql<BoardQuery>(BOARD_QUERY, { id } as BoardQueryVariables);
@@ -500,4 +561,81 @@ export async function deleteTag(id: string): Promise<boolean> {
     id,
   } as DeleteTagMutationVariables);
   return data.deleteTag;
+}
+
+// Bulk card operations
+export interface BulkUpdateCardsInput {
+  cardIds: string[];
+  columnId?: string;
+  assigneeId?: string | null;
+  clearAssignee?: boolean;
+  tagIds?: string[];
+  priority?: CardPriority;
+  dueDate?: string | null;
+  clearDueDate?: boolean;
+  storyPoints?: number | null;
+  clearStoryPoints?: boolean;
+}
+
+export async function bulkUpdateCards(input: BulkUpdateCardsInput): Promise<BoardCard[]> {
+  const graphqlInput: Record<string, unknown> = {
+    cardIds: input.cardIds,
+  };
+
+  if (input.columnId) graphqlInput.columnId = input.columnId;
+  if (input.clearAssignee) {
+    graphqlInput.clearAssignee = true;
+  } else if (input.assigneeId !== undefined) {
+    graphqlInput.assigneeId = input.assigneeId;
+  }
+  if (input.tagIds) graphqlInput.tagIds = input.tagIds;
+  if (input.priority) graphqlInput.priority = input.priority;
+  if (input.clearDueDate) {
+    graphqlInput.clearDueDate = true;
+  } else if (input.dueDate !== undefined) {
+    graphqlInput.dueDate = input.dueDate;
+  }
+  if (input.clearStoryPoints) {
+    graphqlInput.clearStoryPoints = true;
+  } else if (input.storyPoints !== undefined) {
+    graphqlInput.storyPoints = input.storyPoints;
+  }
+
+  const data = await graphql<{ bulkUpdateCards: BoardCard[] }>(BULK_UPDATE_CARDS_MUTATION, {
+    input: graphqlInput,
+  });
+  return data.bulkUpdateCards;
+}
+
+export async function bulkDeleteCards(cardIds: string[]): Promise<number> {
+  const data = await graphql<{ bulkDeleteCards: number }>(BULK_DELETE_CARDS_MUTATION, {
+    cardIds,
+  });
+  return data.bulkDeleteCards;
+}
+
+export async function bulkAddCardsToSprint(
+  cardIds: string[],
+  sprintId: string
+): Promise<BoardCard[]> {
+  const data = await graphql<{ bulkAddCardsToSprint: BoardCard[] }>(
+    BULK_ADD_CARDS_TO_SPRINT_MUTATION,
+    {
+      input: { cardIds, sprintId },
+    }
+  );
+  return data.bulkAddCardsToSprint;
+}
+
+export async function bulkRemoveCardsFromSprint(
+  cardIds: string[],
+  sprintId: string
+): Promise<BoardCard[]> {
+  const data = await graphql<{ bulkRemoveCardsFromSprint: BoardCard[] }>(
+    BULK_REMOVE_CARDS_FROM_SPRINT_MUTATION,
+    {
+      input: { cardIds, sprintId },
+    }
+  );
+  return data.bulkRemoveCardsFromSprint;
 }

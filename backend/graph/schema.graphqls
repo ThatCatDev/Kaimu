@@ -178,4 +178,14 @@ type Mutation {
     setCardSprints(cardId: ID!, sprintIds: [ID!]!): Card!
     "Move a card to backlog (remove from all sprints)"
     moveCardToBacklog(cardId: ID!): Card!
+
+    # Bulk Card Operations
+    "Bulk update multiple cards"
+    bulkUpdateCards(input: BulkUpdateCardsInput!): [Card!]!
+    "Bulk delete multiple cards"
+    bulkDeleteCards(cardIds: [ID!]!): Int!
+    "Bulk add cards to a sprint"
+    bulkAddCardsToSprint(input: BulkSprintInput!): [Card!]!
+    "Bulk remove cards from a sprint"
+    bulkRemoveCardsFromSprint(input: BulkSprintInput!): [Card!]!
 }

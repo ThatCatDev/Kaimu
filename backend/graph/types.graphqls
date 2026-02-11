@@ -385,6 +385,25 @@ input MoveCardToSprintInput {
     sprintId: ID!
 }
 
+# Bulk Card Inputs
+input BulkUpdateCardsInput {
+    cardIds: [ID!]!
+    columnId: ID
+    assigneeId: ID
+    clearAssignee: Boolean
+    tagIds: [ID!]
+    priority: CardPriority
+    dueDate: Time
+    clearDueDate: Boolean
+    storyPoints: Int
+    clearStoryPoints: Boolean
+}
+
+input BulkSprintInput {
+    cardIds: [ID!]!
+    sprintId: ID!
+}
+
 # Pagination Types
 type PageInfo {
     hasNextPage: Boolean!

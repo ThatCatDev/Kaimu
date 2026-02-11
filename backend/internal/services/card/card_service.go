@@ -50,6 +50,19 @@ type UpdateCardInput struct {
 	ClearStoryPoints bool
 }
 
+type BulkUpdateInput struct {
+	CardIDs          []uuid.UUID
+	ColumnID         *uuid.UUID
+	AssigneeID       *uuid.UUID
+	ClearAssignee    bool
+	TagIDs           []uuid.UUID
+	Priority         *card.CardPriority
+	DueDate          *time.Time
+	ClearDueDate     bool
+	StoryPoints      *int
+	ClearStoryPoints bool
+}
+
 type Service interface {
 	CreateCard(ctx context.Context, input CreateCardInput) (*card.Card, error)
 	GetCard(ctx context.Context, id uuid.UUID) (*card.Card, error)
@@ -62,6 +75,12 @@ type Service interface {
 	GetTagsForCard(ctx context.Context, cardID uuid.UUID) ([]*tag.Tag, error)
 	GetBoardByCardID(ctx context.Context, cardID uuid.UUID) (*board.Board, error)
 	GetColumnByCardID(ctx context.Context, cardID uuid.UUID) (*board_column.BoardColumn, error)
+
+	// Bulk operations
+	BulkUpdateCards(ctx context.Context, input BulkUpdateInput) ([]*card.Card, error)
+	BulkDeleteCards(ctx context.Context, ids []uuid.UUID) (int64, error)
+	BulkAddCardsToSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) ([]*card.Card, error)
+	BulkRemoveCardsFromSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) ([]*card.Card, error)
 }
 
 type service struct {
@@ -364,4 +383,109 @@ func (s *service) GetColumnByCardID(ctx context.Context, cardID uuid.UUID) (*boa
 	}
 
 	return col, nil
+}
+
+func (s *service) BulkUpdateCards(ctx context.Context, input BulkUpdateInput) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkUpdateCards")
+	span.SetAttributes(attribute.Int("card.count", len(input.CardIDs)))
+	defer span.End()
+
+	if len(input.CardIDs) == 0 {
+		return []*card.Card{}, nil
+	}
+
+	// Build updates map
+	updates := make(map[string]interface{})
+
+	if input.ColumnID != nil {
+		// Verify column exists
+		col, err := s.columnRepo.GetByID(ctx, *input.ColumnID)
+		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return nil, ErrColumnNotFound
+			}
+			return nil, err
+		}
+		updates["column_id"] = *input.ColumnID
+		updates["board_id"] = col.BoardID
+	}
+
+	if input.ClearAssignee {
+		updates["assignee_id"] = nil
+	} else if input.AssigneeID != nil {
+		updates["assignee_id"] = *input.AssigneeID
+	}
+
+	if input.Priority != nil {
+		updates["priority"] = *input.Priority
+	}
+
+	if input.ClearDueDate {
+		updates["due_date"] = nil
+	} else if input.DueDate != nil {
+		updates["due_date"] = *input.DueDate
+	}
+
+	if input.ClearStoryPoints {
+		updates["story_points"] = nil
+	} else if input.StoryPoints != nil {
+		updates["story_points"] = *input.StoryPoints
+	}
+
+	// Apply bulk updates if there are any field updates
+	if len(updates) > 0 {
+		if err := s.cardRepo.BulkUpdate(ctx, input.CardIDs, updates); err != nil {
+			return nil, err
+		}
+	}
+
+	// Update tags for each card if provided
+	if input.TagIDs != nil {
+		for _, cardID := range input.CardIDs {
+			if err := s.cardTagRepo.SetTagsForCard(ctx, cardID, input.TagIDs); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	// Return updated cards
+	return s.cardRepo.GetByIDs(ctx, input.CardIDs)
+}
+
+func (s *service) BulkDeleteCards(ctx context.Context, ids []uuid.UUID) (int64, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkDeleteCards")
+	span.SetAttributes(attribute.Int("card.count", len(ids)))
+	defer span.End()
+
+	return s.cardRepo.BulkDelete(ctx, ids)
+}
+
+func (s *service) BulkAddCardsToSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkAddCardsToSprint")
+	span.SetAttributes(
+		attribute.Int("card.count", len(cardIDs)),
+		attribute.String("sprint.id", sprintID.String()),
+	)
+	defer span.End()
+
+	if err := s.cardRepo.BulkAddToSprint(ctx, cardIDs, sprintID); err != nil {
+		return nil, err
+	}
+
+	return s.cardRepo.GetByIDs(ctx, cardIDs)
+}
+
+func (s *service) BulkRemoveCardsFromSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkRemoveCardsFromSprint")
+	span.SetAttributes(
+		attribute.Int("card.count", len(cardIDs)),
+		attribute.String("sprint.id", sprintID.String()),
+	)
+	defer span.End()
+
+	if err := s.cardRepo.BulkRemoveFromSprint(ctx, cardIDs, sprintID); err != nil {
+		return nil, err
+	}
+
+	return s.cardRepo.GetByIDs(ctx, cardIDs)
 }

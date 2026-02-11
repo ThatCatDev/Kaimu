@@ -8,14 +8,16 @@
   import EditColumnModal from './EditColumnModal.svelte';
   import CardDetailModal from './CardDetailModal.svelte';
   import CardDetailPanel from './CardDetailPanel.svelte';
+  import BulkActionToolbar from './BulkActionToolbar.svelte';
   import { ConfirmModal } from '../ui';
   import type { BoardWithColumns, BoardColumn, BoardCard, Tag } from '../../lib/api/boards';
   import { getBoard, moveCard, getTags, deleteCard, reorderColumns, toggleColumnVisibility, deleteColumn, updateBoard } from '../../lib/api/boards';
-  import { moveCardToBacklog, getActiveSprint, addCardToSprint, type SprintData } from '../../lib/api/sprints';
+  import { moveCardToBacklog, getActiveSprint, addCardToSprint, getSprints, type SprintData } from '../../lib/api/sprints';
   import EditableTitle from '../EditableTitle.svelte';
   import EditableDescription from '../EditableDescription.svelte';
   import { Permissions } from '../../lib/stores/permissions.svelte';
-  import { getMyPermissions } from '../../lib/api/rbac';
+  import { getMyPermissions, getOrganizationMembers, type OrganizationMember } from '../../lib/api/rbac';
+  import { bulkSelection } from '../../lib/stores/bulkSelection.svelte';
 
   interface Props {
     boardId: string;
@@ -27,9 +29,15 @@
   let board = $state<BoardWithColumns | null>(null);
   let tags = $state<Tag[]>([]);
   let activeSprint = $state<SprintData | null>(null);
+  let allSprints = $state<SprintData[]>([]);
+  let organizationMembers = $state<OrganizationMember[]>([]);
   let loading = $state(true);
   let error = $state<string | null>(null);
   let showHiddenColumns = $state(false);
+
+  // Bulk selection state
+  let selectionMode = $derived(bulkSelection.selectionMode);
+  let hasSelection = $derived(bulkSelection.hasSelection);
 
   // Modal states
   let showCreateCardModal = $state(false);
@@ -149,14 +157,18 @@
       error = null;
       board = await getBoard(boardId);
       if (board) {
-        const [projectTags, perms, active] = await Promise.all([
+        const [projectTags, perms, active, sprints, members] = await Promise.all([
           getTags(board.project.id),
           getMyPermissions('project', board.project.id),
-          getActiveSprint(boardId)
+          getActiveSprint(boardId),
+          getSprints(boardId),
+          getOrganizationMembers(board.project.organization.id)
         ]);
         tags = projectTags;
         permissions = perms;
         activeSprint = active;
+        allSprints = sprints;
+        organizationMembers = members;
 
         // If initialCardId is provided, find and open the card
         if (initialCardId) {
@@ -198,18 +210,25 @@
   // Export refreshBoard so parent components can trigger refresh
   export async function refreshBoard() {
     try {
-      const [newBoard, active] = await Promise.all([
+      const [newBoard, active, sprints] = await Promise.all([
         getBoard(boardId),
-        getActiveSprint(boardId)
+        getActiveSprint(boardId),
+        getSprints(boardId)
       ]);
       board = newBoard;
       activeSprint = active;
+      allSprints = sprints;
       if (board) {
         tags = await getTags(board.project.id);
       }
     } catch (e) {
       error = e instanceof Error ? e.message : 'Failed to refresh board';
     }
+  }
+
+  // Handle bulk action completion
+  async function handleBulkActionComplete() {
+    await refreshBoard();
   }
 
   // Update a single card in the board display without affecting editingCard
@@ -512,6 +531,19 @@
     <!-- Board controls -->
     <div class="flex items-center justify-end py-3">
       <div class="flex items-center gap-4">
+        <!-- Bulk selection toggle -->
+        <button
+          type="button"
+          onclick={() => bulkSelection.toggleSelectionMode()}
+          class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md border transition-colors {selectionMode ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}"
+          title="{selectionMode ? 'Exit selection mode' : 'Enter selection mode to bulk edit cards'}"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+          {selectionMode ? 'Exit Selection' : 'Select Cards'}
+        </button>
+
         <!-- Priority style toggle -->
         <div class="flex items-center gap-2 text-sm text-gray-600">
           <span>Priority:</span>
@@ -678,4 +710,14 @@
       canDeleteCard={canDeleteCard}
     />
   {/if}
+
+  <!-- Bulk Action Toolbar -->
+  <BulkActionToolbar
+    columns={filteredColumns}
+    {tags}
+    sprints={allSprints}
+    {activeSprint}
+    projectMembers={organizationMembers.map(m => ({ id: m.user.id, username: m.user.username, displayName: m.user.displayName }))}
+    onBulkActionComplete={handleBulkActionComplete}
+  />
 {/if}

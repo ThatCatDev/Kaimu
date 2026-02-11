@@ -13,6 +13,7 @@ import (
 type Repository interface {
 	Create(ctx context.Context, card *Card) error
 	GetByID(ctx context.Context, id uuid.UUID) (*Card, error)
+	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*Card, error)
 	GetByColumnID(ctx context.Context, columnID uuid.UUID) ([]*Card, error)
 	GetByBoardID(ctx context.Context, boardID uuid.UUID) ([]*Card, error)
 	GetByAssigneeID(ctx context.Context, assigneeID uuid.UUID) ([]*Card, error)
@@ -24,12 +25,18 @@ type Repository interface {
 	Update(ctx context.Context, card *Card) error
 	Delete(ctx context.Context, id uuid.UUID) error
 
+	// Bulk operations
+	BulkUpdate(ctx context.Context, ids []uuid.UUID, updates map[string]interface{}) error
+	BulkDelete(ctx context.Context, ids []uuid.UUID) (int64, error)
+
 	// Card-Sprint relationship methods (many-to-many)
 	AddCardToSprint(ctx context.Context, cardID, sprintID uuid.UUID) error
 	RemoveCardFromSprint(ctx context.Context, cardID, sprintID uuid.UUID) error
 	GetSprintIDsForCard(ctx context.Context, cardID uuid.UUID) ([]uuid.UUID, error)
 	SetCardSprints(ctx context.Context, cardID uuid.UUID, sprintIDs []uuid.UUID) error
 	RemoveCardFromAllSprints(ctx context.Context, cardID uuid.UUID) error
+	BulkAddToSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) error
+	BulkRemoveFromSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) error
 }
 
 type repository struct {
@@ -254,5 +261,71 @@ func (r *repository) SetCardSprints(ctx context.Context, cardID uuid.UUID, sprin
 func (r *repository) RemoveCardFromAllSprints(ctx context.Context, cardID uuid.UUID) error {
 	return r.db.WithContext(ctx).
 		Where("card_id = ?", cardID).
+		Delete(&CardSprint{}).Error
+}
+
+// GetByIDs returns multiple cards by their IDs
+func (r *repository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*Card, error) {
+	if len(ids) == 0 {
+		return []*Card{}, nil
+	}
+	var cards []*Card
+	err := r.db.WithContext(ctx).
+		Where("id IN ?", ids).
+		Find(&cards).Error
+	if err != nil {
+		return nil, err
+	}
+	return cards, nil
+}
+
+// BulkUpdate updates multiple cards with the same values
+func (r *repository) BulkUpdate(ctx context.Context, ids []uuid.UUID, updates map[string]interface{}) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).
+		Model(&Card{}).
+		Where("id IN ?", ids).
+		Updates(updates).Error
+}
+
+// BulkDelete deletes multiple cards and returns the count of deleted cards
+func (r *repository) BulkDelete(ctx context.Context, ids []uuid.UUID) (int64, error) {
+	if len(ids) == 0 {
+		return 0, nil
+	}
+	result := r.db.WithContext(ctx).
+		Where("id IN ?", ids).
+		Delete(&Card{})
+	return result.RowsAffected, result.Error
+}
+
+// BulkAddToSprint adds multiple cards to a sprint
+func (r *repository) BulkAddToSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) error {
+	if len(cardIDs) == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, cardID := range cardIDs {
+			cardSprint := &CardSprint{
+				CardID:   cardID,
+				SprintID: sprintID,
+			}
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(cardSprint).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+// BulkRemoveFromSprint removes multiple cards from a sprint
+func (r *repository) BulkRemoveFromSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) error {
+	if len(cardIDs) == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).
+		Where("card_id IN ? AND sprint_id = ?", cardIDs, sprintID).
 		Delete(&CardSprint{}).Error
 }

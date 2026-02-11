@@ -186,55 +186,59 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptInvitation        func(childComplexity int, token string) int
-		AddCardToSprint         func(childComplexity int, input model.MoveCardToSprintInput) int
-		AssignProjectRole       func(childComplexity int, input model.AssignProjectRoleInput) int
-		CancelInvitation        func(childComplexity int, id string) int
-		ChangeMemberRole        func(childComplexity int, organizationID string, input model.ChangeMemberRoleInput) int
-		CompleteSprint          func(childComplexity int, id string, moveIncompleteToNextSprint *bool) int
-		CreateBoard             func(childComplexity int, input model.CreateBoardInput) int
-		CreateCard              func(childComplexity int, input model.CreateCardInput) int
-		CreateColumn            func(childComplexity int, input model.CreateColumnInput) int
-		CreateOrganization      func(childComplexity int, input model.CreateOrganizationInput) int
-		CreateProject           func(childComplexity int, input model.CreateProjectInput) int
-		CreateRole              func(childComplexity int, input model.CreateRoleInput) int
-		CreateSprint            func(childComplexity int, input model.CreateSprintInput) int
-		CreateTag               func(childComplexity int, input model.CreateTagInput) int
-		DeleteBoard             func(childComplexity int, id string) int
-		DeleteCard              func(childComplexity int, id string) int
-		DeleteColumn            func(childComplexity int, id string) int
-		DeleteOrganization      func(childComplexity int, id string) int
-		DeleteProject           func(childComplexity int, id string) int
-		DeleteRole              func(childComplexity int, id string) int
-		DeleteSprint            func(childComplexity int, id string) int
-		DeleteTag               func(childComplexity int, id string) int
-		InviteMember            func(childComplexity int, input model.InviteMemberInput) int
-		Login                   func(childComplexity int, input model.LoginInput) int
-		Logout                  func(childComplexity int) int
-		MoveCard                func(childComplexity int, input model.MoveCardInput) int
-		MoveCardToBacklog       func(childComplexity int, cardID string) int
-		RefreshToken            func(childComplexity int) int
-		Register                func(childComplexity int, input model.RegisterInput) int
-		RemoveCardFromSprint    func(childComplexity int, input model.MoveCardToSprintInput) int
-		RemoveMember            func(childComplexity int, organizationID string, userID string) int
-		RemoveProjectMember     func(childComplexity int, projectID string, userID string) int
-		ReopenSprint            func(childComplexity int, id string) int
-		ReorderColumns          func(childComplexity int, input model.ReorderColumnsInput) int
-		ResendInvitation        func(childComplexity int, id string) int
-		ResendVerificationEmail func(childComplexity int) int
-		SetCardSprints          func(childComplexity int, cardID string, sprintIds []string) int
-		StartSprint             func(childComplexity int, id string) int
-		ToggleColumnVisibility  func(childComplexity int, id string) int
-		UpdateBoard             func(childComplexity int, input model.UpdateBoardInput) int
-		UpdateCard              func(childComplexity int, input model.UpdateCardInput) int
-		UpdateColumn            func(childComplexity int, input model.UpdateColumnInput) int
-		UpdateMe                func(childComplexity int, input model.UpdateMeInput) int
-		UpdateOrganization      func(childComplexity int, input model.UpdateOrganizationInput) int
-		UpdateProject           func(childComplexity int, input model.UpdateProjectInput) int
-		UpdateRole              func(childComplexity int, input model.UpdateRoleInput) int
-		UpdateSprint            func(childComplexity int, id string, input model.UpdateSprintInput) int
-		UpdateTag               func(childComplexity int, input model.UpdateTagInput) int
-		VerifyEmail             func(childComplexity int, token string) int
+		AcceptInvitation          func(childComplexity int, token string) int
+		AddCardToSprint           func(childComplexity int, input model.MoveCardToSprintInput) int
+		AssignProjectRole         func(childComplexity int, input model.AssignProjectRoleInput) int
+		BulkAddCardsToSprint      func(childComplexity int, input model.BulkSprintInput) int
+		BulkDeleteCards           func(childComplexity int, cardIds []string) int
+		BulkRemoveCardsFromSprint func(childComplexity int, input model.BulkSprintInput) int
+		BulkUpdateCards           func(childComplexity int, input model.BulkUpdateCardsInput) int
+		CancelInvitation          func(childComplexity int, id string) int
+		ChangeMemberRole          func(childComplexity int, organizationID string, input model.ChangeMemberRoleInput) int
+		CompleteSprint            func(childComplexity int, id string, moveIncompleteToNextSprint *bool) int
+		CreateBoard               func(childComplexity int, input model.CreateBoardInput) int
+		CreateCard                func(childComplexity int, input model.CreateCardInput) int
+		CreateColumn              func(childComplexity int, input model.CreateColumnInput) int
+		CreateOrganization        func(childComplexity int, input model.CreateOrganizationInput) int
+		CreateProject             func(childComplexity int, input model.CreateProjectInput) int
+		CreateRole                func(childComplexity int, input model.CreateRoleInput) int
+		CreateSprint              func(childComplexity int, input model.CreateSprintInput) int
+		CreateTag                 func(childComplexity int, input model.CreateTagInput) int
+		DeleteBoard               func(childComplexity int, id string) int
+		DeleteCard                func(childComplexity int, id string) int
+		DeleteColumn              func(childComplexity int, id string) int
+		DeleteOrganization        func(childComplexity int, id string) int
+		DeleteProject             func(childComplexity int, id string) int
+		DeleteRole                func(childComplexity int, id string) int
+		DeleteSprint              func(childComplexity int, id string) int
+		DeleteTag                 func(childComplexity int, id string) int
+		InviteMember              func(childComplexity int, input model.InviteMemberInput) int
+		Login                     func(childComplexity int, input model.LoginInput) int
+		Logout                    func(childComplexity int) int
+		MoveCard                  func(childComplexity int, input model.MoveCardInput) int
+		MoveCardToBacklog         func(childComplexity int, cardID string) int
+		RefreshToken              func(childComplexity int) int
+		Register                  func(childComplexity int, input model.RegisterInput) int
+		RemoveCardFromSprint      func(childComplexity int, input model.MoveCardToSprintInput) int
+		RemoveMember              func(childComplexity int, organizationID string, userID string) int
+		RemoveProjectMember       func(childComplexity int, projectID string, userID string) int
+		ReopenSprint              func(childComplexity int, id string) int
+		ReorderColumns            func(childComplexity int, input model.ReorderColumnsInput) int
+		ResendInvitation          func(childComplexity int, id string) int
+		ResendVerificationEmail   func(childComplexity int) int
+		SetCardSprints            func(childComplexity int, cardID string, sprintIds []string) int
+		StartSprint               func(childComplexity int, id string) int
+		ToggleColumnVisibility    func(childComplexity int, id string) int
+		UpdateBoard               func(childComplexity int, input model.UpdateBoardInput) int
+		UpdateCard                func(childComplexity int, input model.UpdateCardInput) int
+		UpdateColumn              func(childComplexity int, input model.UpdateColumnInput) int
+		UpdateMe                  func(childComplexity int, input model.UpdateMeInput) int
+		UpdateOrganization        func(childComplexity int, input model.UpdateOrganizationInput) int
+		UpdateProject             func(childComplexity int, input model.UpdateProjectInput) int
+		UpdateRole                func(childComplexity int, input model.UpdateRoleInput) int
+		UpdateSprint              func(childComplexity int, id string, input model.UpdateSprintInput) int
+		UpdateTag                 func(childComplexity int, input model.UpdateTagInput) int
+		VerifyEmail               func(childComplexity int, token string) int
 	}
 
 	OIDCProvider struct {
@@ -524,6 +528,10 @@ type MutationResolver interface {
 	RemoveCardFromSprint(ctx context.Context, input model.MoveCardToSprintInput) (*model.Card, error)
 	SetCardSprints(ctx context.Context, cardID string, sprintIds []string) (*model.Card, error)
 	MoveCardToBacklog(ctx context.Context, cardID string) (*model.Card, error)
+	BulkUpdateCards(ctx context.Context, input model.BulkUpdateCardsInput) ([]*model.Card, error)
+	BulkDeleteCards(ctx context.Context, cardIds []string) (int, error)
+	BulkAddCardsToSprint(ctx context.Context, input model.BulkSprintInput) ([]*model.Card, error)
+	BulkRemoveCardsFromSprint(ctx context.Context, input model.BulkSprintInput) ([]*model.Card, error)
 }
 type OrganizationMemberResolver interface {
 	User(ctx context.Context, obj *model.OrganizationMember) (*model.User, error)
@@ -1258,6 +1266,54 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AssignProjectRole(childComplexity, args["input"].(model.AssignProjectRoleInput)), true
+
+	case "Mutation.bulkAddCardsToSprint":
+		if e.complexity.Mutation.BulkAddCardsToSprint == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkAddCardsToSprint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkAddCardsToSprint(childComplexity, args["input"].(model.BulkSprintInput)), true
+
+	case "Mutation.bulkDeleteCards":
+		if e.complexity.Mutation.BulkDeleteCards == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkDeleteCards_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkDeleteCards(childComplexity, args["cardIds"].([]string)), true
+
+	case "Mutation.bulkRemoveCardsFromSprint":
+		if e.complexity.Mutation.BulkRemoveCardsFromSprint == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkRemoveCardsFromSprint_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkRemoveCardsFromSprint(childComplexity, args["input"].(model.BulkSprintInput)), true
+
+	case "Mutation.bulkUpdateCards":
+		if e.complexity.Mutation.BulkUpdateCards == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkUpdateCards_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkUpdateCards(childComplexity, args["input"].(model.BulkUpdateCardsInput)), true
 
 	case "Mutation.cancelInvitation":
 		if e.complexity.Mutation.CancelInvitation == nil {
@@ -2983,6 +3039,8 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAssignProjectRoleInput,
 		ec.unmarshalInputAuditFilters,
+		ec.unmarshalInputBulkSprintInput,
+		ec.unmarshalInputBulkUpdateCardsInput,
 		ec.unmarshalInputChangeMemberRoleInput,
 		ec.unmarshalInputCreateBoardInput,
 		ec.unmarshalInputCreateCardInput,
@@ -3411,6 +3469,16 @@ type Mutation {
     setCardSprints(cardId: ID!, sprintIds: [ID!]!): Card!
     "Move a card to backlog (remove from all sprints)"
     moveCardToBacklog(cardId: ID!): Card!
+
+    # Bulk Card Operations
+    "Bulk update multiple cards"
+    bulkUpdateCards(input: BulkUpdateCardsInput!): [Card!]!
+    "Bulk delete multiple cards"
+    bulkDeleteCards(cardIds: [ID!]!): Int!
+    "Bulk add cards to a sprint"
+    bulkAddCardsToSprint(input: BulkSprintInput!): [Card!]!
+    "Bulk remove cards from a sprint"
+    bulkRemoveCardsFromSprint(input: BulkSprintInput!): [Card!]!
 }
 `, BuiltIn: false},
 	{Name: "../types.graphqls", Input: `type User {
@@ -3800,6 +3868,25 @@ input MoveCardToSprintInput {
     sprintId: ID!
 }
 
+# Bulk Card Inputs
+input BulkUpdateCardsInput {
+    cardIds: [ID!]!
+    columnId: ID
+    assigneeId: ID
+    clearAssignee: Boolean
+    tagIds: [ID!]
+    priority: CardPriority
+    dueDate: Time
+    clearDueDate: Boolean
+    storyPoints: Int
+    clearStoryPoints: Boolean
+}
+
+input BulkSprintInput {
+    cardIds: [ID!]!
+    sprintId: ID!
+}
+
 # Pagination Types
 type PageInfo {
     hasNextPage: Boolean!
@@ -4001,6 +4088,66 @@ func (ec *executionContext) field_Mutation_assignProjectRole_args(ctx context.Co
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNAssignProjectRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐAssignProjectRoleInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkAddCardsToSprint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.BulkSprintInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNBulkSprintInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkSprintInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkDeleteCards_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []string
+	if tmp, ok := rawArgs["cardIds"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardIds"))
+		arg0, err = ec.unmarshalNID2ᚕstringᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["cardIds"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkRemoveCardsFromSprint_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.BulkSprintInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNBulkSprintInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkSprintInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkUpdateCards_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.BulkUpdateCardsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNBulkUpdateCardsInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkUpdateCardsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -13185,6 +13332,322 @@ func (ec *executionContext) fieldContext_Mutation_moveCardToBacklog(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_moveCardToBacklog_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkUpdateCards(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkUpdateCards(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkUpdateCards(rctx, fc.Args["input"].(model.BulkUpdateCardsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkUpdateCards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "column":
+				return ec.fieldContext_Card_column(ctx, field)
+			case "board":
+				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
+			case "title":
+				return ec.fieldContext_Card_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Card_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Card_position(ctx, field)
+			case "priority":
+				return ec.fieldContext_Card_priority(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Card_assignee(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Card_dueDate(ctx, field)
+			case "storyPoints":
+				return ec.fieldContext_Card_storyPoints(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Card_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Card_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Card_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkUpdateCards_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkDeleteCards(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkDeleteCards(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkDeleteCards(rctx, fc.Args["cardIds"].([]string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkDeleteCards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkDeleteCards_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkAddCardsToSprint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkAddCardsToSprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkAddCardsToSprint(rctx, fc.Args["input"].(model.BulkSprintInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkAddCardsToSprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "column":
+				return ec.fieldContext_Card_column(ctx, field)
+			case "board":
+				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
+			case "title":
+				return ec.fieldContext_Card_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Card_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Card_position(ctx, field)
+			case "priority":
+				return ec.fieldContext_Card_priority(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Card_assignee(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Card_dueDate(ctx, field)
+			case "storyPoints":
+				return ec.fieldContext_Card_storyPoints(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Card_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Card_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Card_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkAddCardsToSprint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkRemoveCardsFromSprint(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkRemoveCardsFromSprint(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkRemoveCardsFromSprint(rctx, fc.Args["input"].(model.BulkSprintInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkRemoveCardsFromSprint(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "column":
+				return ec.fieldContext_Card_column(ctx, field)
+			case "board":
+				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
+			case "title":
+				return ec.fieldContext_Card_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Card_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Card_position(ctx, field)
+			case "priority":
+				return ec.fieldContext_Card_priority(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Card_assignee(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Card_dueDate(ctx, field)
+			case "storyPoints":
+				return ec.fieldContext_Card_storyPoints(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Card_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Card_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Card_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkRemoveCardsFromSprint_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -22850,6 +23313,154 @@ func (ec *executionContext) unmarshalInputAuditFilters(ctx context.Context, obj 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputBulkSprintInput(ctx context.Context, obj interface{}) (model.BulkSprintInput, error) {
+	var it model.BulkSprintInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cardIds", "sprintId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cardIds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardIds"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CardIds = data
+		case "sprintId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sprintId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SprintID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBulkUpdateCardsInput(ctx context.Context, obj interface{}) (model.BulkUpdateCardsInput, error) {
+	var it model.BulkUpdateCardsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cardIds", "columnId", "assigneeId", "clearAssignee", "tagIds", "priority", "dueDate", "clearDueDate", "storyPoints", "clearStoryPoints"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cardIds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardIds"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CardIds = data
+		case "columnId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("columnId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ColumnID = data
+		case "assigneeId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assigneeId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AssigneeID = data
+		case "clearAssignee":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearAssignee"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearAssignee = data
+		case "tagIds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tagIds"))
+			data, err := ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TagIds = data
+		case "priority":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+			data, err := ec.unmarshalOCardPriority2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardPriority(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priority = data
+		case "dueDate":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("dueDate"))
+			data, err := ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.DueDate = data
+		case "clearDueDate":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearDueDate"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearDueDate = data
+		case "storyPoints":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storyPoints"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoryPoints = data
+		case "clearStoryPoints":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearStoryPoints"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearStoryPoints = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputChangeMemberRoleInput(ctx context.Context, obj interface{}) (model.ChangeMemberRoleInput, error) {
 	var it model.ChangeMemberRoleInput
 	asMap := map[string]interface{}{}
@@ -25843,6 +26454,34 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "moveCardToBacklog":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_moveCardToBacklog(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkUpdateCards":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkUpdateCards(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkDeleteCards":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkDeleteCards(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkAddCardsToSprint":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkAddCardsToSprint(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkRemoveCardsFromSprint":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkRemoveCardsFromSprint(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -28849,6 +29488,16 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNBulkSprintInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkSprintInput(ctx context.Context, v interface{}) (model.BulkSprintInput, error) {
+	res, err := ec.unmarshalInputBulkSprintInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNBulkUpdateCardsInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkUpdateCardsInput(ctx context.Context, v interface{}) (model.BulkUpdateCardsInput, error) {
+	res, err := ec.unmarshalInputBulkUpdateCardsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNCard2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v model.Card) graphql.Marshaler {
