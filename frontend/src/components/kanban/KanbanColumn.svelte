@@ -23,6 +23,10 @@
     canEditCard?: boolean;
     canMoveCard?: boolean;
     canDeleteCard?: boolean;
+    // Selection mode props
+    isSelectionMode?: boolean;
+    selectedCardIds?: Set<string>;
+    onToggleSelect?: (card: BoardCard) => void;
   }
 
   let {
@@ -42,7 +46,10 @@
     canManageBoard = true,
     canEditCard = true,
     canMoveCard = true,
-    canDeleteCard = true
+    canDeleteCard = true,
+    isSelectionMode = false,
+    selectedCardIds = new Set(),
+    onToggleSelect,
   }: Props = $props();
 
   let items = $state(cards.map(card => ({ ...card, id: card.id })));
@@ -110,8 +117,8 @@
       use:dndzone={{
         items,
         flipDurationMs: 200,
-        dropTargetStyle: canMoveCard ? { outline: '2px dashed #6366f1', outlineOffset: '-2px' } : {},
-        dragDisabled: !canMoveCard,
+        dropTargetStyle: canMoveCard && !isSelectionMode ? { outline: '2px dashed #6366f1', outlineOffset: '-2px' } : {},
+        dragDisabled: !canMoveCard || isSelectionMode,
         type: 'cards',
       }}
       onconsider={handleConsider}
@@ -126,6 +133,9 @@
             {priorityStyle}
             {canEditCard}
             {canDeleteCard}
+            {isSelectionMode}
+            isSelected={selectedCardIds.has(card.id)}
+            {onToggleSelect}
           />
         </div>
       {/each}

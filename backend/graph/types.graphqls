@@ -466,3 +466,52 @@ type SprintStats {
     daysRemaining: Int!
     daysElapsed: Int!
 }
+
+# Bulk Card Operations
+type BulkCardResult {
+    successCount: Int!
+    totalCount: Int!
+    cards: [Card!]!
+}
+
+enum TagOperation { ADD REMOVE SET }
+
+input BulkMoveCardsToColumnInput {
+    cardIds: [ID!]!
+    targetColumnId: ID!
+    boardId: ID!
+}
+
+input BulkUpdateCardSprintsInput {
+    cardIds: [ID!]!
+    sprintId: ID!
+    boardId: ID!
+    add: Boolean!
+}
+
+input BulkUpdateCardPropertiesInput {
+    cardIds: [ID!]!
+    boardId: ID!
+    priority: CardPriority
+    assigneeId: ID
+    clearAssignee: Boolean
+    storyPoints: Int
+    clearStoryPoints: Boolean
+}
+
+input BulkTagCardsInput {
+    cardIds: [ID!]!
+    boardId: ID!
+    tagIds: [ID!]!
+    operation: TagOperation!
+}
+
+input BulkDeleteCardsInput {
+    cardIds: [ID!]!
+    boardId: ID!
+}
+
+input BulkMoveCardsToBacklogInput {
+    cardIds: [ID!]!
+    boardId: ID!
+}

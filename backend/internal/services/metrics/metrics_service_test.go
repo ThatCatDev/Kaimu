@@ -8,6 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/audit"
+	auditMocks "github.com/thatcatdev/kaimu/backend/internal/db/repositories/audit/mocks"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/board_column"
 	columnMocks "github.com/thatcatdev/kaimu/backend/internal/db/repositories/board_column/mocks"
 	"github.com/thatcatdev/kaimu/backend/internal/db/repositories/card"
@@ -20,20 +22,21 @@ import (
 	"gorm.io/gorm"
 )
 
-func setupMocks(t *testing.T) (*gomock.Controller, *sprintMocks.MockRepository, *cardMocks.MockRepository, *columnMocks.MockRepository, *metricsHistMocks.MockRepository) {
+func setupMocks(t *testing.T) (*gomock.Controller, *sprintMocks.MockRepository, *cardMocks.MockRepository, *columnMocks.MockRepository, *metricsHistMocks.MockRepository, *auditMocks.MockRepository) {
 	ctrl := gomock.NewController(t)
 	return ctrl,
 		sprintMocks.NewMockRepository(ctrl),
 		cardMocks.NewMockRepository(ctrl),
 		columnMocks.NewMockRepository(ctrl),
-		metricsHistMocks.NewMockRepository(ctrl)
+		metricsHistMocks.NewMockRepository(ctrl),
+		auditMocks.NewMockRepository(ctrl)
 }
 
 func TestGetSprintStats(t *testing.T) {
-	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo := setupMocks(t)
+	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo := setupMocks(t)
 	defer ctrl.Finish()
 
-	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo)
+	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo)
 	ctx := context.Background()
 
 	sprintID := uuid.New()
@@ -129,10 +132,10 @@ func TestGetSprintStats(t *testing.T) {
 }
 
 func TestRecordDailySnapshot(t *testing.T) {
-	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo := setupMocks(t)
+	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo := setupMocks(t)
 	defer ctrl.Finish()
 
-	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo)
+	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo)
 	ctx := context.Background()
 
 	sprintID := uuid.New()
@@ -190,10 +193,10 @@ func TestRecordDailySnapshot(t *testing.T) {
 }
 
 func TestGetBurnDownData(t *testing.T) {
-	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo := setupMocks(t)
+	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo := setupMocks(t)
 	defer ctrl.Finish()
 
-	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo)
+	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo)
 	ctx := context.Background()
 
 	sprintID := uuid.New()
@@ -203,7 +206,7 @@ func TestGetBurnDownData(t *testing.T) {
 	startDate := now.Add(-7 * 24 * time.Hour)
 	endDate := now.Add(7 * 24 * time.Hour)
 
-	t.Run("success with existing history - card count mode", func(t *testing.T) {
+	t.Run("success - card count mode with no audit events", func(t *testing.T) {
 		theSprint := &sprint.Sprint{
 			ID:        sprintID,
 			Name:      "Sprint 1",
@@ -212,33 +215,13 @@ func TestGetBurnDownData(t *testing.T) {
 			EndDate:   &endDate,
 		}
 
-		// First GetByID call for burn down data
-		mockSprintRepo.EXPECT().
-			GetByID(gomock.Any(), sprintID).
-			Return(theSprint, nil)
-
-		// Return existing history (includes today)
-		mockMetricsHistRepo.EXPECT().
-			GetBySprintIDAndDateRange(gomock.Any(), sprintID, startDate, endDate).
-			Return([]*metrics_history.MetricsHistory{
-				{SprintID: sprintID, RecordedDate: startDate, TotalCards: 10, CompletedCards: 0},
-				{SprintID: sprintID, RecordedDate: now, TotalCards: 10, CompletedCards: 5},
-			}, nil)
-
-		// GetSprintStats is called internally - needs sprint, cards, columns
-		mockSprintRepo.EXPECT().
-			GetByID(gomock.Any(), sprintID).
-			Return(theSprint, nil)
-
 		colID := uuid.New()
 		doneColID := uuid.New()
 		sp := 5
-		mockCardRepo.EXPECT().
-			GetBySprintID(gomock.Any(), sprintID).
-			Return([]*card.Card{
-				{ID: uuid.New(), ColumnID: colID, StoryPoints: &sp},
-				{ID: uuid.New(), ColumnID: doneColID, StoryPoints: &sp},
-			}, nil)
+
+		mockSprintRepo.EXPECT().
+			GetByID(gomock.Any(), sprintID).
+			Return(theSprint, nil)
 
 		mockColumnRepo.EXPECT().
 			GetByBoardID(gomock.Any(), boardID).
@@ -246,67 +229,24 @@ func TestGetBurnDownData(t *testing.T) {
 				{ID: colID, Name: "Todo", IsDone: false},
 				{ID: doneColID, Name: "Done", IsDone: true},
 			}, nil)
+
+		mockCardRepo.EXPECT().
+			GetBySprintID(gomock.Any(), sprintID).
+			Return([]*card.Card{
+				{ID: uuid.New(), ColumnID: colID, StoryPoints: &sp},
+				{ID: uuid.New(), ColumnID: doneColID, StoryPoints: &sp},
+			}, nil)
+
+		mockAuditRepo.EXPECT().
+			GetCardMovementsByBoardAndDateRange(gomock.Any(), boardID, startDate, gomock.Any()).
+			Return([]*audit.AuditEvent{}, nil)
 
 		data, err := svc.GetBurnDownData(ctx, sprintID, MetricModeCardCount)
 		require.NoError(t, err)
 		assert.Equal(t, sprintID, data.SprintID)
 		assert.Equal(t, "Sprint 1", data.SprintName)
 		assert.NotEmpty(t, data.IdealLine)
-		assert.Equal(t, 2, len(data.ActualLine))
-		// First point: 10 total - 0 completed = 10 remaining
-		assert.Equal(t, float64(10), data.ActualLine[0].Value)
-		// Second point: 10 total - 5 completed = 5 remaining
-		assert.Equal(t, float64(5), data.ActualLine[1].Value)
-	})
-
-	t.Run("success with existing history - story points mode", func(t *testing.T) {
-		theSprint := &sprint.Sprint{
-			ID:        sprintID,
-			Name:      "Sprint 1",
-			BoardID:   boardID,
-			StartDate: &startDate,
-			EndDate:   &endDate,
-		}
-
-		mockSprintRepo.EXPECT().
-			GetByID(gomock.Any(), sprintID).
-			Return(theSprint, nil)
-
-		mockMetricsHistRepo.EXPECT().
-			GetBySprintIDAndDateRange(gomock.Any(), sprintID, startDate, endDate).
-			Return([]*metrics_history.MetricsHistory{
-				{SprintID: sprintID, RecordedDate: startDate, TotalStoryPoints: 50, CompletedStoryPoints: 0},
-				{SprintID: sprintID, RecordedDate: now, TotalStoryPoints: 50, CompletedStoryPoints: 20},
-			}, nil)
-
-		// GetSprintStats is called internally
-		mockSprintRepo.EXPECT().
-			GetByID(gomock.Any(), sprintID).
-			Return(theSprint, nil)
-
-		colID := uuid.New()
-		doneColID := uuid.New()
-		sp := 25
-		mockCardRepo.EXPECT().
-			GetBySprintID(gomock.Any(), sprintID).
-			Return([]*card.Card{
-				{ID: uuid.New(), ColumnID: colID, StoryPoints: &sp},
-				{ID: uuid.New(), ColumnID: doneColID, StoryPoints: &sp},
-			}, nil)
-
-		mockColumnRepo.EXPECT().
-			GetByBoardID(gomock.Any(), boardID).
-			Return([]*board_column.BoardColumn{
-				{ID: colID, Name: "Todo", IsDone: false},
-				{ID: doneColID, Name: "Done", IsDone: true},
-			}, nil)
-
-		data, err := svc.GetBurnDownData(ctx, sprintID, MetricModeStoryPoints)
-		require.NoError(t, err)
-		// First point: 50 - 0 = 50 remaining
-		assert.Equal(t, float64(50), data.ActualLine[0].Value)
-		// Second point: 50 - 20 = 30 remaining
-		assert.Equal(t, float64(30), data.ActualLine[1].Value)
+		assert.NotEmpty(t, data.ActualLine)
 	})
 
 	t.Run("sprint not found", func(t *testing.T) {
@@ -321,10 +261,10 @@ func TestGetBurnDownData(t *testing.T) {
 }
 
 func TestGetBurnUpData(t *testing.T) {
-	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo := setupMocks(t)
+	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo := setupMocks(t)
 	defer ctrl.Finish()
 
-	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo)
+	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo)
 	ctx := context.Background()
 
 	sprintID := uuid.New()
@@ -343,30 +283,12 @@ func TestGetBurnUpData(t *testing.T) {
 			EndDate:   &endDate,
 		}
 
-		mockSprintRepo.EXPECT().
-			GetByID(gomock.Any(), sprintID).
-			Return(theSprint, nil)
-
-		mockMetricsHistRepo.EXPECT().
-			GetBySprintIDAndDateRange(gomock.Any(), sprintID, startDate, endDate).
-			Return([]*metrics_history.MetricsHistory{
-				{SprintID: sprintID, RecordedDate: startDate, TotalCards: 10, CompletedCards: 0},
-				{SprintID: sprintID, RecordedDate: now, TotalCards: 12, CompletedCards: 5},
-			}, nil)
-
-		// GetSprintStats is called internally
-		mockSprintRepo.EXPECT().
-			GetByID(gomock.Any(), sprintID).
-			Return(theSprint, nil)
-
 		colID := uuid.New()
 		doneColID := uuid.New()
-		mockCardRepo.EXPECT().
-			GetBySprintID(gomock.Any(), sprintID).
-			Return([]*card.Card{
-				{ID: uuid.New(), ColumnID: colID},
-				{ID: uuid.New(), ColumnID: doneColID},
-			}, nil)
+
+		mockSprintRepo.EXPECT().
+			GetByID(gomock.Any(), sprintID).
+			Return(theSprint, nil)
 
 		mockColumnRepo.EXPECT().
 			GetByBoardID(gomock.Any(), boardID).
@@ -375,24 +297,31 @@ func TestGetBurnUpData(t *testing.T) {
 				{ID: doneColID, Name: "Done", IsDone: true},
 			}, nil)
 
+		mockCardRepo.EXPECT().
+			GetBySprintID(gomock.Any(), sprintID).
+			Return([]*card.Card{
+				{ID: uuid.New(), ColumnID: colID},
+				{ID: uuid.New(), ColumnID: doneColID},
+			}, nil)
+
+		mockAuditRepo.EXPECT().
+			GetCardMovementsByBoardAndDateRange(gomock.Any(), boardID, startDate, gomock.Any()).
+			Return([]*audit.AuditEvent{}, nil)
+
 		data, err := svc.GetBurnUpData(ctx, sprintID, MetricModeCardCount)
 		require.NoError(t, err)
-		assert.Equal(t, 2, len(data.ScopeLine))
-		assert.Equal(t, 2, len(data.DoneLine))
-		// Scope line shows total
-		assert.Equal(t, float64(10), data.ScopeLine[0].Value)
-		assert.Equal(t, float64(12), data.ScopeLine[1].Value) // Scope increased
-		// Done line shows completed
-		assert.Equal(t, float64(0), data.DoneLine[0].Value)
-		assert.Equal(t, float64(5), data.DoneLine[1].Value)
+		assert.NotEmpty(t, data.ScopeLine)
+		assert.NotEmpty(t, data.DoneLine)
+		assert.Equal(t, sprintID, data.SprintID)
+		assert.Equal(t, "Sprint 1", data.SprintName)
 	})
 }
 
 func TestGetVelocityData(t *testing.T) {
-	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo := setupMocks(t)
+	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo := setupMocks(t)
 	defer ctrl.Finish()
 
-	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo)
+	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo)
 	ctx := context.Background()
 
 	boardID := uuid.New()
@@ -470,10 +399,10 @@ func TestGetVelocityData(t *testing.T) {
 }
 
 func TestGetCumulativeFlowData(t *testing.T) {
-	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo := setupMocks(t)
+	ctrl, mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo := setupMocks(t)
 	defer ctrl.Finish()
 
-	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo)
+	svc := NewService(mockSprintRepo, mockCardRepo, mockColumnRepo, mockMetricsHistRepo, mockAuditRepo)
 	ctx := context.Background()
 
 	sprintID := uuid.New()

@@ -50,6 +50,15 @@ type UpdateCardInput struct {
 	ClearStoryPoints bool
 }
 
+type BulkUpdatePropertiesInput struct {
+	CardIDs          []uuid.UUID
+	Priority         *card.CardPriority
+	AssigneeID       *uuid.UUID
+	ClearAssignee    bool
+	StoryPoints      *int
+	ClearStoryPoints bool
+}
+
 type Service interface {
 	CreateCard(ctx context.Context, input CreateCardInput) (*card.Card, error)
 	GetCard(ctx context.Context, id uuid.UUID) (*card.Card, error)
@@ -62,6 +71,15 @@ type Service interface {
 	GetTagsForCard(ctx context.Context, cardID uuid.UUID) ([]*tag.Tag, error)
 	GetBoardByCardID(ctx context.Context, cardID uuid.UUID) (*board.Board, error)
 	GetColumnByCardID(ctx context.Context, cardID uuid.UUID) (*board_column.BoardColumn, error)
+
+	// Bulk operations
+	BulkMoveToColumn(ctx context.Context, cardIDs []uuid.UUID, targetColumnID uuid.UUID) ([]*card.Card, error)
+	BulkUpdateProperties(ctx context.Context, input BulkUpdatePropertiesInput) ([]*card.Card, error)
+	BulkAddTags(ctx context.Context, cardIDs, tagIDs []uuid.UUID) ([]*card.Card, error)
+	BulkRemoveTags(ctx context.Context, cardIDs, tagIDs []uuid.UUID) ([]*card.Card, error)
+	BulkSetTags(ctx context.Context, cardIDs, tagIDs []uuid.UUID) ([]*card.Card, error)
+	BulkDelete(ctx context.Context, ids []uuid.UUID) error
+	GetCardsByIDs(ctx context.Context, ids []uuid.UUID) ([]*card.Card, error)
 }
 
 type service struct {
@@ -364,4 +382,115 @@ func (s *service) GetColumnByCardID(ctx context.Context, cardID uuid.UUID) (*boa
 	}
 
 	return col, nil
+}
+
+// Bulk operations
+
+func (s *service) GetCardsByIDs(ctx context.Context, ids []uuid.UUID) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "GetCardsByIDs")
+	span.SetAttributes(attribute.Int("card.count", len(ids)))
+	defer span.End()
+
+	return s.cardRepo.GetByIDs(ctx, ids)
+}
+
+func (s *service) BulkMoveToColumn(ctx context.Context, cardIDs []uuid.UUID, targetColumnID uuid.UUID) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkMoveToColumn")
+	span.SetAttributes(
+		attribute.Int("card.count", len(cardIDs)),
+		attribute.String("card.target_column_id", targetColumnID.String()),
+	)
+	defer span.End()
+
+	// Verify target column exists
+	_, err := s.columnRepo.GetByID(ctx, targetColumnID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrColumnNotFound
+		}
+		return nil, err
+	}
+
+	if err := s.cardRepo.MoveToColumn(ctx, cardIDs, targetColumnID); err != nil {
+		return nil, err
+	}
+
+	return s.cardRepo.GetByIDs(ctx, cardIDs)
+}
+
+func (s *service) BulkUpdateProperties(ctx context.Context, input BulkUpdatePropertiesInput) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkUpdateProperties")
+	span.SetAttributes(attribute.Int("card.count", len(input.CardIDs)))
+	defer span.End()
+
+	cards, err := s.cardRepo.GetByIDs(ctx, input.CardIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, c := range cards {
+		if input.Priority != nil {
+			c.Priority = *input.Priority
+		}
+		if input.ClearAssignee {
+			c.AssigneeID = nil
+		} else if input.AssigneeID != nil {
+			c.AssigneeID = input.AssigneeID
+		}
+		if input.ClearStoryPoints {
+			c.StoryPoints = nil
+		} else if input.StoryPoints != nil {
+			c.StoryPoints = input.StoryPoints
+		}
+
+		if err := s.cardRepo.Update(ctx, c); err != nil {
+			return nil, err
+		}
+	}
+
+	return s.cardRepo.GetByIDs(ctx, input.CardIDs)
+}
+
+func (s *service) BulkAddTags(ctx context.Context, cardIDs, tagIDs []uuid.UUID) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkAddTags")
+	span.SetAttributes(attribute.Int("card.count", len(cardIDs)))
+	defer span.End()
+
+	if err := s.cardTagRepo.AddTagsToCards(ctx, cardIDs, tagIDs); err != nil {
+		return nil, err
+	}
+
+	return s.cardRepo.GetByIDs(ctx, cardIDs)
+}
+
+func (s *service) BulkRemoveTags(ctx context.Context, cardIDs, tagIDs []uuid.UUID) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkRemoveTags")
+	span.SetAttributes(attribute.Int("card.count", len(cardIDs)))
+	defer span.End()
+
+	if err := s.cardTagRepo.RemoveTagsFromCards(ctx, cardIDs, tagIDs); err != nil {
+		return nil, err
+	}
+
+	return s.cardRepo.GetByIDs(ctx, cardIDs)
+}
+
+func (s *service) BulkSetTags(ctx context.Context, cardIDs, tagIDs []uuid.UUID) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkSetTags")
+	span.SetAttributes(attribute.Int("card.count", len(cardIDs)))
+	defer span.End()
+
+	if err := s.cardTagRepo.SetTagsForCards(ctx, cardIDs, tagIDs); err != nil {
+		return nil, err
+	}
+
+	return s.cardRepo.GetByIDs(ctx, cardIDs)
+}
+
+func (s *service) BulkDelete(ctx context.Context, ids []uuid.UUID) error {
+	ctx, span := s.startServiceSpan(ctx, "BulkDelete")
+	span.SetAttributes(attribute.Int("card.count", len(ids)))
+	defer span.End()
+
+	return s.cardRepo.DeleteMany(ctx, ids)
 }

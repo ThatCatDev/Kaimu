@@ -68,9 +68,10 @@ func TestUserRepository_Create(t *testing.T) {
 	repo := NewRepository(db)
 	ctx := context.Background()
 
+	hash := "hashedpassword"
 	user := &User{
 		Username:     "testcreate",
-		PasswordHash: "hashedpassword",
+		PasswordHash: &hash,
 	}
 
 	err := repo.Create(ctx, user)
@@ -88,13 +89,15 @@ func TestUserRepository_Create_DuplicateUsername(t *testing.T) {
 	repo := NewRepository(db)
 	ctx := context.Background()
 
+	hash1 := "hash1"
+	hash2 := "hash2"
 	user1 := &User{
 		Username:     "duplicate",
-		PasswordHash: "hash1",
+		PasswordHash: &hash1,
 	}
 	user2 := &User{
 		Username:     "duplicate",
-		PasswordHash: "hash2",
+		PasswordHash: &hash2,
 	}
 
 	err := repo.Create(ctx, user1)
@@ -112,9 +115,10 @@ func TestUserRepository_GetByUsername(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a user first
+	pw := "password"
 	user := &User{
 		Username:     "findme",
-		PasswordHash: "password",
+		PasswordHash: &pw,
 	}
 	repo.Create(ctx, user)
 
@@ -149,9 +153,10 @@ func TestUserRepository_GetByID(t *testing.T) {
 	ctx := context.Background()
 
 	// Create a user first
+	pw2 := "password"
 	user := &User{
 		Username:     "findbyid",
-		PasswordHash: "password",
+		PasswordHash: &pw2,
 	}
 	repo.Create(ctx, user)
 

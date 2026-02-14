@@ -11,6 +11,10 @@
     // Permission props
     canEditCard?: boolean;
     canDeleteCard?: boolean;
+    // Selection mode props
+    isSelectionMode?: boolean;
+    isSelected?: boolean;
+    onToggleSelect?: (card: BoardCard) => void;
   }
 
   let {
@@ -19,7 +23,10 @@
     onQuickDelete,
     priorityStyle = 'badge',
     canEditCard = true,
-    canDeleteCard = true
+    canDeleteCard = true,
+    isSelectionMode = false,
+    isSelected = false,
+    onToggleSelect,
   }: Props = $props();
   let showDeleteConfirm = $state(false);
 
@@ -73,6 +80,10 @@
   }
 
   function handleClick() {
+    if (isSelectionMode) {
+      onToggleSelect?.(card);
+      return;
+    }
     if (onCardClick) {
       onCardClick(card);
     }
@@ -106,15 +117,26 @@
 </script>
 
 <div
-  class="group relative w-full text-left rounded-lg shadow-sm border p-4 transition-shadow bg-white border-gray-200 hover:shadow-md cursor-pointer {priorityStyle === 'border' && card.priority !== CardPriority.None ? `border-l-4 ${priorityColors[card.priority]}` : ''}"
+  class="group relative w-full text-left rounded-lg shadow-sm border p-4 transition-shadow bg-white cursor-pointer {isSelected ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200 hover:shadow-md'} {priorityStyle === 'border' && card.priority !== CardPriority.None ? `border-l-4 ${priorityColors[card.priority]}` : ''}"
   onclick={handleClick}
   onkeydown={handleKeydown}
   role="button"
   tabindex="0"
 >
+  <!-- Selection checkbox -->
+  {#if isSelectionMode}
+    <div class="absolute top-3 left-3 z-10">
+      <input
+        type="checkbox"
+        checked={isSelected}
+        onclick={(e) => { e.stopPropagation(); onToggleSelect?.(card); }}
+        class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+      />
+    </div>
+  {/if}
 
   <!-- Quick actions - simple icons that appear on hover, permission-gated -->
-  {#if canEditCard || canDeleteCard}
+  {#if !isSelectionMode && (canEditCard || canDeleteCard)}
     <div class="absolute top-3 right-3 hidden group-hover:flex gap-1 z-10">
       {#if canEditCard}
         <button
@@ -143,7 +165,7 @@
     </div>
   {/if}
 
-  <h4 class="text-sm font-medium text-gray-900 mb-1 pr-16">{card.title}</h4>
+  <h4 class="text-sm font-medium text-gray-900 mb-1 pr-16 {isSelectionMode ? 'pl-6' : ''}">{card.title}</h4>
 
   {#if card.tags && card.tags.length > 0}
     <div class="flex flex-wrap gap-1 mb-2">

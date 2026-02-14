@@ -221,12 +221,16 @@ func (s *service) DeleteBoard(ctx context.Context, id uuid.UUID) error {
 	defer span.End()
 
 	// Verify board exists
-	_, err := s.boardRepo.GetByID(ctx, id)
+	b, err := s.boardRepo.GetByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ErrBoardNotFound
 		}
 		return err
+	}
+
+	if b.IsDefault {
+		return ErrCannotDeleteDefault
 	}
 
 	return s.boardRepo.Delete(ctx, id)

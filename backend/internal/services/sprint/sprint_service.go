@@ -63,6 +63,11 @@ type Service interface {
 
 	// Get board for sprint
 	GetBoard(ctx context.Context, sprintID uuid.UUID) (*board.Board, error)
+
+	// Bulk Card-Sprint operations
+	BulkAddCardsToSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) ([]*card.Card, error)
+	BulkRemoveCardsFromSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) ([]*card.Card, error)
+	BulkMoveCardsToBacklog(ctx context.Context, cardIDs []uuid.UUID) ([]*card.Card, error)
 }
 
 type service struct {
@@ -577,4 +582,66 @@ func (s *service) GetCardByID(ctx context.Context, cardID uuid.UUID) (*card.Card
 	defer span.End()
 
 	return s.cardRepo.GetByID(ctx, cardID)
+}
+
+// Bulk Card-Sprint operations
+
+func (s *service) BulkAddCardsToSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkAddCardsToSprint")
+	span.SetAttributes(
+		attribute.Int("card.count", len(cardIDs)),
+		attribute.String("sprint.id", sprintID.String()),
+	)
+	defer span.End()
+
+	// Verify sprint exists
+	_, err := s.sprintRepo.GetByID(ctx, sprintID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrSprintNotFound
+		}
+		return nil, err
+	}
+
+	if err := s.cardRepo.AddManyToSprint(ctx, cardIDs, sprintID); err != nil {
+		return nil, err
+	}
+
+	return s.cardRepo.GetByIDs(ctx, cardIDs)
+}
+
+func (s *service) BulkRemoveCardsFromSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkRemoveCardsFromSprint")
+	span.SetAttributes(
+		attribute.Int("card.count", len(cardIDs)),
+		attribute.String("sprint.id", sprintID.String()),
+	)
+	defer span.End()
+
+	// Verify sprint exists
+	_, err := s.sprintRepo.GetByID(ctx, sprintID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrSprintNotFound
+		}
+		return nil, err
+	}
+
+	if err := s.cardRepo.RemoveManyFromSprint(ctx, cardIDs, sprintID); err != nil {
+		return nil, err
+	}
+
+	return s.cardRepo.GetByIDs(ctx, cardIDs)
+}
+
+func (s *service) BulkMoveCardsToBacklog(ctx context.Context, cardIDs []uuid.UUID) ([]*card.Card, error) {
+	ctx, span := s.startServiceSpan(ctx, "BulkMoveCardsToBacklog")
+	span.SetAttributes(attribute.Int("card.count", len(cardIDs)))
+	defer span.End()
+
+	if err := s.cardRepo.RemoveManyFromAllSprints(ctx, cardIDs); err != nil {
+		return nil, err
+	}
+
+	return s.cardRepo.GetByIDs(ctx, cardIDs)
 }

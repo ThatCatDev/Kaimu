@@ -5,6 +5,7 @@
   import PlanningCardRow from './PlanningCardRow.svelte';
   import CardDetailPanel from '../kanban/CardDetailPanel.svelte';
   import BoardPageLayout from '../kanban/BoardPageLayout.svelte';
+  import BulkActionToolbar from '../kanban/BulkActionToolbar.svelte';
   import { Button } from '../ui';
   import {
     getActiveSprint,
@@ -19,6 +20,24 @@
     type BacklogCard,
   } from '../../lib/api/sprints';
   import { getBoard, getTags, type BoardWithColumns, type BoardCard, type Tag } from '../../lib/api/boards';
+  import { getProjectMembers, getOrganizationMembers } from '../../lib/api/rbac';
+  import {
+    bulkUpdateCardSprints,
+    bulkUpdateCardProperties,
+    bulkTagCards,
+    bulkDeleteCards,
+    bulkMoveCardsToBacklog,
+  } from '../../lib/api/bulk';
+  import { TagOperation, type CardPriority } from '../../lib/graphql/generated';
+  import {
+    getIsSelectionMode,
+    getSelectedCardIds,
+    getSelectedCount,
+    toggleSelectionMode,
+    exitSelectionMode,
+    toggleCardSelection,
+    getSelectedCardIdsArray,
+  } from '../../lib/stores/cardSelection.svelte';
 
   interface Props {
     boardId: string;
@@ -31,6 +50,7 @@
   // Board data
   let board = $state<BoardWithColumns | null>(null);
   let tags = $state<Tag[]>([]);
+  let assignableMembers = $state<{ user: { id: string; email: string; displayName?: string | null } }[]>([]);
 
   // Sprint data
   let activeSprint = $state<SprintData | null>(null);
@@ -80,18 +100,26 @@
         loading = true;
       }
 
-      // Load board, tags, sprints, and backlog in parallel
-      const [boardData, tagsData, active, future, closedResult, backlog] = await Promise.all([
+      // Load board, tags, sprints, backlog, and members in parallel
+      const [boardData, tagsData, active, future, closedResult, backlog, projMembers] = await Promise.all([
         getBoard(boardId),
         getTags(projectId),
         getActiveSprint(boardId),
         getFutureSprints(boardId),
         getClosedSprints(boardId, 10),
         getBacklogCards(boardId),
+        getProjectMembers(projectId),
       ]);
 
       board = boardData;
       tags = tagsData;
+
+      // Use project members if available, otherwise fall back to org members
+      if (projMembers.length > 0) {
+        assignableMembers = projMembers;
+      } else if (boardData?.project.organization.id) {
+        assignableMembers = await getOrganizationMembers(boardData.project.organization.id);
+      }
       activeSprint = active;
       futureSprints = future;
       closedSprints = closedResult.sprints;
@@ -322,6 +350,120 @@
       // Use the card's actual sprints data (loaded from GraphQL query)
     } as BoardCard;
   }
+
+  // Helper to reload all expanded sprint data
+  async function reloadExpandedSprints() {
+    const reloadPromises: Promise<void>[] = [];
+    for (const sectionId of expandedSections) {
+      if (sectionId === 'backlog' || sectionId === 'closed') continue;
+      if (sectionId === 'active' && activeSprint) {
+        reloadPromises.push(loadSprintCards(activeSprint.id, true));
+      } else if (sectionId.startsWith('closed-')) {
+        reloadPromises.push(loadSprintCards(sectionId.replace('closed-', ''), true));
+      } else {
+        reloadPromises.push(loadSprintCards(sectionId, true));
+      }
+    }
+    await Promise.all(reloadPromises);
+  }
+
+  // Bulk operation handlers
+  async function handleBulkAddToSprint(sprintId: string) {
+    try {
+      const result = await bulkUpdateCardSprints(getSelectedCardIdsArray(), sprintId, boardId, true);
+      toast.success(`Added ${result.successCount} card(s) to sprint`);
+      exitSelectionMode();
+      await loadData(false);
+      await reloadExpandedSprints();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to add cards to sprint');
+    }
+  }
+
+  async function handleBulkRemoveFromSprint(sprintId: string) {
+    try {
+      const result = await bulkUpdateCardSprints(getSelectedCardIdsArray(), sprintId, boardId, false);
+      toast.success(`Removed ${result.successCount} card(s) from sprint`);
+      exitSelectionMode();
+      await loadData(false);
+      await reloadExpandedSprints();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to remove cards from sprint');
+    }
+  }
+
+  async function handleBulkSetPriority(priority: CardPriority) {
+    try {
+      const result = await bulkUpdateCardProperties(getSelectedCardIdsArray(), boardId, { priority });
+      toast.success(`Updated priority for ${result.successCount} card(s)`);
+      exitSelectionMode();
+      await loadData(false);
+      await reloadExpandedSprints();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to update priority');
+    }
+  }
+
+  async function handleBulkSetAssignee(userId: string | null) {
+    try {
+      const props = userId ? { assigneeId: userId } : { clearAssignee: true };
+      const result = await bulkUpdateCardProperties(getSelectedCardIdsArray(), boardId, props);
+      toast.success(`Updated assignee for ${result.successCount} card(s)`);
+      exitSelectionMode();
+      await loadData(false);
+      await reloadExpandedSprints();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to update assignee');
+    }
+  }
+
+  async function handleBulkAddTags(tagIds: string[]) {
+    try {
+      const result = await bulkTagCards(getSelectedCardIdsArray(), boardId, tagIds, TagOperation.Add);
+      toast.success(`Added tags to ${result.successCount} card(s)`);
+      exitSelectionMode();
+      await loadData(false);
+      await reloadExpandedSprints();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to add tags');
+    }
+  }
+
+  async function handleBulkRemoveTags(tagIds: string[]) {
+    try {
+      const result = await bulkTagCards(getSelectedCardIdsArray(), boardId, tagIds, TagOperation.Remove);
+      toast.success(`Removed tags from ${result.successCount} card(s)`);
+      exitSelectionMode();
+      await loadData(false);
+      await reloadExpandedSprints();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to remove tags');
+    }
+  }
+
+  async function handleBulkMoveToBacklog() {
+    try {
+      const result = await bulkMoveCardsToBacklog(getSelectedCardIdsArray(), boardId);
+      toast.success(`Moved ${result.successCount} card(s) to backlog`);
+      exitSelectionMode();
+      await loadData(false);
+      await reloadExpandedSprints();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to move cards to backlog');
+    }
+  }
+
+  async function handleBulkDelete() {
+    try {
+      await bulkDeleteCards(getSelectedCardIdsArray(), boardId);
+      toast.success(`Deleted ${getSelectedCount()} card(s)`);
+      exitSelectionMode();
+      await loadData(false);
+      await reloadExpandedSprints();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to delete cards');
+    }
+  }
 </script>
 
 <BoardPageLayout {board} {boardId} {projectId} currentPage="planning">
@@ -354,6 +496,20 @@
       </div>
     {:else}
       <div class="max-w-5xl mx-auto space-y-4">
+        <!-- Selection controls -->
+        <div class="flex items-center justify-end">
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md border transition-colors {getIsSelectionMode() ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}"
+            onclick={toggleSelectionMode}
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+            {getIsSelectionMode() ? 'Cancel' : 'Select'}
+          </button>
+        </div>
+
         <!-- Active Sprint -->
         {#if activeSprint}
           {@const cards = sprintCards.get(activeSprint.id) ?? []}
@@ -389,6 +545,9 @@
                     onCardClick={handleCardClick}
                     onMoveToSprint={handleMoveToSprint}
                     onMoveToBacklog={handleMoveToBacklog}
+                    isSelectionMode={getIsSelectionMode()}
+                    isSelected={getSelectedCardIds().has(card.id)}
+                    onToggleSelect={(c) => toggleCardSelection(c.id)}
                   />
                 {/each}
               </div>
@@ -432,6 +591,9 @@
                     onCardClick={handleCardClick}
                     onMoveToSprint={handleMoveToSprint}
                     onMoveToBacklog={handleMoveToBacklog}
+                    isSelectionMode={getIsSelectionMode()}
+                    isSelected={getSelectedCardIds().has(card.id)}
+                    onToggleSelect={(c) => toggleCardSelection(c.id)}
                   />
                 {/each}
               </div>
@@ -458,6 +620,9 @@
                   {availableSprints}
                   onCardClick={handleCardClick}
                   onMoveToSprint={handleMoveToSprint}
+                  isSelectionMode={getIsSelectionMode()}
+                  isSelected={getSelectedCardIds().has(card.id)}
+                  onToggleSelect={(c) => toggleCardSelection(c.id)}
                 />
               {/each}
             </div>
@@ -524,6 +689,9 @@
                               {availableSprints}
                               onCardClick={handleCardClick}
                               onMoveToSprint={handleMoveToSprint}
+                              isSelectionMode={getIsSelectionMode()}
+                              isSelected={getSelectedCardIds().has(card.id)}
+                              onToggleSelect={(c) => toggleCardSelection(c.id)}
                             />
                           {/each}
                         </div>
@@ -566,6 +734,26 @@
         canDeleteCard={true}
       />
     {/if}
+
+    <!-- Bulk Action Toolbar -->
+    <BulkActionToolbar
+      selectedCount={getSelectedCount()}
+      sprints={availableSprints}
+      {tags}
+      canMoveCard={true}
+      canEditCard={true}
+      canDeleteCard={true}
+      onClearSelection={exitSelectionMode}
+      onAddToSprint={handleBulkAddToSprint}
+      onRemoveFromSprint={handleBulkRemoveFromSprint}
+      onSetPriority={handleBulkSetPriority}
+      members={assignableMembers}
+      onSetAssignee={handleBulkSetAssignee}
+      onAddTags={handleBulkAddTags}
+      onRemoveTags={handleBulkRemoveTags}
+      onMoveToBacklog={handleBulkMoveToBacklog}
+      onDelete={handleBulkDelete}
+    />
   </div>
   {/snippet}
 </BoardPageLayout>

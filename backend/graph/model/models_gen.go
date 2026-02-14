@@ -84,6 +84,52 @@ type BoardColumn struct {
 	UpdatedAt time.Time `json:"updatedAt"`
 }
 
+type BulkCardResult struct {
+	SuccessCount int     `json:"successCount"`
+	TotalCount   int     `json:"totalCount"`
+	Cards        []*Card `json:"cards"`
+}
+
+type BulkDeleteCardsInput struct {
+	CardIds []string `json:"cardIds"`
+	BoardID string   `json:"boardId"`
+}
+
+type BulkMoveCardsToBacklogInput struct {
+	CardIds []string `json:"cardIds"`
+	BoardID string   `json:"boardId"`
+}
+
+type BulkMoveCardsToColumnInput struct {
+	CardIds        []string `json:"cardIds"`
+	TargetColumnID string   `json:"targetColumnId"`
+	BoardID        string   `json:"boardId"`
+}
+
+type BulkTagCardsInput struct {
+	CardIds   []string     `json:"cardIds"`
+	BoardID   string       `json:"boardId"`
+	TagIds    []string     `json:"tagIds"`
+	Operation TagOperation `json:"operation"`
+}
+
+type BulkUpdateCardPropertiesInput struct {
+	CardIds          []string      `json:"cardIds"`
+	BoardID          string        `json:"boardId"`
+	Priority         *CardPriority `json:"priority,omitempty"`
+	AssigneeID       *string       `json:"assigneeId,omitempty"`
+	ClearAssignee    *bool         `json:"clearAssignee,omitempty"`
+	StoryPoints      *int          `json:"storyPoints,omitempty"`
+	ClearStoryPoints *bool         `json:"clearStoryPoints,omitempty"`
+}
+
+type BulkUpdateCardSprintsInput struct {
+	CardIds  []string `json:"cardIds"`
+	SprintID string   `json:"sprintId"`
+	BoardID  string   `json:"boardId"`
+	Add      bool     `json:"add"`
+}
+
 type BurnDownData struct {
 	SprintID   string       `json:"sprintId"`
 	SprintName string       `json:"sprintName"`
@@ -787,5 +833,48 @@ func (e *SprintStatus) UnmarshalGQL(v interface{}) error {
 }
 
 func (e SprintStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type TagOperation string
+
+const (
+	TagOperationAdd    TagOperation = "ADD"
+	TagOperationRemove TagOperation = "REMOVE"
+	TagOperationSet    TagOperation = "SET"
+)
+
+var AllTagOperation = []TagOperation{
+	TagOperationAdd,
+	TagOperationRemove,
+	TagOperationSet,
+}
+
+func (e TagOperation) IsValid() bool {
+	switch e {
+	case TagOperationAdd, TagOperationRemove, TagOperationSet:
+		return true
+	}
+	return false
+}
+
+func (e TagOperation) String() string {
+	return string(e)
+}
+
+func (e *TagOperation) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TagOperation(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TagOperation", str)
+	}
+	return nil
+}
+
+func (e TagOperation) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

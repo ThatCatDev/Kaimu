@@ -103,6 +103,59 @@ export type AuthPayload = {
   user: User;
 };
 
+export type BulkCardResult = {
+  __typename?: 'BulkCardResult';
+  cards: Array<Card>;
+  successCount: Scalars['Int']['output'];
+  totalCount: Scalars['Int']['output'];
+};
+
+export type BulkDeleteCardsInput = {
+  boardId: Scalars['ID']['input'];
+  cardIds: Array<Scalars['ID']['input']>;
+};
+
+export type BulkMoveCardsToBacklogInput = {
+  boardId: Scalars['ID']['input'];
+  cardIds: Array<Scalars['ID']['input']>;
+};
+
+export type BulkMoveCardsToColumnInput = {
+  boardId: Scalars['ID']['input'];
+  cardIds: Array<Scalars['ID']['input']>;
+  targetColumnId: Scalars['ID']['input'];
+};
+
+export type BulkTagCardsInput = {
+  boardId: Scalars['ID']['input'];
+  cardIds: Array<Scalars['ID']['input']>;
+  operation: TagOperation;
+  tagIds: Array<Scalars['ID']['input']>;
+};
+
+export type BulkUpdateCardPropertiesInput = {
+  assigneeId?: InputMaybe<Scalars['ID']['input']>;
+  boardId: Scalars['ID']['input'];
+  cardIds: Array<Scalars['ID']['input']>;
+  clearAssignee?: InputMaybe<Scalars['Boolean']['input']>;
+  clearStoryPoints?: InputMaybe<Scalars['Boolean']['input']>;
+  priority?: InputMaybe<CardPriority>;
+  storyPoints?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type BulkUpdateCardSprintsInput = {
+  add: Scalars['Boolean']['input'];
+  boardId: Scalars['ID']['input'];
+  cardIds: Array<Scalars['ID']['input']>;
+  sprintId: Scalars['ID']['input'];
+};
+
+export enum TagOperation {
+  Add = 'ADD',
+  Remove = 'REMOVE',
+  Set = 'SET'
+}
+
 export type Board = {
   __typename?: 'Board';
   activeSprint?: Maybe<Sprint>;
@@ -309,6 +362,18 @@ export type Mutation = {
   acceptInvitation: Organization;
   /** Add a card to a sprint (cards can be in multiple sprints) */
   addCardToSprint: Card;
+  /** Delete multiple cards */
+  bulkDeleteCards: Scalars['Boolean']['output'];
+  /** Move multiple cards to backlog (remove from all sprints) */
+  bulkMoveCardsToBacklog: BulkCardResult;
+  /** Move multiple cards to a column */
+  bulkMoveCardsToColumn: BulkCardResult;
+  /** Add, remove, or set tags on multiple cards */
+  bulkTagCards: BulkCardResult;
+  /** Update properties on multiple cards */
+  bulkUpdateCardProperties: BulkCardResult;
+  /** Add or remove multiple cards from a sprint */
+  bulkUpdateCardSprints: BulkCardResult;
   /** Assign/change a project-specific role */
   assignProjectRole: ProjectMember;
   /** Cancel a pending invitation */
@@ -1763,3 +1828,40 @@ export type MoveCardToBacklogMutationVariables = Exact<{
 
 
 export type MoveCardToBacklogMutation = { __typename?: 'Mutation', moveCardToBacklog: { __typename?: 'Card', id: string, title: string, description?: string | null, position: number, priority: CardPriority, dueDate?: string | null, storyPoints?: number | null, createdAt: string, updatedAt: string, sprints: Array<{ __typename?: 'Sprint', id: string, name: string }>, assignee?: { __typename?: 'User', id: string, username: string, displayName?: string | null, avatarUrl?: string | null } | null, tags: Array<{ __typename?: 'Tag', id: string, name: string, color: string }>, column: { __typename?: 'BoardColumn', id: string, name: string } } };
+
+// Bulk Card Operation Types
+export type BulkMoveCardsToColumnMutationVariables = Exact<{
+  input: BulkMoveCardsToColumnInput;
+}>;
+
+export type BulkMoveCardsToColumnMutation = { __typename?: 'Mutation', bulkMoveCardsToColumn: { __typename?: 'BulkCardResult', successCount: number, totalCount: number, cards: Array<{ __typename?: 'Card', id: string }> } };
+
+export type BulkUpdateCardSprintsMutationVariables = Exact<{
+  input: BulkUpdateCardSprintsInput;
+}>;
+
+export type BulkUpdateCardSprintsMutation = { __typename?: 'Mutation', bulkUpdateCardSprints: { __typename?: 'BulkCardResult', successCount: number, totalCount: number, cards: Array<{ __typename?: 'Card', id: string }> } };
+
+export type BulkUpdateCardPropertiesMutationVariables = Exact<{
+  input: BulkUpdateCardPropertiesInput;
+}>;
+
+export type BulkUpdateCardPropertiesMutation = { __typename?: 'Mutation', bulkUpdateCardProperties: { __typename?: 'BulkCardResult', successCount: number, totalCount: number, cards: Array<{ __typename?: 'Card', id: string }> } };
+
+export type BulkTagCardsMutationVariables = Exact<{
+  input: BulkTagCardsInput;
+}>;
+
+export type BulkTagCardsMutation = { __typename?: 'Mutation', bulkTagCards: { __typename?: 'BulkCardResult', successCount: number, totalCount: number, cards: Array<{ __typename?: 'Card', id: string }> } };
+
+export type BulkDeleteCardsMutationVariables = Exact<{
+  input: BulkDeleteCardsInput;
+}>;
+
+export type BulkDeleteCardsMutation = { __typename?: 'Mutation', bulkDeleteCards: boolean };
+
+export type BulkMoveCardsToBacklogMutationVariables = Exact<{
+  input: BulkMoveCardsToBacklogInput;
+}>;
+
+export type BulkMoveCardsToBacklogMutation = { __typename?: 'Mutation', bulkMoveCardsToBacklog: { __typename?: 'BulkCardResult', successCount: number, totalCount: number, cards: Array<{ __typename?: 'Card', id: string }> } };

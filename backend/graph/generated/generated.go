@@ -119,6 +119,12 @@ type ComplexityRoot struct {
 		WipLimit  func(childComplexity int) int
 	}
 
+	BulkCardResult struct {
+		Cards        func(childComplexity int) int
+		SuccessCount func(childComplexity int) int
+		TotalCount   func(childComplexity int) int
+	}
+
 	BurnDownData struct {
 		ActualLine func(childComplexity int) int
 		EndDate    func(childComplexity int) int
@@ -186,55 +192,61 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptInvitation        func(childComplexity int, token string) int
-		AddCardToSprint         func(childComplexity int, input model.MoveCardToSprintInput) int
-		AssignProjectRole       func(childComplexity int, input model.AssignProjectRoleInput) int
-		CancelInvitation        func(childComplexity int, id string) int
-		ChangeMemberRole        func(childComplexity int, organizationID string, input model.ChangeMemberRoleInput) int
-		CompleteSprint          func(childComplexity int, id string, moveIncompleteToNextSprint *bool) int
-		CreateBoard             func(childComplexity int, input model.CreateBoardInput) int
-		CreateCard              func(childComplexity int, input model.CreateCardInput) int
-		CreateColumn            func(childComplexity int, input model.CreateColumnInput) int
-		CreateOrganization      func(childComplexity int, input model.CreateOrganizationInput) int
-		CreateProject           func(childComplexity int, input model.CreateProjectInput) int
-		CreateRole              func(childComplexity int, input model.CreateRoleInput) int
-		CreateSprint            func(childComplexity int, input model.CreateSprintInput) int
-		CreateTag               func(childComplexity int, input model.CreateTagInput) int
-		DeleteBoard             func(childComplexity int, id string) int
-		DeleteCard              func(childComplexity int, id string) int
-		DeleteColumn            func(childComplexity int, id string) int
-		DeleteOrganization      func(childComplexity int, id string) int
-		DeleteProject           func(childComplexity int, id string) int
-		DeleteRole              func(childComplexity int, id string) int
-		DeleteSprint            func(childComplexity int, id string) int
-		DeleteTag               func(childComplexity int, id string) int
-		InviteMember            func(childComplexity int, input model.InviteMemberInput) int
-		Login                   func(childComplexity int, input model.LoginInput) int
-		Logout                  func(childComplexity int) int
-		MoveCard                func(childComplexity int, input model.MoveCardInput) int
-		MoveCardToBacklog       func(childComplexity int, cardID string) int
-		RefreshToken            func(childComplexity int) int
-		Register                func(childComplexity int, input model.RegisterInput) int
-		RemoveCardFromSprint    func(childComplexity int, input model.MoveCardToSprintInput) int
-		RemoveMember            func(childComplexity int, organizationID string, userID string) int
-		RemoveProjectMember     func(childComplexity int, projectID string, userID string) int
-		ReopenSprint            func(childComplexity int, id string) int
-		ReorderColumns          func(childComplexity int, input model.ReorderColumnsInput) int
-		ResendInvitation        func(childComplexity int, id string) int
-		ResendVerificationEmail func(childComplexity int) int
-		SetCardSprints          func(childComplexity int, cardID string, sprintIds []string) int
-		StartSprint             func(childComplexity int, id string) int
-		ToggleColumnVisibility  func(childComplexity int, id string) int
-		UpdateBoard             func(childComplexity int, input model.UpdateBoardInput) int
-		UpdateCard              func(childComplexity int, input model.UpdateCardInput) int
-		UpdateColumn            func(childComplexity int, input model.UpdateColumnInput) int
-		UpdateMe                func(childComplexity int, input model.UpdateMeInput) int
-		UpdateOrganization      func(childComplexity int, input model.UpdateOrganizationInput) int
-		UpdateProject           func(childComplexity int, input model.UpdateProjectInput) int
-		UpdateRole              func(childComplexity int, input model.UpdateRoleInput) int
-		UpdateSprint            func(childComplexity int, id string, input model.UpdateSprintInput) int
-		UpdateTag               func(childComplexity int, input model.UpdateTagInput) int
-		VerifyEmail             func(childComplexity int, token string) int
+		AcceptInvitation         func(childComplexity int, token string) int
+		AddCardToSprint          func(childComplexity int, input model.MoveCardToSprintInput) int
+		AssignProjectRole        func(childComplexity int, input model.AssignProjectRoleInput) int
+		BulkDeleteCards          func(childComplexity int, input model.BulkDeleteCardsInput) int
+		BulkMoveCardsToBacklog   func(childComplexity int, input model.BulkMoveCardsToBacklogInput) int
+		BulkMoveCardsToColumn    func(childComplexity int, input model.BulkMoveCardsToColumnInput) int
+		BulkTagCards             func(childComplexity int, input model.BulkTagCardsInput) int
+		BulkUpdateCardProperties func(childComplexity int, input model.BulkUpdateCardPropertiesInput) int
+		BulkUpdateCardSprints    func(childComplexity int, input model.BulkUpdateCardSprintsInput) int
+		CancelInvitation         func(childComplexity int, id string) int
+		ChangeMemberRole         func(childComplexity int, organizationID string, input model.ChangeMemberRoleInput) int
+		CompleteSprint           func(childComplexity int, id string, moveIncompleteToNextSprint *bool) int
+		CreateBoard              func(childComplexity int, input model.CreateBoardInput) int
+		CreateCard               func(childComplexity int, input model.CreateCardInput) int
+		CreateColumn             func(childComplexity int, input model.CreateColumnInput) int
+		CreateOrganization       func(childComplexity int, input model.CreateOrganizationInput) int
+		CreateProject            func(childComplexity int, input model.CreateProjectInput) int
+		CreateRole               func(childComplexity int, input model.CreateRoleInput) int
+		CreateSprint             func(childComplexity int, input model.CreateSprintInput) int
+		CreateTag                func(childComplexity int, input model.CreateTagInput) int
+		DeleteBoard              func(childComplexity int, id string) int
+		DeleteCard               func(childComplexity int, id string) int
+		DeleteColumn             func(childComplexity int, id string) int
+		DeleteOrganization       func(childComplexity int, id string) int
+		DeleteProject            func(childComplexity int, id string) int
+		DeleteRole               func(childComplexity int, id string) int
+		DeleteSprint             func(childComplexity int, id string) int
+		DeleteTag                func(childComplexity int, id string) int
+		InviteMember             func(childComplexity int, input model.InviteMemberInput) int
+		Login                    func(childComplexity int, input model.LoginInput) int
+		Logout                   func(childComplexity int) int
+		MoveCard                 func(childComplexity int, input model.MoveCardInput) int
+		MoveCardToBacklog        func(childComplexity int, cardID string) int
+		RefreshToken             func(childComplexity int) int
+		Register                 func(childComplexity int, input model.RegisterInput) int
+		RemoveCardFromSprint     func(childComplexity int, input model.MoveCardToSprintInput) int
+		RemoveMember             func(childComplexity int, organizationID string, userID string) int
+		RemoveProjectMember      func(childComplexity int, projectID string, userID string) int
+		ReopenSprint             func(childComplexity int, id string) int
+		ReorderColumns           func(childComplexity int, input model.ReorderColumnsInput) int
+		ResendInvitation         func(childComplexity int, id string) int
+		ResendVerificationEmail  func(childComplexity int) int
+		SetCardSprints           func(childComplexity int, cardID string, sprintIds []string) int
+		StartSprint              func(childComplexity int, id string) int
+		ToggleColumnVisibility   func(childComplexity int, id string) int
+		UpdateBoard              func(childComplexity int, input model.UpdateBoardInput) int
+		UpdateCard               func(childComplexity int, input model.UpdateCardInput) int
+		UpdateColumn             func(childComplexity int, input model.UpdateColumnInput) int
+		UpdateMe                 func(childComplexity int, input model.UpdateMeInput) int
+		UpdateOrganization       func(childComplexity int, input model.UpdateOrganizationInput) int
+		UpdateProject            func(childComplexity int, input model.UpdateProjectInput) int
+		UpdateRole               func(childComplexity int, input model.UpdateRoleInput) int
+		UpdateSprint             func(childComplexity int, id string, input model.UpdateSprintInput) int
+		UpdateTag                func(childComplexity int, input model.UpdateTagInput) int
+		VerifyEmail              func(childComplexity int, token string) int
 	}
 
 	OIDCProvider struct {
@@ -524,6 +536,12 @@ type MutationResolver interface {
 	RemoveCardFromSprint(ctx context.Context, input model.MoveCardToSprintInput) (*model.Card, error)
 	SetCardSprints(ctx context.Context, cardID string, sprintIds []string) (*model.Card, error)
 	MoveCardToBacklog(ctx context.Context, cardID string) (*model.Card, error)
+	BulkMoveCardsToColumn(ctx context.Context, input model.BulkMoveCardsToColumnInput) (*model.BulkCardResult, error)
+	BulkUpdateCardSprints(ctx context.Context, input model.BulkUpdateCardSprintsInput) (*model.BulkCardResult, error)
+	BulkUpdateCardProperties(ctx context.Context, input model.BulkUpdateCardPropertiesInput) (*model.BulkCardResult, error)
+	BulkTagCards(ctx context.Context, input model.BulkTagCardsInput) (*model.BulkCardResult, error)
+	BulkDeleteCards(ctx context.Context, input model.BulkDeleteCardsInput) (bool, error)
+	BulkMoveCardsToBacklog(ctx context.Context, input model.BulkMoveCardsToBacklogInput) (*model.BulkCardResult, error)
 }
 type OrganizationMemberResolver interface {
 	User(ctx context.Context, obj *model.OrganizationMember) (*model.User, error)
@@ -908,6 +926,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BoardColumn.WipLimit(childComplexity), true
 
+	case "BulkCardResult.cards":
+		if e.complexity.BulkCardResult.Cards == nil {
+			break
+		}
+
+		return e.complexity.BulkCardResult.Cards(childComplexity), true
+
+	case "BulkCardResult.successCount":
+		if e.complexity.BulkCardResult.SuccessCount == nil {
+			break
+		}
+
+		return e.complexity.BulkCardResult.SuccessCount(childComplexity), true
+
+	case "BulkCardResult.totalCount":
+		if e.complexity.BulkCardResult.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.BulkCardResult.TotalCount(childComplexity), true
+
 	case "BurnDownData.actualLine":
 		if e.complexity.BurnDownData.ActualLine == nil {
 			break
@@ -1258,6 +1297,78 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AssignProjectRole(childComplexity, args["input"].(model.AssignProjectRoleInput)), true
+
+	case "Mutation.bulkDeleteCards":
+		if e.complexity.Mutation.BulkDeleteCards == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkDeleteCards_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkDeleteCards(childComplexity, args["input"].(model.BulkDeleteCardsInput)), true
+
+	case "Mutation.bulkMoveCardsToBacklog":
+		if e.complexity.Mutation.BulkMoveCardsToBacklog == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkMoveCardsToBacklog_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkMoveCardsToBacklog(childComplexity, args["input"].(model.BulkMoveCardsToBacklogInput)), true
+
+	case "Mutation.bulkMoveCardsToColumn":
+		if e.complexity.Mutation.BulkMoveCardsToColumn == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkMoveCardsToColumn_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkMoveCardsToColumn(childComplexity, args["input"].(model.BulkMoveCardsToColumnInput)), true
+
+	case "Mutation.bulkTagCards":
+		if e.complexity.Mutation.BulkTagCards == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkTagCards_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkTagCards(childComplexity, args["input"].(model.BulkTagCardsInput)), true
+
+	case "Mutation.bulkUpdateCardProperties":
+		if e.complexity.Mutation.BulkUpdateCardProperties == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkUpdateCardProperties_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkUpdateCardProperties(childComplexity, args["input"].(model.BulkUpdateCardPropertiesInput)), true
+
+	case "Mutation.bulkUpdateCardSprints":
+		if e.complexity.Mutation.BulkUpdateCardSprints == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_bulkUpdateCardSprints_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BulkUpdateCardSprints(childComplexity, args["input"].(model.BulkUpdateCardSprintsInput)), true
 
 	case "Mutation.cancelInvitation":
 		if e.complexity.Mutation.CancelInvitation == nil {
@@ -2983,6 +3094,12 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputAssignProjectRoleInput,
 		ec.unmarshalInputAuditFilters,
+		ec.unmarshalInputBulkDeleteCardsInput,
+		ec.unmarshalInputBulkMoveCardsToBacklogInput,
+		ec.unmarshalInputBulkMoveCardsToColumnInput,
+		ec.unmarshalInputBulkTagCardsInput,
+		ec.unmarshalInputBulkUpdateCardPropertiesInput,
+		ec.unmarshalInputBulkUpdateCardSprintsInput,
 		ec.unmarshalInputChangeMemberRoleInput,
 		ec.unmarshalInputCreateBoardInput,
 		ec.unmarshalInputCreateCardInput,
@@ -3411,6 +3528,20 @@ type Mutation {
     setCardSprints(cardId: ID!, sprintIds: [ID!]!): Card!
     "Move a card to backlog (remove from all sprints)"
     moveCardToBacklog(cardId: ID!): Card!
+
+    # Bulk Card Mutations
+    "Move multiple cards to a column"
+    bulkMoveCardsToColumn(input: BulkMoveCardsToColumnInput!): BulkCardResult!
+    "Add or remove multiple cards from a sprint"
+    bulkUpdateCardSprints(input: BulkUpdateCardSprintsInput!): BulkCardResult!
+    "Update properties on multiple cards"
+    bulkUpdateCardProperties(input: BulkUpdateCardPropertiesInput!): BulkCardResult!
+    "Add, remove, or set tags on multiple cards"
+    bulkTagCards(input: BulkTagCardsInput!): BulkCardResult!
+    "Delete multiple cards"
+    bulkDeleteCards(input: BulkDeleteCardsInput!): Boolean!
+    "Move multiple cards to backlog (remove from all sprints)"
+    bulkMoveCardsToBacklog(input: BulkMoveCardsToBacklogInput!): BulkCardResult!
 }
 `, BuiltIn: false},
 	{Name: "../types.graphqls", Input: `type User {
@@ -3881,6 +4012,55 @@ type SprintStats {
     daysRemaining: Int!
     daysElapsed: Int!
 }
+
+# Bulk Card Operations
+type BulkCardResult {
+    successCount: Int!
+    totalCount: Int!
+    cards: [Card!]!
+}
+
+enum TagOperation { ADD REMOVE SET }
+
+input BulkMoveCardsToColumnInput {
+    cardIds: [ID!]!
+    targetColumnId: ID!
+    boardId: ID!
+}
+
+input BulkUpdateCardSprintsInput {
+    cardIds: [ID!]!
+    sprintId: ID!
+    boardId: ID!
+    add: Boolean!
+}
+
+input BulkUpdateCardPropertiesInput {
+    cardIds: [ID!]!
+    boardId: ID!
+    priority: CardPriority
+    assigneeId: ID
+    clearAssignee: Boolean
+    storyPoints: Int
+    clearStoryPoints: Boolean
+}
+
+input BulkTagCardsInput {
+    cardIds: [ID!]!
+    boardId: ID!
+    tagIds: [ID!]!
+    operation: TagOperation!
+}
+
+input BulkDeleteCardsInput {
+    cardIds: [ID!]!
+    boardId: ID!
+}
+
+input BulkMoveCardsToBacklogInput {
+    cardIds: [ID!]!
+    boardId: ID!
+}
 `, BuiltIn: false},
 	{Name: "../../federation/directives.graphql", Input: `
 	directive @key(fields: _FieldSet!) repeatable on OBJECT | INTERFACE
@@ -4001,6 +4181,96 @@ func (ec *executionContext) field_Mutation_assignProjectRole_args(ctx context.Co
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNAssignProjectRoleInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐAssignProjectRoleInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkDeleteCards_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.BulkDeleteCardsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNBulkDeleteCardsInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkDeleteCardsInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkMoveCardsToBacklog_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.BulkMoveCardsToBacklogInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNBulkMoveCardsToBacklogInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkMoveCardsToBacklogInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkMoveCardsToColumn_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.BulkMoveCardsToColumnInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNBulkMoveCardsToColumnInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkMoveCardsToColumnInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkTagCards_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.BulkTagCardsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNBulkTagCardsInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkTagCardsInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkUpdateCardProperties_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.BulkUpdateCardPropertiesInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNBulkUpdateCardPropertiesInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkUpdateCardPropertiesInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_bulkUpdateCardSprints_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.BulkUpdateCardSprintsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNBulkUpdateCardSprintsInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkUpdateCardSprintsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7587,6 +7857,170 @@ func (ec *executionContext) fieldContext_BoardColumn_updatedAt(ctx context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BulkCardResult_successCount(ctx context.Context, field graphql.CollectedField, obj *model.BulkCardResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BulkCardResult_successCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SuccessCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BulkCardResult_successCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BulkCardResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BulkCardResult_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.BulkCardResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BulkCardResult_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BulkCardResult_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BulkCardResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BulkCardResult_cards(ctx context.Context, field graphql.CollectedField, obj *model.BulkCardResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BulkCardResult_cards(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cards, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚕᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BulkCardResult_cards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BulkCardResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "column":
+				return ec.fieldContext_Card_column(ctx, field)
+			case "board":
+				return ec.fieldContext_Card_board(ctx, field)
+			case "sprints":
+				return ec.fieldContext_Card_sprints(ctx, field)
+			case "title":
+				return ec.fieldContext_Card_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Card_description(ctx, field)
+			case "position":
+				return ec.fieldContext_Card_position(ctx, field)
+			case "priority":
+				return ec.fieldContext_Card_priority(ctx, field)
+			case "assignee":
+				return ec.fieldContext_Card_assignee(ctx, field)
+			case "tags":
+				return ec.fieldContext_Card_tags(ctx, field)
+			case "dueDate":
+				return ec.fieldContext_Card_dueDate(ctx, field)
+			case "storyPoints":
+				return ec.fieldContext_Card_storyPoints(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Card_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Card_updatedAt(ctx, field)
+			case "createdBy":
+				return ec.fieldContext_Card_createdBy(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
 		},
 	}
 	return fc, nil
@@ -13185,6 +13619,376 @@ func (ec *executionContext) fieldContext_Mutation_moveCardToBacklog(ctx context.
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_moveCardToBacklog_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkMoveCardsToColumn(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkMoveCardsToColumn(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkMoveCardsToColumn(rctx, fc.Args["input"].(model.BulkMoveCardsToColumnInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.BulkCardResult)
+	fc.Result = res
+	return ec.marshalNBulkCardResult2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkCardResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkMoveCardsToColumn(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "successCount":
+				return ec.fieldContext_BulkCardResult_successCount(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_BulkCardResult_totalCount(ctx, field)
+			case "cards":
+				return ec.fieldContext_BulkCardResult_cards(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BulkCardResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkMoveCardsToColumn_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkUpdateCardSprints(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkUpdateCardSprints(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkUpdateCardSprints(rctx, fc.Args["input"].(model.BulkUpdateCardSprintsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.BulkCardResult)
+	fc.Result = res
+	return ec.marshalNBulkCardResult2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkCardResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkUpdateCardSprints(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "successCount":
+				return ec.fieldContext_BulkCardResult_successCount(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_BulkCardResult_totalCount(ctx, field)
+			case "cards":
+				return ec.fieldContext_BulkCardResult_cards(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BulkCardResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkUpdateCardSprints_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkUpdateCardProperties(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkUpdateCardProperties(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkUpdateCardProperties(rctx, fc.Args["input"].(model.BulkUpdateCardPropertiesInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.BulkCardResult)
+	fc.Result = res
+	return ec.marshalNBulkCardResult2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkCardResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkUpdateCardProperties(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "successCount":
+				return ec.fieldContext_BulkCardResult_successCount(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_BulkCardResult_totalCount(ctx, field)
+			case "cards":
+				return ec.fieldContext_BulkCardResult_cards(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BulkCardResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkUpdateCardProperties_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkTagCards(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkTagCards(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkTagCards(rctx, fc.Args["input"].(model.BulkTagCardsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.BulkCardResult)
+	fc.Result = res
+	return ec.marshalNBulkCardResult2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkCardResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkTagCards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "successCount":
+				return ec.fieldContext_BulkCardResult_successCount(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_BulkCardResult_totalCount(ctx, field)
+			case "cards":
+				return ec.fieldContext_BulkCardResult_cards(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BulkCardResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkTagCards_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkDeleteCards(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkDeleteCards(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkDeleteCards(rctx, fc.Args["input"].(model.BulkDeleteCardsInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkDeleteCards(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkDeleteCards_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_bulkMoveCardsToBacklog(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_bulkMoveCardsToBacklog(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BulkMoveCardsToBacklog(rctx, fc.Args["input"].(model.BulkMoveCardsToBacklogInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.BulkCardResult)
+	fc.Result = res
+	return ec.marshalNBulkCardResult2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkCardResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_bulkMoveCardsToBacklog(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "successCount":
+				return ec.fieldContext_BulkCardResult_successCount(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_BulkCardResult_totalCount(ctx, field)
+			case "cards":
+				return ec.fieldContext_BulkCardResult_cards(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BulkCardResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_bulkMoveCardsToBacklog_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -22850,6 +23654,324 @@ func (ec *executionContext) unmarshalInputAuditFilters(ctx context.Context, obj 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputBulkDeleteCardsInput(ctx context.Context, obj interface{}) (model.BulkDeleteCardsInput, error) {
+	var it model.BulkDeleteCardsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cardIds", "boardId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cardIds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardIds"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CardIds = data
+		case "boardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BoardID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBulkMoveCardsToBacklogInput(ctx context.Context, obj interface{}) (model.BulkMoveCardsToBacklogInput, error) {
+	var it model.BulkMoveCardsToBacklogInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cardIds", "boardId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cardIds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardIds"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CardIds = data
+		case "boardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BoardID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBulkMoveCardsToColumnInput(ctx context.Context, obj interface{}) (model.BulkMoveCardsToColumnInput, error) {
+	var it model.BulkMoveCardsToColumnInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cardIds", "targetColumnId", "boardId"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cardIds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardIds"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CardIds = data
+		case "targetColumnId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetColumnId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TargetColumnID = data
+		case "boardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BoardID = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBulkTagCardsInput(ctx context.Context, obj interface{}) (model.BulkTagCardsInput, error) {
+	var it model.BulkTagCardsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cardIds", "boardId", "tagIds", "operation"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cardIds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardIds"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CardIds = data
+		case "boardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BoardID = data
+		case "tagIds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("tagIds"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.TagIds = data
+		case "operation":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("operation"))
+			data, err := ec.unmarshalNTagOperation2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTagOperation(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Operation = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBulkUpdateCardPropertiesInput(ctx context.Context, obj interface{}) (model.BulkUpdateCardPropertiesInput, error) {
+	var it model.BulkUpdateCardPropertiesInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cardIds", "boardId", "priority", "assigneeId", "clearAssignee", "storyPoints", "clearStoryPoints"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cardIds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardIds"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CardIds = data
+		case "boardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BoardID = data
+		case "priority":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("priority"))
+			data, err := ec.unmarshalOCardPriority2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCardPriority(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Priority = data
+		case "assigneeId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("assigneeId"))
+			data, err := ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.AssigneeID = data
+		case "clearAssignee":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearAssignee"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearAssignee = data
+		case "storyPoints":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("storyPoints"))
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.StoryPoints = data
+		case "clearStoryPoints":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("clearStoryPoints"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ClearStoryPoints = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBulkUpdateCardSprintsInput(ctx context.Context, obj interface{}) (model.BulkUpdateCardSprintsInput, error) {
+	var it model.BulkUpdateCardSprintsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"cardIds", "sprintId", "boardId", "add"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "cardIds":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("cardIds"))
+			data, err := ec.unmarshalNID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.CardIds = data
+		case "sprintId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sprintId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SprintID = data
+		case "boardId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boardId"))
+			data, err := ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BoardID = data
+		case "add":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("add"))
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Add = data
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputChangeMemberRoleInput(ctx context.Context, obj interface{}) (model.ChangeMemberRoleInput, error) {
 	var it model.ChangeMemberRoleInput
 	asMap := map[string]interface{}{}
@@ -24758,6 +25880,55 @@ func (ec *executionContext) _BoardColumn(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var bulkCardResultImplementors = []string{"BulkCardResult"}
+
+func (ec *executionContext) _BulkCardResult(ctx context.Context, sel ast.SelectionSet, obj *model.BulkCardResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bulkCardResultImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BulkCardResult")
+		case "successCount":
+			out.Values[i] = ec._BulkCardResult_successCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "totalCount":
+			out.Values[i] = ec._BulkCardResult_totalCount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "cards":
+			out.Values[i] = ec._BulkCardResult_cards(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var burnDownDataImplementors = []string{"BurnDownData"}
 
 func (ec *executionContext) _BurnDownData(ctx context.Context, sel ast.SelectionSet, obj *model.BurnDownData) graphql.Marshaler {
@@ -25843,6 +27014,48 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "moveCardToBacklog":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_moveCardToBacklog(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkMoveCardsToColumn":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkMoveCardsToColumn(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkUpdateCardSprints":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkUpdateCardSprints(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkUpdateCardProperties":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkUpdateCardProperties(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkTagCards":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkTagCards(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkDeleteCards":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkDeleteCards(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bulkMoveCardsToBacklog":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_bulkMoveCardsToBacklog(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -28851,6 +30064,50 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNBulkCardResult2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkCardResult(ctx context.Context, sel ast.SelectionSet, v model.BulkCardResult) graphql.Marshaler {
+	return ec._BulkCardResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBulkCardResult2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkCardResult(ctx context.Context, sel ast.SelectionSet, v *model.BulkCardResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BulkCardResult(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNBulkDeleteCardsInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkDeleteCardsInput(ctx context.Context, v interface{}) (model.BulkDeleteCardsInput, error) {
+	res, err := ec.unmarshalInputBulkDeleteCardsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNBulkMoveCardsToBacklogInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkMoveCardsToBacklogInput(ctx context.Context, v interface{}) (model.BulkMoveCardsToBacklogInput, error) {
+	res, err := ec.unmarshalInputBulkMoveCardsToBacklogInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNBulkMoveCardsToColumnInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkMoveCardsToColumnInput(ctx context.Context, v interface{}) (model.BulkMoveCardsToColumnInput, error) {
+	res, err := ec.unmarshalInputBulkMoveCardsToColumnInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNBulkTagCardsInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkTagCardsInput(ctx context.Context, v interface{}) (model.BulkTagCardsInput, error) {
+	res, err := ec.unmarshalInputBulkTagCardsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNBulkUpdateCardPropertiesInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkUpdateCardPropertiesInput(ctx context.Context, v interface{}) (model.BulkUpdateCardPropertiesInput, error) {
+	res, err := ec.unmarshalInputBulkUpdateCardPropertiesInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNBulkUpdateCardSprintsInput2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐBulkUpdateCardSprintsInput(ctx context.Context, v interface{}) (model.BulkUpdateCardSprintsInput, error) {
+	res, err := ec.unmarshalInputBulkUpdateCardSprintsInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNCard2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐCard(ctx context.Context, sel ast.SelectionSet, v model.Card) graphql.Marshaler {
 	return ec._Card(ctx, sel, &v)
 }
@@ -30072,6 +31329,16 @@ func (ec *executionContext) marshalNTag2ᚖgithubᚗcomᚋthatcatdevᚋkaimuᚋb
 		return graphql.Null
 	}
 	return ec._Tag(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTagOperation2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTagOperation(ctx context.Context, v interface{}) (model.TagOperation, error) {
+	var res model.TagOperation
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTagOperation2githubᚗcomᚋthatcatdevᚋkaimuᚋbackendᚋgraphᚋmodelᚐTagOperation(ctx context.Context, sel ast.SelectionSet, v model.TagOperation) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {

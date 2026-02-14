@@ -42,6 +42,20 @@ func (m *MockRepository) EXPECT() *MockRepositoryMockRecorder {
 	return m.recorder
 }
 
+// AddTagsToCards mocks base method.
+func (m *MockRepository) AddTagsToCards(ctx context.Context, cardIDs, tagIDs []uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddTagsToCards", ctx, cardIDs, tagIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddTagsToCards indicates an expected call of AddTagsToCards.
+func (mr *MockRepositoryMockRecorder) AddTagsToCards(ctx, cardIDs, tagIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddTagsToCards", reflect.TypeOf((*MockRepository)(nil).AddTagsToCards), ctx, cardIDs, tagIDs)
+}
+
 // Create mocks base method.
 func (m *MockRepository) Create(ctx context.Context, cardTag *card_tag.CardTag) error {
 	m.ctrl.T.Helper()
@@ -114,6 +128,20 @@ func (mr *MockRepositoryMockRecorder) GetByTagID(ctx, tagID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByTagID", reflect.TypeOf((*MockRepository)(nil).GetByTagID), ctx, tagID)
 }
 
+// RemoveTagsFromCards mocks base method.
+func (m *MockRepository) RemoveTagsFromCards(ctx context.Context, cardIDs, tagIDs []uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveTagsFromCards", ctx, cardIDs, tagIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveTagsFromCards indicates an expected call of RemoveTagsFromCards.
+func (mr *MockRepositoryMockRecorder) RemoveTagsFromCards(ctx, cardIDs, tagIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveTagsFromCards", reflect.TypeOf((*MockRepository)(nil).RemoveTagsFromCards), ctx, cardIDs, tagIDs)
+}
+
 // SetTagsForCard mocks base method.
 func (m *MockRepository) SetTagsForCard(ctx context.Context, cardID uuid.UUID, tagIDs []uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -126,4 +154,18 @@ func (m *MockRepository) SetTagsForCard(ctx context.Context, cardID uuid.UUID, t
 func (mr *MockRepositoryMockRecorder) SetTagsForCard(ctx, cardID, tagIDs any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTagsForCard", reflect.TypeOf((*MockRepository)(nil).SetTagsForCard), ctx, cardID, tagIDs)
+}
+
+// SetTagsForCards mocks base method.
+func (m *MockRepository) SetTagsForCards(ctx context.Context, cardIDs, tagIDs []uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetTagsForCards", ctx, cardIDs, tagIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SetTagsForCards indicates an expected call of SetTagsForCards.
+func (mr *MockRepositoryMockRecorder) SetTagsForCards(ctx, cardIDs, tagIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetTagsForCards", reflect.TypeOf((*MockRepository)(nil).SetTagsForCards), ctx, cardIDs, tagIDs)
 }
