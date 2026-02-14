@@ -117,7 +117,7 @@
 </script>
 
 <div
-  class="group relative w-full text-left rounded-lg shadow-sm border p-4 transition-shadow bg-white cursor-pointer {isSelected ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200 hover:shadow-md'} {priorityStyle === 'border' && card.priority !== CardPriority.None ? `border-l-4 ${priorityColors[card.priority]}` : ''}"
+  class="group relative w-full text-left rounded-lg shadow-sm border p-4 transition-all bg-white cursor-pointer {isSelected ? 'border-indigo-500 ring-2 ring-indigo-200' : isSelectionMode ? 'border-indigo-200 hover:border-indigo-400' : 'border-gray-200 hover:shadow-md'} {priorityStyle === 'border' && card.priority !== CardPriority.None ? `border-l-4 ${priorityColors[card.priority]}` : ''}"
   onclick={(e) => handleClick(e)}
   onkeydown={handleKeydown}
   role="button"
@@ -153,7 +153,7 @@
     </div>
   {/if}
 
-  <h4 class="text-sm font-medium text-gray-900 mb-1 pr-16 {isSelectionMode ? 'pl-6' : ''}">{card.title}</h4>
+  <h4 class="text-sm font-medium text-gray-900 mb-1 pr-16">{card.title}</h4>
 
   {#if card.tags && card.tags.length > 0}
     <div class="flex flex-wrap gap-1 mb-2">
