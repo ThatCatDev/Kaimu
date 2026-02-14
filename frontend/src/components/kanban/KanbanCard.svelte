@@ -14,7 +14,7 @@
     // Selection mode props
     isSelectionMode?: boolean;
     isSelected?: boolean;
-    onToggleSelect?: (card: BoardCard) => void;
+    onToggleSelect?: (card: BoardCard, shiftKey?: boolean) => void;
   }
 
   let {
@@ -79,9 +79,9 @@
     return date < today;
   }
 
-  function handleClick() {
+  function handleClick(e?: MouseEvent) {
     if (isSelectionMode) {
-      onToggleSelect?.(card);
+      onToggleSelect?.(card, e?.shiftKey);
       return;
     }
     if (onCardClick) {
@@ -118,23 +118,11 @@
 
 <div
   class="group relative w-full text-left rounded-lg shadow-sm border p-4 transition-shadow bg-white cursor-pointer {isSelected ? 'border-indigo-500 ring-2 ring-indigo-200' : 'border-gray-200 hover:shadow-md'} {priorityStyle === 'border' && card.priority !== CardPriority.None ? `border-l-4 ${priorityColors[card.priority]}` : ''}"
-  onclick={handleClick}
+  onclick={(e) => handleClick(e)}
   onkeydown={handleKeydown}
   role="button"
   tabindex="0"
 >
-  <!-- Selection checkbox -->
-  {#if isSelectionMode}
-    <div class="absolute top-3 left-3 z-10">
-      <input
-        type="checkbox"
-        checked={isSelected}
-        onclick={(e) => { e.stopPropagation(); onToggleSelect?.(card); }}
-        class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-      />
-    </div>
-  {/if}
-
   <!-- Quick actions - simple icons that appear on hover, permission-gated -->
   {#if !isSelectionMode && (canEditCard || canDeleteCard)}
     <div class="absolute top-3 right-3 hidden group-hover:flex gap-1 z-10">

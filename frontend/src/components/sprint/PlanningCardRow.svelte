@@ -11,7 +11,7 @@
     onMoveToBacklog?: (cardId: string) => void;
     isSelectionMode?: boolean;
     isSelected?: boolean;
-    onToggleSelect?: (card: SprintCard) => void;
+    onToggleSelect?: (card: SprintCard, shiftKey?: boolean) => void;
   }
 
   let {
@@ -71,7 +71,7 @@
     // Don't trigger card click if clicking dropdown
     if ((e.target as HTMLElement).closest('[data-dropdown]')) return;
     if (isSelectionMode) {
-      onToggleSelect?.(card);
+      onToggleSelect?.(card, e.shiftKey);
       return;
     }
     onCardClick?.(card);
@@ -85,18 +85,6 @@
   onclick={handleRowClick}
   onkeydown={(e) => e.key === 'Enter' && (isSelectionMode ? onToggleSelect?.(card) : onCardClick?.(card))}
 >
-  <!-- Selection checkbox -->
-  {#if isSelectionMode}
-    <div class="flex-shrink-0">
-      <input
-        type="checkbox"
-        checked={isSelected}
-        onclick={(e) => { e.stopPropagation(); onToggleSelect?.(card); }}
-        class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-      />
-    </div>
-  {/if}
-
   <!-- Title -->
   <div class="flex-1 min-w-0">
     <p class="text-sm font-medium text-gray-900 truncate" title={card.title}>

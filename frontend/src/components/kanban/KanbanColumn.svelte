@@ -8,6 +8,7 @@
     column: BoardColumn;
     cards: BoardCard[];
     onCardMove: (cardId: string, columnId: string, afterCardId: string | null) => void;
+    onBulkCardMove?: (cardIds: string[], columnId: string) => void;
     onCardClick?: (card: BoardCard) => void;
     onAddCard?: (columnId: string) => void;
     onRename?: () => void;
@@ -26,13 +27,14 @@
     // Selection mode props
     isSelectionMode?: boolean;
     selectedCardIds?: Set<string>;
-    onToggleSelect?: (card: BoardCard) => void;
+    onToggleSelect?: (card: BoardCard, shiftKey?: boolean) => void;
   }
 
   let {
     column,
     cards,
     onCardMove,
+    onBulkCardMove,
     onCardClick,
     onAddCard,
     onRename,
@@ -53,18 +55,52 @@
   }: Props = $props();
 
   let items = $state(cards.map(card => ({ ...card, id: card.id })));
+  let bulkDragActive = $state(false);
+  let bulkDragId = $state<string | null>(null);
 
-  // Sync items when cards prop changes
+  // Sync items when cards prop changes (e.g. after API refresh)
   $effect(() => {
     items = cards.map(card => ({ ...card, id: card.id }));
+    bulkDragActive = false;
+    bulkDragId = null;
   });
 
-  function handleConsider(e: CustomEvent<{ items: BoardCard[] }>) {
+  function handleConsider(e: CustomEvent<{ items: BoardCard[]; info: { id: string } }>) {
     items = e.detail.items;
+    const dragId = e.detail.info.id;
+
+    // Track bulk drag state (animation handles hiding via CSS)
+    if (isSelectionMode && selectedCardIds.has(dragId) && selectedCardIds.size > 1) {
+      bulkDragActive = true;
+      bulkDragId = dragId;
+    }
   }
 
-  function handleFinalize(e: CustomEvent<{ items: BoardCard[] }>) {
+  function handleFinalize(e: CustomEvent<{ items: BoardCard[]; info: { id: string } }>) {
     const newItems = e.detail.items;
+    const draggedCardId = e.detail.info.id;
+
+    const isFromThisColumn = cards.some(c => c.id === draggedCardId);
+    const isBulkDrag = isSelectionMode && selectedCardIds.has(draggedCardId) && selectedCardIds.size > 1;
+
+    // Target column: card dropped here from another column
+    if (isBulkDrag && onBulkCardMove && !isFromThisColumn) {
+      items = newItems;
+      onBulkCardMove(Array.from(selectedCardIds), column.id);
+      return; // bulkDragActive stays true until cards prop refreshes
+    }
+
+    // Source column: card dragged out
+    if (isBulkDrag && isFromThisColumn && !newItems.some(item => item.id === draggedCardId)) {
+      items = newItems;
+      return; // bulkDragActive stays true until cards prop refreshes
+    }
+
+    // Cancelled or within-column: reset animation and restore
+    bulkDragActive = false;
+    bulkDragId = null;
+
+    // Normal single-card move
     const movedCard = newItems.find((item, index) => {
       const originalIndex = cards.findIndex(c => c.id === item.id);
       return originalIndex !== index || cards[originalIndex]?.id !== newItems[index]?.id;
@@ -77,6 +113,53 @@
     }
 
     items = newItems;
+  }
+
+  function transformDraggedElement(element: HTMLElement, data: any) {
+    if (isSelectionMode && selectedCardIds.has(data.id) && selectedCardIds.size > 1) {
+      const count = selectedCardIds.size;
+      element.style.overflow = 'visible';
+
+      // Stacked card layers peeking out behind the dragged card
+      for (let i = 2; i >= 1; i--) {
+        const layer = document.createElement('div');
+        Object.assign(layer.style, {
+          position: 'absolute',
+          top: `${i * 4}px`,
+          left: `${i * 4}px`,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'white',
+          borderRadius: '0.5rem',
+          border: '1px solid #e5e7eb',
+          boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)',
+          pointerEvents: 'none',
+        });
+        element.insertBefore(layer, element.firstChild);
+      }
+
+      // Count badge
+      const badge = document.createElement('div');
+      badge.textContent = String(count);
+      Object.assign(badge.style, {
+        position: 'absolute',
+        top: '-8px',
+        right: '-8px',
+        width: '24px',
+        height: '24px',
+        borderRadius: '50%',
+        backgroundColor: '#6366f1',
+        color: 'white',
+        fontSize: '12px',
+        fontWeight: '600',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: '10',
+        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+      });
+      element.appendChild(badge);
+    }
   }
 
   function handleAddCard() {
@@ -117,15 +200,17 @@
       use:dndzone={{
         items,
         flipDurationMs: 200,
-        dropTargetStyle: canMoveCard && !isSelectionMode ? { outline: '2px dashed #6366f1', outlineOffset: '-2px' } : {},
-        dragDisabled: !canMoveCard || isSelectionMode,
+        dropTargetStyle: canMoveCard ? { outline: '2px dashed #6366f1', outlineOffset: '-2px' } : {},
+        dragDisabled: !canMoveCard,
         type: 'cards',
+        transformDraggedElement,
       }}
       onconsider={handleConsider}
       onfinalize={handleFinalize}
     >
       {#each items as card (card.id)}
-        <div class="mb-2">
+        {@const isScrunch = bulkDragActive && selectedCardIds.has(card.id) && card.id !== bulkDragId}
+        <div class="mb-2" class:bulk-scrunch={isScrunch}>
           <KanbanCard
             {card}
             {onCardClick}
@@ -164,3 +249,32 @@
     </div>
   {/if}
 </div>
+
+<style>
+  .bulk-scrunch {
+    animation: bulk-scrunch 200ms ease-out forwards;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  @keyframes bulk-scrunch {
+    0% {
+      transform: scale(1);
+      opacity: 1;
+      max-height: 200px;
+      margin-bottom: 0.5rem;
+    }
+    40% {
+      transform: scale(0.7);
+      opacity: 0;
+      max-height: 200px;
+      margin-bottom: 0.5rem;
+    }
+    100% {
+      transform: scale(0);
+      opacity: 0;
+      max-height: 0;
+      margin-bottom: 0;
+    }
+  }
+</style>

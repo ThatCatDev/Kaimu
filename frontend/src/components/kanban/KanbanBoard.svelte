@@ -29,6 +29,7 @@
     toggleSelectionMode,
     exitSelectionMode,
     toggleCardSelection,
+    selectCards,
     getSelectedCardIdsArray,
   } from '../../lib/stores/cardSelection.svelte';
   import EditableTitle from '../EditableTitle.svelte';
@@ -96,6 +97,26 @@
   let canMoveCard = $derived(permissions.includes(Permissions.CARD_MOVE));
   let canDeleteCard = $derived(permissions.includes(Permissions.CARD_DELETE));
 
+
+  // Shift-click range selection
+  let lastSelectedCardId: string | null = null;
+
+  function handleToggleSelect(card: BoardCard, shiftKey?: boolean) {
+    if (shiftKey && lastSelectedCardId) {
+      // Build flat list of all visible card IDs in column order
+      const allCardIds = columnItems.flatMap(col => col.cards.map(c => c.id));
+      const lastIdx = allCardIds.indexOf(lastSelectedCardId);
+      const currIdx = allCardIds.indexOf(card.id);
+      if (lastIdx !== -1 && currIdx !== -1) {
+        const start = Math.min(lastIdx, currIdx);
+        const end = Math.max(lastIdx, currIdx);
+        selectCards(allCardIds.slice(start, end + 1));
+        return;
+      }
+    }
+    toggleCardSelection(card.id);
+    lastSelectedCardId = card.id;
+  }
 
   // Filter cards based on sprint status:
   // - If active sprint: only show cards in the active sprint
@@ -503,6 +524,10 @@
     }
   }
 
+  async function handleBulkCardDragMove(_cardIds: string[], columnId: string) {
+    await handleBulkMoveToColumn(columnId);
+  }
+
   async function handleBulkAddToSprint(sprintId: string) {
     if (!board) return;
     try {
@@ -710,6 +735,7 @@
             {column}
             cards={column.cards}
             onCardMove={canMoveCard ? handleCardMove : () => {}}
+            onBulkCardMove={canMoveCard ? handleBulkCardDragMove : undefined}
             onCardClick={handleCardClick}
             onAddCard={canCreateCard ? handleAddCard : undefined}
             onRename={canManageBoard ? () => handleColumnRename(column) : undefined}
@@ -726,7 +752,7 @@
             {canDeleteCard}
             isSelectionMode={getIsSelectionMode()}
             selectedCardIds={getSelectedCardIds()}
-            onToggleSelect={(card) => toggleCardSelection(card.id)}
+            onToggleSelect={handleToggleSelect}
           />
         {/each}
 

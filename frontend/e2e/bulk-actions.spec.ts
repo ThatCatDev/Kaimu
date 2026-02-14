@@ -34,9 +34,6 @@ test.describe('Bulk Card Actions', () => {
     await page.getByRole('button', { name: 'Select', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Cancel', exact: true })).toBeVisible({ timeout: 5000 });
 
-    // Wait for checkboxes to appear
-    await expect(page.locator('input[type="checkbox"]').first()).toBeVisible({ timeout: 5000 });
-
     // Click on each card to select it (clicking the card toggles selection in selection mode)
     await page.getByText(`Select Card A ${ctx.testId}`).click();
     await page.getByText(`Select Card B ${ctx.testId}`).click();
