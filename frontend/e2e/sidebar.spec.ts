@@ -1,5 +1,21 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Locator } from '@playwright/test';
 import { setupTestEnvironment, navigateToBoard, randomId } from './helpers';
+
+/**
+ * Wait for the sidebar to finish loading organizations, then ensure
+ * the org is expanded (showing its projects). Handles two cases:
+ * 1. Org is collapsed → click "Expand" button
+ * 2. Org is already expanded (from sessionStorage or auto-expand) → no-op
+ */
+async function ensureOrgExpanded(sidebar: Locator, orgName: string, projectName: string) {
+  // Wait for org name to render (proves data has loaded)
+  await expect(sidebar.getByText(orgName)).toBeVisible({ timeout: 15000 });
+  // If project is already visible, org is already expanded
+  const alreadyExpanded = await sidebar.getByText(projectName).isVisible().catch(() => false);
+  if (!alreadyExpanded) {
+    await sidebar.locator('button[title="Expand"]').first().click();
+  }
+}
 
 test.describe('Sidebar Navigation', () => {
 
@@ -39,8 +55,7 @@ test.describe('Sidebar Navigation', () => {
     const sidebar = page.locator('aside');
 
     // Click expand button (the arrow) for the org
-    const expandButton = sidebar.locator('button[title="Expand"]').first();
-    await expandButton.click();
+    await ensureOrgExpanded(sidebar, ctx.orgName, ctx.projectName);
 
     // Project should now be visible
     await expect(sidebar.getByText(ctx.projectName)).toBeVisible({ timeout: 5000 });
@@ -55,8 +70,7 @@ test.describe('Sidebar Navigation', () => {
     const sidebar = page.locator('aside');
 
     // First expand
-    const expandButton = sidebar.locator('button[title="Expand"]').first();
-    await expandButton.click();
+    await ensureOrgExpanded(sidebar, ctx.orgName, ctx.projectName);
     await expect(sidebar.getByText(ctx.projectName)).toBeVisible({ timeout: 5000 });
 
     // Now collapse
@@ -187,7 +201,7 @@ test.describe('Sidebar Navigation', () => {
     const sidebar = page.locator('aside');
 
     // Expand org
-    await sidebar.locator('button[title="Expand"]').first().click();
+    await ensureOrgExpanded(sidebar, ctx.orgName, ctx.projectName);
 
     // "New Project" link should be visible
     await expect(sidebar.getByRole('link', { name: 'New Project' })).toBeVisible({ timeout: 5000 });
@@ -201,7 +215,7 @@ test.describe('Sidebar Navigation', () => {
     const sidebar = page.locator('aside');
 
     // Expand org
-    await sidebar.locator('button[title="Expand"]').first().click();
+    await ensureOrgExpanded(sidebar, ctx.orgName, ctx.projectName);
 
     // Click "New Project"
     await sidebar.getByRole('link', { name: 'New Project' }).click();
@@ -292,7 +306,7 @@ test.describe('Sidebar Navigation', () => {
     const sidebar = page.locator('aside');
 
     // Expand org
-    await sidebar.locator('button[title="Expand"]').first().click();
+    await ensureOrgExpanded(sidebar, ctx.orgName, ctx.projectName);
     await expect(sidebar.getByText(ctx.projectName)).toBeVisible({ timeout: 5000 });
 
     // Navigate to org page (via sidebar link)
@@ -435,11 +449,8 @@ test.describe('Sidebar Navigation', () => {
 
     const sidebar = page.locator('aside');
 
-    // Expand org if not already expanded (may be auto-expanded from previous navigation)
-    const expandButton = sidebar.locator('button[title="Expand"]').first();
-    if (await expandButton.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await expandButton.click();
-    }
+    // Expand org (handles already-expanded case)
+    await ensureOrgExpanded(sidebar, ctx.orgName, ctx.projectName);
     await expect(sidebar.getByText(ctx.projectName)).toBeVisible({ timeout: 5000 });
 
     // Track if full page reload happens

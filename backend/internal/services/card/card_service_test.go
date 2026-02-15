@@ -572,3 +572,605 @@ func TestGetCardsByAssigneeID(t *testing.T) {
 		assert.Len(t, result, 2)
 	})
 }
+
+func TestGetCardsByIDs(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCardRepo := cardMocks.NewMockRepository(ctrl)
+	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
+	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
+
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
+	ctx := context.Background()
+
+	cardID1 := uuid.New()
+	cardID2 := uuid.New()
+	boardID := uuid.New()
+	columnID := uuid.New()
+
+	t.Run("success", func(t *testing.T) {
+		expected := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1"},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2"},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), []uuid.UUID{cardID1, cardID2}).
+			Return(expected, nil)
+
+		result, err := svc.GetCardsByIDs(ctx, []uuid.UUID{cardID1, cardID2})
+		require.NoError(t, err)
+		assert.Len(t, result, 2)
+		assert.Equal(t, cardID1, result[0].ID)
+		assert.Equal(t, cardID2, result[1].ID)
+	})
+
+	t.Run("repo error", func(t *testing.T) {
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), []uuid.UUID{cardID1}).
+			Return(nil, gorm.ErrInvalidDB)
+
+		result, err := svc.GetCardsByIDs(ctx, []uuid.UUID{cardID1})
+		assert.Nil(t, result)
+		assert.Error(t, err)
+	})
+}
+
+func TestBulkMoveToColumn(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCardRepo := cardMocks.NewMockRepository(ctrl)
+	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
+	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
+
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
+	ctx := context.Background()
+
+	cardID1 := uuid.New()
+	cardID2 := uuid.New()
+	boardID := uuid.New()
+	sourceColumnID := uuid.New()
+	targetColumnID := uuid.New()
+	cardIDs := []uuid.UUID{cardID1, cardID2}
+
+	t.Run("success", func(t *testing.T) {
+		mockColumnRepo.EXPECT().
+			GetByID(gomock.Any(), targetColumnID).
+			Return(&board_column.BoardColumn{ID: targetColumnID, BoardID: boardID}, nil)
+
+		mockCardRepo.EXPECT().
+			MoveToColumn(gomock.Any(), cardIDs, targetColumnID).
+			Return(nil)
+
+		updatedCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: targetColumnID, Title: "Card 1"},
+			{ID: cardID2, BoardID: boardID, ColumnID: targetColumnID, Title: "Card 2"},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(updatedCards, nil)
+
+		result, err := svc.BulkMoveToColumn(ctx, cardIDs, targetColumnID)
+		require.NoError(t, err)
+		assert.Len(t, result, 2)
+		assert.Equal(t, targetColumnID, result[0].ColumnID)
+		assert.Equal(t, targetColumnID, result[1].ColumnID)
+	})
+
+	t.Run("column not found", func(t *testing.T) {
+		mockColumnRepo.EXPECT().
+			GetByID(gomock.Any(), targetColumnID).
+			Return(nil, gorm.ErrRecordNotFound)
+
+		result, err := svc.BulkMoveToColumn(ctx, cardIDs, targetColumnID)
+		assert.Nil(t, result)
+		assert.ErrorIs(t, err, ErrColumnNotFound)
+	})
+
+	t.Run("column lookup error", func(t *testing.T) {
+		mockColumnRepo.EXPECT().
+			GetByID(gomock.Any(), targetColumnID).
+			Return(nil, gorm.ErrInvalidDB)
+
+		result, err := svc.BulkMoveToColumn(ctx, cardIDs, targetColumnID)
+		assert.Nil(t, result)
+		assert.Error(t, err)
+		assert.NotErrorIs(t, err, ErrColumnNotFound)
+	})
+
+	t.Run("move repo error", func(t *testing.T) {
+		mockColumnRepo.EXPECT().
+			GetByID(gomock.Any(), targetColumnID).
+			Return(&board_column.BoardColumn{ID: targetColumnID, BoardID: boardID}, nil)
+
+		mockCardRepo.EXPECT().
+			MoveToColumn(gomock.Any(), cardIDs, targetColumnID).
+			Return(gorm.ErrInvalidDB)
+
+		result, err := svc.BulkMoveToColumn(ctx, cardIDs, targetColumnID)
+		assert.Nil(t, result)
+		assert.Error(t, err)
+	})
+
+	_ = sourceColumnID // used for clarity in test naming
+}
+
+func TestBulkUpdateProperties(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCardRepo := cardMocks.NewMockRepository(ctrl)
+	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
+	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
+
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
+	ctx := context.Background()
+
+	cardID1 := uuid.New()
+	cardID2 := uuid.New()
+	boardID := uuid.New()
+	columnID := uuid.New()
+	cardIDs := []uuid.UUID{cardID1, cardID2}
+
+	t.Run("set priority", func(t *testing.T) {
+		existingCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1", Priority: card.PriorityLow},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2", Priority: card.PriorityNone},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(existingCards, nil)
+
+		newPriority := card.PriorityHigh
+		mockCardRepo.EXPECT().
+			Update(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, c *card.Card) error {
+				assert.Equal(t, newPriority, c.Priority)
+				return nil
+			}).Times(2)
+
+		updatedCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1", Priority: card.PriorityHigh},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2", Priority: card.PriorityHigh},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(updatedCards, nil)
+
+		input := BulkUpdatePropertiesInput{
+			CardIDs:  cardIDs,
+			Priority: &newPriority,
+		}
+
+		result, err := svc.BulkUpdateProperties(ctx, input)
+		require.NoError(t, err)
+		assert.Len(t, result, 2)
+		assert.Equal(t, card.PriorityHigh, result[0].Priority)
+		assert.Equal(t, card.PriorityHigh, result[1].Priority)
+	})
+
+	t.Run("set assignee", func(t *testing.T) {
+		assigneeID := uuid.New()
+		existingCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1"},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2"},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(existingCards, nil)
+
+		mockCardRepo.EXPECT().
+			Update(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, c *card.Card) error {
+				assert.NotNil(t, c.AssigneeID)
+				assert.Equal(t, assigneeID, *c.AssigneeID)
+				return nil
+			}).Times(2)
+
+		updatedCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1", AssigneeID: &assigneeID},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2", AssigneeID: &assigneeID},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(updatedCards, nil)
+
+		input := BulkUpdatePropertiesInput{
+			CardIDs:    cardIDs,
+			AssigneeID: &assigneeID,
+		}
+
+		result, err := svc.BulkUpdateProperties(ctx, input)
+		require.NoError(t, err)
+		assert.Len(t, result, 2)
+		assert.Equal(t, &assigneeID, result[0].AssigneeID)
+		assert.Equal(t, &assigneeID, result[1].AssigneeID)
+	})
+
+	t.Run("clear assignee", func(t *testing.T) {
+		assigneeID := uuid.New()
+		existingCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1", AssigneeID: &assigneeID},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2", AssigneeID: &assigneeID},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(existingCards, nil)
+
+		mockCardRepo.EXPECT().
+			Update(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, c *card.Card) error {
+				assert.Nil(t, c.AssigneeID)
+				return nil
+			}).Times(2)
+
+		updatedCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1", AssigneeID: nil},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2", AssigneeID: nil},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(updatedCards, nil)
+
+		input := BulkUpdatePropertiesInput{
+			CardIDs:       cardIDs,
+			ClearAssignee: true,
+		}
+
+		result, err := svc.BulkUpdateProperties(ctx, input)
+		require.NoError(t, err)
+		assert.Len(t, result, 2)
+		assert.Nil(t, result[0].AssigneeID)
+		assert.Nil(t, result[1].AssigneeID)
+	})
+
+	t.Run("set story points", func(t *testing.T) {
+		storyPoints := 5
+		existingCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1"},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2"},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(existingCards, nil)
+
+		mockCardRepo.EXPECT().
+			Update(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, c *card.Card) error {
+				assert.NotNil(t, c.StoryPoints)
+				assert.Equal(t, 5, *c.StoryPoints)
+				return nil
+			}).Times(2)
+
+		updatedCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1", StoryPoints: &storyPoints},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2", StoryPoints: &storyPoints},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(updatedCards, nil)
+
+		input := BulkUpdatePropertiesInput{
+			CardIDs:     cardIDs,
+			StoryPoints: &storyPoints,
+		}
+
+		result, err := svc.BulkUpdateProperties(ctx, input)
+		require.NoError(t, err)
+		assert.Len(t, result, 2)
+		assert.Equal(t, &storyPoints, result[0].StoryPoints)
+		assert.Equal(t, &storyPoints, result[1].StoryPoints)
+	})
+
+	t.Run("clear story points", func(t *testing.T) {
+		storyPoints := 3
+		existingCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1", StoryPoints: &storyPoints},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2", StoryPoints: &storyPoints},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(existingCards, nil)
+
+		mockCardRepo.EXPECT().
+			Update(gomock.Any(), gomock.Any()).
+			DoAndReturn(func(ctx context.Context, c *card.Card) error {
+				assert.Nil(t, c.StoryPoints)
+				return nil
+			}).Times(2)
+
+		updatedCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1", StoryPoints: nil},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2", StoryPoints: nil},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(updatedCards, nil)
+
+		input := BulkUpdatePropertiesInput{
+			CardIDs:          cardIDs,
+			ClearStoryPoints: true,
+		}
+
+		result, err := svc.BulkUpdateProperties(ctx, input)
+		require.NoError(t, err)
+		assert.Len(t, result, 2)
+		assert.Nil(t, result[0].StoryPoints)
+		assert.Nil(t, result[1].StoryPoints)
+	})
+
+	t.Run("get cards error", func(t *testing.T) {
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(nil, gorm.ErrInvalidDB)
+
+		input := BulkUpdatePropertiesInput{
+			CardIDs: cardIDs,
+		}
+
+		result, err := svc.BulkUpdateProperties(ctx, input)
+		assert.Nil(t, result)
+		assert.Error(t, err)
+	})
+
+	t.Run("update error", func(t *testing.T) {
+		existingCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1"},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), []uuid.UUID{cardID1}).
+			Return(existingCards, nil)
+
+		newPriority := card.PriorityUrgent
+		mockCardRepo.EXPECT().
+			Update(gomock.Any(), gomock.Any()).
+			Return(gorm.ErrInvalidDB)
+
+		input := BulkUpdatePropertiesInput{
+			CardIDs:  []uuid.UUID{cardID1},
+			Priority: &newPriority,
+		}
+
+		result, err := svc.BulkUpdateProperties(ctx, input)
+		assert.Nil(t, result)
+		assert.Error(t, err)
+	})
+}
+
+func TestBulkAddTags(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCardRepo := cardMocks.NewMockRepository(ctrl)
+	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
+	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
+
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
+	ctx := context.Background()
+
+	cardID1 := uuid.New()
+	cardID2 := uuid.New()
+	tagID1 := uuid.New()
+	tagID2 := uuid.New()
+	boardID := uuid.New()
+	columnID := uuid.New()
+	cardIDs := []uuid.UUID{cardID1, cardID2}
+	tagIDs := []uuid.UUID{tagID1, tagID2}
+
+	t.Run("success", func(t *testing.T) {
+		mockCardTagRepo.EXPECT().
+			AddTagsToCards(gomock.Any(), cardIDs, tagIDs).
+			Return(nil)
+
+		updatedCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1"},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2"},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(updatedCards, nil)
+
+		result, err := svc.BulkAddTags(ctx, cardIDs, tagIDs)
+		require.NoError(t, err)
+		assert.Len(t, result, 2)
+	})
+
+	t.Run("add tags error", func(t *testing.T) {
+		mockCardTagRepo.EXPECT().
+			AddTagsToCards(gomock.Any(), cardIDs, tagIDs).
+			Return(gorm.ErrInvalidDB)
+
+		result, err := svc.BulkAddTags(ctx, cardIDs, tagIDs)
+		assert.Nil(t, result)
+		assert.Error(t, err)
+	})
+
+	t.Run("get cards after add error", func(t *testing.T) {
+		mockCardTagRepo.EXPECT().
+			AddTagsToCards(gomock.Any(), cardIDs, tagIDs).
+			Return(nil)
+
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(nil, gorm.ErrInvalidDB)
+
+		result, err := svc.BulkAddTags(ctx, cardIDs, tagIDs)
+		assert.Nil(t, result)
+		assert.Error(t, err)
+	})
+}
+
+func TestBulkRemoveTags(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCardRepo := cardMocks.NewMockRepository(ctrl)
+	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
+	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
+
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
+	ctx := context.Background()
+
+	cardID1 := uuid.New()
+	cardID2 := uuid.New()
+	tagID1 := uuid.New()
+	tagID2 := uuid.New()
+	boardID := uuid.New()
+	columnID := uuid.New()
+	cardIDs := []uuid.UUID{cardID1, cardID2}
+	tagIDs := []uuid.UUID{tagID1, tagID2}
+
+	t.Run("success", func(t *testing.T) {
+		mockCardTagRepo.EXPECT().
+			RemoveTagsFromCards(gomock.Any(), cardIDs, tagIDs).
+			Return(nil)
+
+		updatedCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1"},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2"},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(updatedCards, nil)
+
+		result, err := svc.BulkRemoveTags(ctx, cardIDs, tagIDs)
+		require.NoError(t, err)
+		assert.Len(t, result, 2)
+	})
+
+	t.Run("remove tags error", func(t *testing.T) {
+		mockCardTagRepo.EXPECT().
+			RemoveTagsFromCards(gomock.Any(), cardIDs, tagIDs).
+			Return(gorm.ErrInvalidDB)
+
+		result, err := svc.BulkRemoveTags(ctx, cardIDs, tagIDs)
+		assert.Nil(t, result)
+		assert.Error(t, err)
+	})
+
+	t.Run("get cards after remove error", func(t *testing.T) {
+		mockCardTagRepo.EXPECT().
+			RemoveTagsFromCards(gomock.Any(), cardIDs, tagIDs).
+			Return(nil)
+
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(nil, gorm.ErrInvalidDB)
+
+		result, err := svc.BulkRemoveTags(ctx, cardIDs, tagIDs)
+		assert.Nil(t, result)
+		assert.Error(t, err)
+	})
+}
+
+func TestBulkSetTags(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCardRepo := cardMocks.NewMockRepository(ctrl)
+	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
+	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
+
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
+	ctx := context.Background()
+
+	cardID1 := uuid.New()
+	cardID2 := uuid.New()
+	tagID1 := uuid.New()
+	tagID2 := uuid.New()
+	boardID := uuid.New()
+	columnID := uuid.New()
+	cardIDs := []uuid.UUID{cardID1, cardID2}
+	tagIDs := []uuid.UUID{tagID1, tagID2}
+
+	t.Run("success", func(t *testing.T) {
+		mockCardTagRepo.EXPECT().
+			SetTagsForCards(gomock.Any(), cardIDs, tagIDs).
+			Return(nil)
+
+		updatedCards := []*card.Card{
+			{ID: cardID1, BoardID: boardID, ColumnID: columnID, Title: "Card 1"},
+			{ID: cardID2, BoardID: boardID, ColumnID: columnID, Title: "Card 2"},
+		}
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(updatedCards, nil)
+
+		result, err := svc.BulkSetTags(ctx, cardIDs, tagIDs)
+		require.NoError(t, err)
+		assert.Len(t, result, 2)
+	})
+
+	t.Run("set tags error", func(t *testing.T) {
+		mockCardTagRepo.EXPECT().
+			SetTagsForCards(gomock.Any(), cardIDs, tagIDs).
+			Return(gorm.ErrInvalidDB)
+
+		result, err := svc.BulkSetTags(ctx, cardIDs, tagIDs)
+		assert.Nil(t, result)
+		assert.Error(t, err)
+	})
+
+	t.Run("get cards after set error", func(t *testing.T) {
+		mockCardTagRepo.EXPECT().
+			SetTagsForCards(gomock.Any(), cardIDs, tagIDs).
+			Return(nil)
+
+		mockCardRepo.EXPECT().
+			GetByIDs(gomock.Any(), cardIDs).
+			Return(nil, gorm.ErrInvalidDB)
+
+		result, err := svc.BulkSetTags(ctx, cardIDs, tagIDs)
+		assert.Nil(t, result)
+		assert.Error(t, err)
+	})
+}
+
+func TestBulkDelete(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockCardRepo := cardMocks.NewMockRepository(ctrl)
+	mockColumnRepo := columnMocks.NewMockRepository(ctrl)
+	mockBoardRepo := boardMocks.NewMockRepository(ctrl)
+	mockTagRepo := tagMocks.NewMockRepository(ctrl)
+	mockCardTagRepo := cardTagMocks.NewMockRepository(ctrl)
+
+	svc := NewService(mockCardRepo, mockColumnRepo, mockBoardRepo, mockTagRepo, mockCardTagRepo)
+	ctx := context.Background()
+
+	cardID1 := uuid.New()
+	cardID2 := uuid.New()
+	cardIDs := []uuid.UUID{cardID1, cardID2}
+
+	t.Run("success", func(t *testing.T) {
+		mockCardRepo.EXPECT().
+			DeleteMany(gomock.Any(), cardIDs).
+			Return(nil)
+
+		err := svc.BulkDelete(ctx, cardIDs)
+		require.NoError(t, err)
+	})
+
+	t.Run("delete error", func(t *testing.T) {
+		mockCardRepo.EXPECT().
+			DeleteMany(gomock.Any(), cardIDs).
+			Return(gorm.ErrInvalidDB)
+
+		err := svc.BulkDelete(ctx, cardIDs)
+		assert.Error(t, err)
+	})
+}

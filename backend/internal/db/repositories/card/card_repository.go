@@ -30,6 +30,14 @@ type Repository interface {
 	GetSprintIDsForCard(ctx context.Context, cardID uuid.UUID) ([]uuid.UUID, error)
 	SetCardSprints(ctx context.Context, cardID uuid.UUID, sprintIDs []uuid.UUID) error
 	RemoveCardFromAllSprints(ctx context.Context, cardID uuid.UUID) error
+
+	// Bulk operations
+	GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*Card, error)
+	DeleteMany(ctx context.Context, ids []uuid.UUID) error
+	MoveToColumn(ctx context.Context, ids []uuid.UUID, columnID uuid.UUID) error
+	AddManyToSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) error
+	RemoveManyFromSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) error
+	RemoveManyFromAllSprints(ctx context.Context, cardIDs []uuid.UUID) error
 }
 
 type repository struct {
@@ -254,5 +262,48 @@ func (r *repository) SetCardSprints(ctx context.Context, cardID uuid.UUID, sprin
 func (r *repository) RemoveCardFromAllSprints(ctx context.Context, cardID uuid.UUID) error {
 	return r.db.WithContext(ctx).
 		Where("card_id = ?", cardID).
+		Delete(&CardSprint{}).Error
+}
+
+// Bulk operations
+
+func (r *repository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*Card, error) {
+	var cards []*Card
+	err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&cards).Error
+	return cards, err
+}
+
+func (r *repository) DeleteMany(ctx context.Context, ids []uuid.UUID) error {
+	return r.db.WithContext(ctx).Where("id IN ?", ids).Delete(&Card{}).Error
+}
+
+func (r *repository) MoveToColumn(ctx context.Context, ids []uuid.UUID, columnID uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Model(&Card{}).
+		Where("id IN ?", ids).
+		Update("column_id", columnID).Error
+}
+
+func (r *repository) AddManyToSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		for _, cardID := range cardIDs {
+			cs := &CardSprint{CardID: cardID, SprintID: sprintID}
+			if err := tx.Clauses(clause.OnConflict{DoNothing: true}).Create(cs).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func (r *repository) RemoveManyFromSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Where("card_id IN ? AND sprint_id = ?", cardIDs, sprintID).
+		Delete(&CardSprint{}).Error
+}
+
+func (r *repository) RemoveManyFromAllSprints(ctx context.Context, cardIDs []uuid.UUID) error {
+	return r.db.WithContext(ctx).
+		Where("card_id IN ?", cardIDs).
 		Delete(&CardSprint{}).Error
 }

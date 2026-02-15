@@ -11,6 +11,10 @@
     // Permission props
     canEditCard?: boolean;
     canDeleteCard?: boolean;
+    // Selection mode props
+    isSelectionMode?: boolean;
+    isSelected?: boolean;
+    onToggleSelect?: (card: BoardCard, shiftKey?: boolean) => void;
   }
 
   let {
@@ -19,7 +23,10 @@
     onQuickDelete,
     priorityStyle = 'badge',
     canEditCard = true,
-    canDeleteCard = true
+    canDeleteCard = true,
+    isSelectionMode = false,
+    isSelected = false,
+    onToggleSelect,
   }: Props = $props();
   let showDeleteConfirm = $state(false);
 
@@ -72,7 +79,11 @@
     return date < today;
   }
 
-  function handleClick() {
+  function handleClick(e?: MouseEvent) {
+    if (isSelectionMode) {
+      onToggleSelect?.(card, e?.shiftKey);
+      return;
+    }
     if (onCardClick) {
       onCardClick(card);
     }
@@ -106,15 +117,14 @@
 </script>
 
 <div
-  class="group relative w-full text-left rounded-lg shadow-sm border p-4 transition-shadow bg-white border-gray-200 hover:shadow-md cursor-pointer {priorityStyle === 'border' && card.priority !== CardPriority.None ? `border-l-4 ${priorityColors[card.priority]}` : ''}"
-  onclick={handleClick}
+  class="group relative w-full text-left rounded-lg shadow-sm border p-4 transition-all bg-white cursor-pointer {isSelected ? 'border-indigo-500 ring-2 ring-indigo-200' : isSelectionMode ? 'border-indigo-200 hover:border-indigo-400' : 'border-gray-200 hover:shadow-md'} {priorityStyle === 'border' && card.priority !== CardPriority.None ? `border-l-4 ${priorityColors[card.priority]}` : ''}"
+  onclick={(e) => handleClick(e)}
   onkeydown={handleKeydown}
   role="button"
   tabindex="0"
 >
-
   <!-- Quick actions - simple icons that appear on hover, permission-gated -->
-  {#if canEditCard || canDeleteCard}
+  {#if !isSelectionMode && (canEditCard || canDeleteCard)}
     <div class="absolute top-3 right-3 hidden group-hover:flex gap-1 z-10">
       {#if canEditCard}
         <button

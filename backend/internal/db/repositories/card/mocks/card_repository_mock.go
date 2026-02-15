@@ -56,6 +56,20 @@ func (mr *MockRepositoryMockRecorder) AddCardToSprint(ctx, cardID, sprintID any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardToSprint", reflect.TypeOf((*MockRepository)(nil).AddCardToSprint), ctx, cardID, sprintID)
 }
 
+// AddManyToSprint mocks base method.
+func (m *MockRepository) AddManyToSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddManyToSprint", ctx, cardIDs, sprintID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddManyToSprint indicates an expected call of AddManyToSprint.
+func (mr *MockRepositoryMockRecorder) AddManyToSprint(ctx, cardIDs, sprintID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddManyToSprint", reflect.TypeOf((*MockRepository)(nil).AddManyToSprint), ctx, cardIDs, sprintID)
+}
+
 // Create mocks base method.
 func (m *MockRepository) Create(ctx context.Context, arg1 *card.Card) error {
 	m.ctrl.T.Helper()
@@ -82,6 +96,20 @@ func (m *MockRepository) Delete(ctx context.Context, id uuid.UUID) error {
 func (mr *MockRepositoryMockRecorder) Delete(ctx, id any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockRepository)(nil).Delete), ctx, id)
+}
+
+// DeleteMany mocks base method.
+func (m *MockRepository) DeleteMany(ctx context.Context, ids []uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteMany", ctx, ids)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteMany indicates an expected call of DeleteMany.
+func (mr *MockRepositoryMockRecorder) DeleteMany(ctx, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMany", reflect.TypeOf((*MockRepository)(nil).DeleteMany), ctx, ids)
 }
 
 // GetAll mocks base method.
@@ -174,6 +202,21 @@ func (mr *MockRepositoryMockRecorder) GetByID(ctx, id any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByID", reflect.TypeOf((*MockRepository)(nil).GetByID), ctx, id)
 }
 
+// GetByIDs mocks base method.
+func (m *MockRepository) GetByIDs(ctx context.Context, ids []uuid.UUID) ([]*card.Card, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetByIDs", ctx, ids)
+	ret0, _ := ret[0].([]*card.Card)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetByIDs indicates an expected call of GetByIDs.
+func (mr *MockRepositoryMockRecorder) GetByIDs(ctx, ids any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByIDs", reflect.TypeOf((*MockRepository)(nil).GetByIDs), ctx, ids)
+}
+
 // GetBySprintID mocks base method.
 func (m *MockRepository) GetBySprintID(ctx context.Context, sprintID uuid.UUID) ([]*card.Card, error) {
 	m.ctrl.T.Helper()
@@ -234,6 +277,20 @@ func (mr *MockRepositoryMockRecorder) GetSprintIDsForCard(ctx, cardID any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSprintIDsForCard", reflect.TypeOf((*MockRepository)(nil).GetSprintIDsForCard), ctx, cardID)
 }
 
+// MoveToColumn mocks base method.
+func (m *MockRepository) MoveToColumn(ctx context.Context, ids []uuid.UUID, columnID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MoveToColumn", ctx, ids, columnID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MoveToColumn indicates an expected call of MoveToColumn.
+func (mr *MockRepositoryMockRecorder) MoveToColumn(ctx, ids, columnID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveToColumn", reflect.TypeOf((*MockRepository)(nil).MoveToColumn), ctx, ids, columnID)
+}
+
 // RemoveCardFromAllSprints mocks base method.
 func (m *MockRepository) RemoveCardFromAllSprints(ctx context.Context, cardID uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -260,6 +317,34 @@ func (m *MockRepository) RemoveCardFromSprint(ctx context.Context, cardID, sprin
 func (mr *MockRepositoryMockRecorder) RemoveCardFromSprint(ctx, cardID, sprintID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveCardFromSprint", reflect.TypeOf((*MockRepository)(nil).RemoveCardFromSprint), ctx, cardID, sprintID)
+}
+
+// RemoveManyFromAllSprints mocks base method.
+func (m *MockRepository) RemoveManyFromAllSprints(ctx context.Context, cardIDs []uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveManyFromAllSprints", ctx, cardIDs)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveManyFromAllSprints indicates an expected call of RemoveManyFromAllSprints.
+func (mr *MockRepositoryMockRecorder) RemoveManyFromAllSprints(ctx, cardIDs any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveManyFromAllSprints", reflect.TypeOf((*MockRepository)(nil).RemoveManyFromAllSprints), ctx, cardIDs)
+}
+
+// RemoveManyFromSprint mocks base method.
+func (m *MockRepository) RemoveManyFromSprint(ctx context.Context, cardIDs []uuid.UUID, sprintID uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveManyFromSprint", ctx, cardIDs, sprintID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveManyFromSprint indicates an expected call of RemoveManyFromSprint.
+func (mr *MockRepositoryMockRecorder) RemoveManyFromSprint(ctx, cardIDs, sprintID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveManyFromSprint", reflect.TypeOf((*MockRepository)(nil).RemoveManyFromSprint), ctx, cardIDs, sprintID)
 }
 
 // SetCardSprints mocks base method.

@@ -98,8 +98,6 @@ func TestGetProviders_Success(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	)
 
 	result, err := svc.GetProviders(context.Background())
@@ -127,8 +125,6 @@ func TestGetProviders_Empty(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	)
 
 	result, err := svc.GetProviders(context.Background())
@@ -153,8 +149,6 @@ func TestGetUserIdentities_Success(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	)
 
 	userID := uuid.New()
@@ -197,8 +191,6 @@ func TestGetUserIdentities_NoIdentities(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	)
 
 	userID := uuid.New()
@@ -227,8 +219,6 @@ func TestGetUserIdentities_UnknownProvider(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	)
 
 	userID := uuid.New()
@@ -269,8 +259,6 @@ func TestUnlinkIdentity_Success(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	)
 
 	userID := uuid.New()
@@ -302,8 +290,6 @@ func TestUnlinkIdentity_ProviderNotFound(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	)
 
 	userID := uuid.New()
@@ -389,8 +375,6 @@ func TestGenerateUsername(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	).(*service)
 
 	// Test email prefix
@@ -430,8 +414,6 @@ func TestFindOrCreateUser_ExistingIdentity(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	).(*service)
 
 	provider := &providers[0]
@@ -500,8 +482,6 @@ func TestFindOrCreateUser_LinkToExistingByEmail(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	).(*service)
 
 	provider := &providers[0]
@@ -568,8 +548,6 @@ func TestFindOrCreateUser_CreateNewUser(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	).(*service)
 
 	provider := &providers[0]
@@ -615,32 +593,6 @@ func TestFindOrCreateUser_CreateNewUser(t *testing.T) {
 	assert.NotEqual(t, uuid.Nil, result.User.ID)
 }
 
-func TestGenerateToken(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockIdentityRepo := oidc_identity_mocks.NewMockRepository(ctrl)
-	mockUserRepo := user_mocks.NewMockRepository(ctrl)
-	stateManager := newMockStateManager()
-
-	svc := NewService(
-		[]config.OIDCProvider{},
-		mockIdentityRepo,
-		mockUserRepo,
-		stateManager,
-		"http://localhost:3000",
-		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
-	).(*service)
-
-	userID := uuid.New()
-	token, err := svc.generateToken(userID)
-
-	require.NoError(t, err)
-	assert.NotEmpty(t, token)
-}
-
 func TestRewriteEndpoint(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -656,8 +608,6 @@ func TestRewriteEndpoint(t *testing.T) {
 		stateManager,
 		"http://localhost:3000",
 		"http://localhost:4321",
-		"test-jwt-secret",
-		24,
 	).(*service)
 
 	endpoint := oauth2.Endpoint{

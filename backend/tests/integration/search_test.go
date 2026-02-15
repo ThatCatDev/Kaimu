@@ -112,6 +112,8 @@ func setupSearchTestServer(t *testing.T) *SearchTestServer {
 	if err != nil {
 		t.Skipf("Skipping integration test: could not connect to test database: %v", err)
 	}
+	sqlDB, _ := testDB.DB()
+	t.Cleanup(func() { sqlDB.Close() })
 
 	// Clean up tables before test
 	cleanupTestData(testDB)
@@ -314,6 +316,16 @@ func TestSearchIntegration_OrganizationSearch(t *testing.T) {
 	token, err := server.registerUser("searchuser2", "password123")
 	require.NoError(t, err)
 
+	// Get user ID for search filtering
+	meResp := server.executeQuery(`query { me { id } }`, token)
+	var meData struct {
+		Me struct {
+			ID string `json:"id"`
+		} `json:"me"`
+	}
+	json.Unmarshal(meResp.Data, &meData)
+	require.NotEmpty(t, meData.Me.ID)
+
 	// Create organization
 	createOrgQuery := `mutation {
 		createOrganization(input: { name: "Searchable Org", description: "A test organization for search" }) {
@@ -333,13 +345,13 @@ func TestSearchIntegration_OrganizationSearch(t *testing.T) {
 	json.Unmarshal(orgResp.Data, &orgData)
 	require.NotEmpty(t, orgData.CreateOrganization.ID)
 
-	// Index the organization for search
+	// Index the organization for search (include user as member for search filtering)
 	err = server.searchService.IndexOrganization(ctx, &search.OrganizationDocument{
 		ID:          orgData.CreateOrganization.ID,
 		Name:        orgData.CreateOrganization.Name,
 		Slug:        orgData.CreateOrganization.Slug,
 		Description: "A test organization for search",
-		MemberIDs:   []string{}, // Will be populated from the membership
+		MemberIDs:   []string{meData.Me.ID},
 		CreatedAt:   time.Now().Unix(),
 		UpdatedAt:   time.Now().Unix(),
 	})

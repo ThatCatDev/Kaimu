@@ -73,6 +73,8 @@ func setupTestServer(t *testing.T) *TestServer {
 	if err != nil {
 		t.Skipf("Skipping integration test: could not connect to test database: %v", err)
 	}
+	sqlDB, _ := testDB.DB()
+	t.Cleanup(func() { sqlDB.Close() })
 
 	// Clean up tables before test
 	testDB.Exec("DELETE FROM refresh_tokens")

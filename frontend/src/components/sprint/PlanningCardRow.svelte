@@ -9,6 +9,9 @@
     onCardClick?: (card: SprintCard) => void;
     onMoveToSprint?: (cardId: string, sprintId: string) => void;
     onMoveToBacklog?: (cardId: string) => void;
+    isSelectionMode?: boolean;
+    isSelected?: boolean;
+    onToggleSelect?: (card: SprintCard, shiftKey?: boolean) => void;
   }
 
   let {
@@ -17,6 +20,9 @@
     onCardClick,
     onMoveToSprint,
     onMoveToBacklog,
+    isSelectionMode = false,
+    isSelected = false,
+    onToggleSelect,
   }: Props = $props();
 
   const priorityColors: Record<CardPriority, string> = {
@@ -64,6 +70,10 @@
   function handleRowClick(e: MouseEvent) {
     // Don't trigger card click if clicking dropdown
     if ((e.target as HTMLElement).closest('[data-dropdown]')) return;
+    if (isSelectionMode) {
+      onToggleSelect?.(card, e.shiftKey);
+      return;
+    }
     onCardClick?.(card);
   }
 </script>
@@ -71,9 +81,9 @@
 <div
   role="button"
   tabindex="0"
-  class="px-4 py-3 flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition-colors group"
+  class="px-4 py-3 flex items-center gap-4 hover:bg-gray-50 cursor-pointer transition-colors group {isSelected ? 'bg-indigo-50' : ''}"
   onclick={handleRowClick}
-  onkeydown={(e) => e.key === 'Enter' && onCardClick?.(card)}
+  onkeydown={(e) => e.key === 'Enter' && (isSelectionMode ? onToggleSelect?.(card) : onCardClick?.(card))}
 >
   <!-- Title -->
   <div class="flex-1 min-w-0">
