@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.6](https://github.com/ThatCatDev/Kaimu/compare/v0.0.5...v0.0.6) (2026-02-15)
+
+
+### Features
+
+* add bulk card operations with selection mode ([#5](https://github.com/ThatCatDev/Kaimu/issues/5)) ([129c139](https://github.com/ThatCatDev/Kaimu/commit/129c1393cb916db527d255481518285975025acc))
+
 ## [0.0.5](https://github.com/ThatCatDev/Kaimu/compare/v0.0.4...v0.0.5) (2025-12-15)
 
 
