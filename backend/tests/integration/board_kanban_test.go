@@ -28,16 +28,23 @@ import (
 	refreshTokenRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/refreshtoken"
 	roleRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/role"
 	rolePermissionRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/role_permission"
+	sprintRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/sprint"
 	tagRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/tag"
 	userRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/user"
+	auditRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/audit"
+	metricsHistRepo "github.com/thatcatdev/kaimu/backend/internal/db/repositories/metrics_history"
 	"github.com/thatcatdev/kaimu/backend/internal/directives"
+	auditService "github.com/thatcatdev/kaimu/backend/internal/services/audit"
 	"github.com/thatcatdev/kaimu/backend/internal/services/auth"
 	boardService "github.com/thatcatdev/kaimu/backend/internal/services/board"
 	cardService "github.com/thatcatdev/kaimu/backend/internal/services/card"
+	metricsService "github.com/thatcatdev/kaimu/backend/internal/services/metrics"
 	orgService "github.com/thatcatdev/kaimu/backend/internal/services/organization"
 	projectService "github.com/thatcatdev/kaimu/backend/internal/services/project"
 	rbacService "github.com/thatcatdev/kaimu/backend/internal/services/rbac"
+	sprintService "github.com/thatcatdev/kaimu/backend/internal/services/sprint"
 	tagService "github.com/thatcatdev/kaimu/backend/internal/services/tag"
+	userService "github.com/thatcatdev/kaimu/backend/internal/services/user"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -78,9 +85,11 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 	}
 
 	// Clean up tables before test (order matters due to foreign keys)
+	testDB.Exec("DELETE FROM card_sprints")
 	testDB.Exec("DELETE FROM card_tags")
 	testDB.Exec("DELETE FROM cards")
 	testDB.Exec("DELETE FROM tags")
+	testDB.Exec("DELETE FROM sprints")
 	testDB.Exec("DELETE FROM board_columns")
 	testDB.Exec("DELETE FROM boards")
 	testDB.Exec("DELETE FROM projects")
@@ -103,6 +112,9 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 	permissionRepository := permissionRepo.NewRepository(testDB)
 	roleRepository := roleRepo.NewRepository(testDB)
 	rolePermissionRepository := rolePermissionRepo.NewRepository(testDB)
+	sprintRepository := sprintRepo.NewRepository(testDB)
+	auditRepository := auditRepo.NewRepository(testDB)
+	metricsHistRepository := metricsHistRepo.NewRepository(testDB)
 
 	// Create services
 	refreshRepository := refreshTokenRepo.NewRepository(testDB)
@@ -122,6 +134,10 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 		boardRepository,
 		userRepository,
 	)
+	userSvc := userService.NewService(userRepository)
+	sprintSvc := sprintService.NewService(sprintRepository, cardRepository, boardRepository, columnRepository)
+	auditSvc := auditService.NewService(auditRepository)
+	metricsSvc := metricsService.NewService(sprintRepository, cardRepository, columnRepository, metricsHistRepository, auditRepository)
 
 	// Create resolver
 	cfg := config.Config{
@@ -138,6 +154,10 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 		CardService:         cardSvc,
 		TagService:          tagSvc,
 		RBACService:         rbacSvc,
+		UserService:         userSvc,
+		SprintService:       sprintSvc,
+		AuditService:        auditSvc,
+		MetricsService:      metricsSvc,
 	}
 
 	// Create GraphQL handler
@@ -157,9 +177,11 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 }
 
 func (s *BoardTestServer) cleanup() {
+	s.db.Exec("DELETE FROM card_sprints")
 	s.db.Exec("DELETE FROM card_tags")
 	s.db.Exec("DELETE FROM cards")
 	s.db.Exec("DELETE FROM tags")
+	s.db.Exec("DELETE FROM sprints")
 	s.db.Exec("DELETE FROM board_columns")
 	s.db.Exec("DELETE FROM boards")
 	s.db.Exec("DELETE FROM projects")
