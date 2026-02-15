@@ -18,7 +18,8 @@ var (
 	ErrBoardNotFound       = errors.New("board not found")
 	ErrColumnNotFound      = errors.New("column not found")
 	ErrProjectNotFound     = errors.New("project not found")
-	ErrCannotDeleteDefault = errors.New("cannot delete default board")
+	ErrCannotDeleteDefault       = errors.New("cannot delete default board")
+	ErrCannotDeleteBacklogColumn = errors.New("cannot delete backlog column")
 )
 
 type Service interface {
@@ -391,6 +392,17 @@ func (s *service) DeleteColumn(ctx context.Context, id uuid.UUID) error {
 	ctx, span := s.startServiceSpan(ctx, "DeleteColumn")
 	span.SetAttributes(attribute.String("column.id", id.String()))
 	defer span.End()
+
+	col, err := s.columnRepo.GetByID(ctx, id)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ErrColumnNotFound
+		}
+		return err
+	}
+	if col.IsBacklog {
+		return ErrCannotDeleteBacklogColumn
+	}
 
 	return s.columnRepo.Delete(ctx, id)
 }

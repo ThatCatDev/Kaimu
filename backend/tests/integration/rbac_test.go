@@ -78,6 +78,8 @@ func setupRBACTestServer(t *testing.T) *RBACTestServer {
 	if err != nil {
 		t.Skipf("Skipping integration test: could not connect to test database: %v", err)
 	}
+	sqlDB, _ := testDB.DB()
+	t.Cleanup(func() { sqlDB.Close() })
 
 	// Clean up any existing tables first to ensure clean schema
 	cleanupRBACTables(testDB)

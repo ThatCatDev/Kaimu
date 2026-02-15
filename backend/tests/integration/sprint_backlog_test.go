@@ -82,9 +82,11 @@ func setupSprintTestServer(t *testing.T) *SprintTestServer {
 	if err != nil {
 		t.Skipf("Skipping integration test: could not connect to test database: %v", err)
 	}
+	sqlDB, _ := testDB.DB()
+	t.Cleanup(func() { sqlDB.Close() })
 
 	// Clean up tables before test (order matters due to foreign keys)
-	testDB.Exec("DELETE FROM audit_log")
+	testDB.Exec("DELETE FROM audit_events")
 	testDB.Exec("DELETE FROM metrics_history")
 	testDB.Exec("DELETE FROM card_sprints")
 	testDB.Exec("DELETE FROM sprints")
@@ -800,9 +802,9 @@ func TestCompleteSprint(t *testing.T) {
 		addCardToSprint(input: { cardId: "%s", sprintId: "%s" }) { id }
 	}`, cardID, sprintID), token)
 
-	// Complete sprint with moveIncompleteToBacklog = true
+	// Complete sprint with moveIncompleteToNextSprint = false (cards go to backlog)
 	completeQuery := fmt.Sprintf(`mutation {
-		completeSprint(id: "%s", moveIncompleteToBacklog: true) {
+		completeSprint(id: "%s", moveIncompleteToNextSprint: false) {
 			id
 			status
 		}
@@ -820,26 +822,25 @@ func TestCompleteSprint(t *testing.T) {
 	json.Unmarshal(completeResp.Data, &completeData)
 	assert.Equal(t, "CLOSED", completeData.CompleteSprint.Status)
 
-	// Verify card is no longer in sprint (moved to backlog)
-	getCardQuery := fmt.Sprintf(`query { card(id: "%s") { id sprints { id } } }`, cardID)
+	// Verify card is still in the closed sprint (for historical tracking)
+	// but not moved to any other sprint (effectively in backlog)
+	getCardQuery := fmt.Sprintf(`query { card(id: "%s") { id sprints { id status } } }`, cardID)
 	getResp := server.executeQuery(getCardQuery, token)
 	var getCardData struct {
 		Card struct {
 			ID      string `json:"id"`
 			Sprints []struct {
-				ID string `json:"id"`
+				ID     string `json:"id"`
+				Status string `json:"status"`
 			} `json:"sprints"`
 		} `json:"card"`
 	}
 	json.Unmarshal(getResp.Data, &getCardData)
 
-	// Card should not be in the completed sprint anymore
-	inSprint := false
-	for _, s := range getCardData.Card.Sprints {
-		if s.ID == sprintID {
-			inSprint = true
-			break
-		}
+	// Card should remain in the closed sprint for history
+	assert.Len(t, getCardData.Card.Sprints, 1, "Card should be in exactly one sprint (the closed one)")
+	if len(getCardData.Card.Sprints) > 0 {
+		assert.Equal(t, sprintID, getCardData.Card.Sprints[0].ID, "Card should still be in the completed sprint for history")
+		assert.Equal(t, "CLOSED", getCardData.Card.Sprints[0].Status, "Sprint should be closed")
 	}
-	assert.False(t, inSprint, "Card should not be in completed sprint after moveIncompleteToBacklog=true")
 }

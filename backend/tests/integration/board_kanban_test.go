@@ -83,6 +83,8 @@ func setupBoardTestServer(t *testing.T) *BoardTestServer {
 	if err != nil {
 		t.Skipf("Skipping integration test: could not connect to test database: %v", err)
 	}
+	sqlDB, _ := testDB.DB()
+	t.Cleanup(func() { sqlDB.Close() })
 
 	// Clean up tables before test (order matters due to foreign keys)
 	testDB.Exec("DELETE FROM card_sprints")
