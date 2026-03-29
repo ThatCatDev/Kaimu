@@ -18,6 +18,17 @@ services:
       - app-network
     restart: unless-stopped
 
+  typesense:
+    image: typesense/typesense:27.0
+    environment:
+      TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:-changeme}
+      TYPESENSE_DATA_DIR: /data
+    volumes:
+      - typesense_data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
   backend:
     build:
       context: ./backend
@@ -31,11 +42,16 @@ services:
       DBPASSWORD: ${POSTGRES_PASSWORD}
       DBPORT: 5432
       DBSSL: disable
+      TYPESENSE_HOST: typesense
+      TYPESENSE_PORT: 8108
+      TYPESENSE_API_KEY: ${TYPESENSE_API_KEY:-changeme}
       PORT: 3000
       ENV: production
     depends_on:
       postgres:
         condition: service_healthy
+      typesense:
+        condition: service_started
     networks:
       - app-network
     restart: unless-stopped
@@ -59,3 +75,4 @@ networks:
 
 volumes:
   postgres_data:
+  typesense_data:
