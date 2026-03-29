@@ -9,7 +9,17 @@ secrets:
     - POSTGRES_PASSWORD
 
 hooks:
-  post_deploy: echo "Kaimu deployed to kaimu2.floretos.com"
+  post_deploy:
+    - service: backend
+      run: ./main migrate up
+      depends_on:
+        postgres: healthy
+      timeout: 120s
+    - run: echo "Kaimu deployed to kaimu2.floretos.com"
+
+  on_failure:
+    - run: echo "Deploy failed for kaimu at commit $HAKOBUNE_COMMIT"
+      continue_on_error: true
 
 deploy:
   routes:
