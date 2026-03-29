@@ -15,6 +15,11 @@ hooks:
       depends_on:
         postgres: healthy
       timeout: 120s
+    - service: backend
+      run: ./main index
+      depends_on:
+        typesense: running
+      timeout: 120s
     - run: echo "Kaimu deployed to kaimu2.floretos.com"
 
   on_failure:
