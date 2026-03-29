@@ -1,0 +1,19 @@
+# Hakobune deployment config for Kaimu
+# Deploy: kaimu2.floretos.com
+
+build: true
+compose_file: docker-compose.prod.yaml
+
+secrets:
+  required:
+    - POSTGRES_PASSWORD
+
+hooks:
+  post_deploy: echo "Kaimu deployed to kaimu2.floretos.com"
+
+deploy:
+  routing:
+    domain: kaimu2.floretos.com
+    port: 4321
+    service: frontend
+    ssl: auto
