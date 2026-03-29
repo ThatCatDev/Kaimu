@@ -12,8 +12,13 @@ hooks:
   post_deploy: echo "Kaimu deployed to kaimu2.floretos.com"
 
 deploy:
-  routing:
-    domain: kaimu2.floretos.com
-    port: 4321
-    service: frontend
-    ssl: auto
+  routes:
+    - domain: kaimu2.floretos.com
+      port: 4321
+      service: frontend
+      ssl: auto
+    - domain: kaimu2.floretos.com
+      path: /api
+      port: 3000
+      service: backend
+      ssl: auto
