@@ -4,6 +4,8 @@ A modern project management tool for software teams, similar to Jira or Linear.
 
 **kai** (change) + **mu** (nothing wasted)
 
+**Try it: [kaimu.app](https://kaimu.app)**
+
 ## Overview
 
 Kaimu helps software teams organize their work using Kanban boards, sprints, and agile workflows. It's built with a modern tech stack prioritizing developer experience and performance.
