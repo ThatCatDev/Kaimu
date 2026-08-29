@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.0.7](https://github.com/ThatCatDev/Kaimu/compare/v0.0.6...v0.0.7) (2026-03-29)
+
+
+### Features
+
+* add multi-route hakobune config for frontend and backend ([#8](https://github.com/ThatCatDev/Kaimu/issues/8)) ([c5f1790](https://github.com/ThatCatDev/Kaimu/commit/c5f17905a4f1100ca9a6bb53f184f4feb43e936c))
+
 ## [0.0.6](https://github.com/ThatCatDev/Kaimu/compare/v0.0.5...v0.0.6) (2026-02-15)
 
 
